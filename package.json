@@ -1,0 +1,19 @@
+{
+  "name": "classic-messenger-app-backend",
+  "version": "1.0.0",
+  "description": "Backend infrastructure to support a rendition of a classic messenger application",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Chris-Merced/Classic-Messenger-App-Backend.git"
+  },
+  "author": "Christopher Merced",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Chris-Merced/Classic-Messenger-App-Backend/issues"
+  },
+  "homepage": "https://github.com/Chris-Merced/Classic-Messenger-App-Backend#readme"
+}
