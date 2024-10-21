@@ -2,8 +2,7 @@ const Express = require("express");
 const app = Express();
 const loginRouter = require("./routers/loginRouter");
 
-app.use("/", (req, res) => {
-  res.send("Hello World");
-});
+app.use("/login", loginRouter);
 
-app.listen(3000);
+app.listen(3000, console.log("We're Listening"));
+
