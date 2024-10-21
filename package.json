@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/Chris-Merced/Classic-Messenger-App-Backend/issues"
   },
-  "homepage": "https://github.com/Chris-Merced/Classic-Messenger-App-Backend#readme"
+  "homepage": "https://github.com/Chris-Merced/Classic-Messenger-App-Backend#readme",
+  "dependencies": {
+    "express": "^4.21.1"
+  }
 }
