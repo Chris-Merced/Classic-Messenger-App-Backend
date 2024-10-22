@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/Chris-Merced/Classic-Messenger-App-Backend#readme",
   "dependencies": {
-    "express": "^4.21.1"
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "ws": "^8.18.0"
   }
 }
