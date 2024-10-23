@@ -14,13 +14,17 @@ wss.on("connection", (ws) => {
 
     ws.on('message', (message) => {
         wss.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) { client.send(message); }  
+            if (client.readyState === WebSocket.OPEN) { client.send(message.toString()); }  
         })
     })
 
     ws.on('close', () => {
         console.log("Client Disconnected");
     })
+
+    ws.on('error', (error) => {
+        console.error("Websocket Backend Error:", error)
+    });
 })
 
 
