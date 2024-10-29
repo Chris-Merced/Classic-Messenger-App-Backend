@@ -1,7 +1,11 @@
 const argon2 = require('argon2');
+const db = require('../db/queries')
 
-function loginHandler(req, res) {
-    req.body.password
+
+function signupHandler(req, res) {
+    //const hashedPassword = hashPassword(password);
+    db.addUser(req.body.user);
+
 }
 
 async function hashPassword(password) {
@@ -13,5 +17,4 @@ async function hashPassword(password) {
     }
 }
 
-
-module.exports = { loginHandler };
+module.exports = {signupHandler}

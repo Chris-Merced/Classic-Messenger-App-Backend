@@ -1,8 +1,17 @@
+///Just created the signup route with the users table in the classic messenger database
+//now need to create the front end signup portion to connect and add to database through
+//front end
+//
+//after connection to the frontend is established we can start sanitizing and encrypting
+
+
+
 const Express = require("express");
 const app = Express();
 const WebSocket = require('ws');
 const http = require('http')
 const loginRouter = require("./routers/loginRouter");
+const signupRouter = require("./routers/signuprouter");
 
 
 //Ensure Websocket and Express app are listening in on the same server port
@@ -30,6 +39,6 @@ wss.on("connection", (ws) => {
 
 app.use(Express.json());
 app.use("/login", loginRouter);
-
+app.use("/signup", signupRouter);
 server.listen(3000, console.log("We're Listening"));
 
