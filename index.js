@@ -1,10 +1,3 @@
-///Just created the signup route with the users table in the classic messenger database
-//now need to create the front end signup portion to connect and add to database through
-//front end
-//
-//after connection to the frontend is established we can start sanitizing and encrypting
-
-
 
 const Express = require("express");
 const app = Express();
