@@ -1,10 +1,15 @@
 
-const Express = require("express");
+const Express = require('express');
 const app = Express();
+const cors = require('cors')
 const WebSocket = require('ws');
 const http = require('http')
 const loginRouter = require("./routers/loginRouter");
 const signupRouter = require("./routers/signuprouter");
+
+app.use(cors({
+    origin: 'http://localhost:9000'
+}))
 
 
 //Ensure Websocket and Express app are listening in on the same server port

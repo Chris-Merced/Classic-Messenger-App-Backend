@@ -1,5 +1,10 @@
 const argon2 = require('argon2');
 
+
+//need to add in login authentication and handling along with
+//session management
+
+
 function loginHandler(req, res) {
     req.body.password
 }
