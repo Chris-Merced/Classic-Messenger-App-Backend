@@ -1,12 +1,20 @@
 const argon2 = require('argon2');
 
 
-//need to add in login authentication and handling along with
-//session management
+//ADD IN LOGIN HANDLING AND INTERACTION WITH DB
+//ADD IN SSUID TO CREATE SESSION
+//ADD SSUID TO DATABASE WITH USER ID
+//SEND COOKIE TO CLIENT WITH SESSION ID
+//SEND RES TO CONFIRM CLIENT CONTACT AND ADDITION
+//SWITCH TO FRONT END TO REFLECT THE LOGIN CHANGES
+
 
 
 function loginHandler(req, res) {
-    req.body.password
+    
+    res.status(201).json({
+        message: "Server contact!"
+    });
 }
 
 async function hashPassword(password) {
