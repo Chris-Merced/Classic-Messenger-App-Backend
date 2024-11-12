@@ -18,6 +18,7 @@
   "homepage": "https://github.com/Chris-Merced/Classic-Messenger-App-Backend#readme",
   "dependencies": {
     "argon2": "^0.41.1",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",

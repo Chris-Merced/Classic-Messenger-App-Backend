@@ -1,7 +1,8 @@
 
 const Express = require('express');
 const app = Express();
-const cors = require('cors')
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const WebSocket = require('ws');
 const http = require('http')
 const loginRouter = require("./routers/loginRouter");
