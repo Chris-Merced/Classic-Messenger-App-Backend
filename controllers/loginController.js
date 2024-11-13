@@ -1,11 +1,6 @@
 const argon2 = require('argon2');
 const db = require('../db/queries');
 
-//SEND COOKIE TO CLIENT WITH SESSION ID
-//SEND RES TO CONFIRM CLIENT CONTACT AND ADDITION
-//SWITCH TO FRONT END TO REFLECT THE LOGIN CHANGES
-
-
 
 async function loginHandler(req, res) {
     const user = await db.getUser(req.body.username);
@@ -24,8 +19,10 @@ async function loginHandler(req, res) {
             res.cookie('sessionToken', sessionToken, {
                 httpOnly: true,
                 secure: true,
-
+                maxAge:  86400 * 1000
             })
+
+            console.log("cookie sent");
         } else {
             res.status(401).json({
                 message: "Incorrect Password"

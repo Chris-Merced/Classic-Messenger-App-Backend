@@ -7,6 +7,12 @@ const WebSocket = require('ws');
 const http = require('http')
 const loginRouter = require("./routers/loginRouter");
 const signupRouter = require("./routers/signuprouter");
+const userProfileRouter = require('./routers/userProfileRouter');
+
+
+app.use(cookieParser());
+
+
 
 app.use(cors({
     origin: 'http://localhost:9000'
@@ -39,5 +45,6 @@ wss.on("connection", (ws) => {
 app.use(Express.json());
 app.use("/login", loginRouter);
 app.use("/signup", signupRouter);
+app.use("/userProfile", userProfileRouter);
 server.listen(3000, console.log("We're Listening"));
 
