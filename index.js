@@ -11,11 +11,12 @@ const userProfileRouter = require('./routers/userProfileRouter');
 
 
 app.use(cookieParser());
-
+app.use(Express.json());
 
 
 app.use(cors({
-    origin: 'http://localhost:9000'
+    origin: 'http://localhost:9000',
+    credentials: true
 }))
 
 
@@ -42,7 +43,7 @@ wss.on("connection", (ws) => {
 })
 
 
-app.use(Express.json());
+
 app.use("/login", loginRouter);
 app.use("/signup", signupRouter);
 app.use("/userProfile", userProfileRouter);

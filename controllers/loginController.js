@@ -16,11 +16,16 @@ async function loginHandler(req, res) {
                 userID: user.id
             }
             
-            res.cookie('sessionToken', sessionToken, {
+            res.cookie('sessionToken', JSON.stringify(sessionToken), {
                 httpOnly: true,
                 secure: true,
+                sameSite: "Lax",
                 maxAge:  86400 * 1000
             })
+
+            res.status(201).json({
+                message: "Server contact!"
+            });
 
             console.log("cookie sent");
         } else {
@@ -32,9 +37,6 @@ async function loginHandler(req, res) {
         res.status(402).json({ message: "Sorry there is no user that matches those credentials" })
     }
     
-    res.status(201).json({
-        message: "Server contact!"
-    });
 }
 
 async function verifyPassword(hashedPassword, inputPassword) {
