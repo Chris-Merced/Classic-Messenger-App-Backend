@@ -13,8 +13,7 @@ async function loginHandler(req, res) {
                 await db.storeSession(user.id, sessionID);
             
                 const sessionToken = {
-                    sessionID: sessionID,
-                    userID: user.id
+                    sessionID: sessionID
                 }
             
                 res.cookie('sessionToken', JSON.stringify(sessionToken), {
