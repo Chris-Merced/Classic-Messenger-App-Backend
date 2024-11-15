@@ -3,40 +3,43 @@ const db = require('../db/queries');
 
 
 async function loginHandler(req, res) {
-    const user = await db.getUser(req.body.username);
+    try {
+        const user = await db.getUserByUsername(req.body.username);
     
-    if (user) {
-        const passConfirm = await verifyPassword(user.password, req.body.password);
-        if (passConfirm) {
-            const sessionID = crypto.randomUUID();
-            await db.storeSession(user.id, sessionID);
+        if (user) {
+            const passConfirm = await verifyPassword(user.password, req.body.password);
+            if (passConfirm) {
+                const sessionID = crypto.randomUUID();
+                await db.storeSession(user.id, sessionID);
             
-            const sessionToken = {
-                sessionID: sessionID,
-                userID: user.id
+                const sessionToken = {
+                    sessionID: sessionID,
+                    userID: user.id
+                }
+            
+                res.cookie('sessionToken', JSON.stringify(sessionToken), {
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: "Lax",
+                    maxAge: 86400 * 1000
+                })
+
+                res.status(201).json({
+                    message: "Server contact!"
+                });
+
+                console.log("cookie sent");
+            } else {
+                res.status(401).json({
+                    message: "Incorrect Password"
+                })
             }
-            
-            res.cookie('sessionToken', JSON.stringify(sessionToken), {
-                httpOnly: true,
-                secure: true,
-                sameSite: "Lax",
-                maxAge:  86400 * 1000
-            })
-
-            res.status(201).json({
-                message: "Server contact!"
-            });
-
-            console.log("cookie sent");
         } else {
-            res.status(401).json({
-                message: "Incorrect Password"
-            })
+            res.status(402).json({ message: "Sorry there is no user that matches those credentials" })
         }
-    } else {
-        res.status(402).json({ message: "Sorry there is no user that matches those credentials" })
+    } catch (err) {
+        res.status(402).json({message: err})
     }
-    
 }
 
 async function verifyPassword(hashedPassword, inputPassword) {
@@ -48,8 +51,5 @@ async function verifyPassword(hashedPassword, inputPassword) {
     }
 }
 
-function createSession(id) {
-    const sessionID = crypto.rand()
-}
 
 module.exports = { loginHandler };

@@ -7,7 +7,6 @@ async function signupHandler(req, res) {
         const hashedPassword = await hashPassword(req.body.password);
         const user = { ...req.body, password: hashedPassword }
         
-        console.log(req.body);
         await db.addUser(user);
         res.status(201).json({ message: "User Created Successfully" });
     } catch (error) {

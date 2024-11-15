@@ -3,21 +3,31 @@ const Express = require('express');
 const app = Express();
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const cron = require('node-cron');
 const WebSocket = require('ws');
 const http = require('http')
+const { cleanupSchedule } = require('./db/queries');
 const loginRouter = require("./routers/loginRouter");
 const signupRouter = require("./routers/signuprouter");
 const userProfileRouter = require('./routers/userProfileRouter');
 
+//Cron to clean up expired sessions
+cron.schedule('* * * * *', cleanupSchedule);
 
-app.use(cookieParser());
-app.use(Express.json());
 
-
+//Middleware
 app.use(cors({
     origin: 'http://localhost:9000',
     credentials: true
 }))
+app.use(cookieParser());
+app.use(Express.json());
+
+
+//Routers
+app.use("/login", loginRouter);
+app.use("/signup", signupRouter);
+app.use("/userProfile", userProfileRouter);
 
 
 //Ensure Websocket and Express app are listening in on the same server port
@@ -42,10 +52,6 @@ wss.on("connection", (ws) => {
     });
 })
 
-
-
-app.use("/login", loginRouter);
-app.use("/signup", signupRouter);
-app.use("/userProfile", userProfileRouter);
+//Start Server
 server.listen(3000, console.log("We're Listening"));
 
