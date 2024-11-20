@@ -21,28 +21,39 @@ async function getUserByUsername(username) {
 }
 
 async function getUserByUserID(userID) {
-    console.log(userID);
     const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [userID]);
-    console.log(rows);
     const user = rows[0];
     return user;
 }
 
 async function getSession(sessionID) {
-    const { rows } = await pool.query('SELECT * FROM sessions WHERE session_id = $1', [sessionID]);
-    console.log(rows[0]);
-    const userID = rows[0].user_id;
-    return userID;
+    try {
+        const { rows } = await pool.query('SELECT * FROM sessions WHERE session_id = $1', [sessionID]);
+        const userID = rows[0].user_id;
+        return userID;
+    } catch (err) {
+        console.error("No user information found");
+    }
 }
 
 async function storeSession(userID, sessionID) {
     try{await pool.query("INSERT INTO sessions (session_id, user_id, created_at, expires_at) VALUES ($1, $2, NOW(), NOW() + INTERVAL '1 day')", [sessionID, userID]);
         return;
     } catch (err) {
-        console.error("Error storing user in session:", err)
+        console.error("Error storing user in session:", err);
         throw err;
     }
 }
+
+async function deleteSession(sessionID) {
+    try {
+        await pool.query("DELETE FROM sessions WHERE session_id = ($1)", [sessionID]);
+    } catch (err) {
+        console.error("Error Deleting Session Data:", err);
+        throw err;
+    }   
+}
+
 
 async function cleanupSchedule() {
     try {
@@ -55,4 +66,4 @@ async function cleanupSchedule() {
 
 
 
-module.exports = { addUser, getUserByUsername, storeSession, cleanupSchedule, getSession, getUserByUserID };
+module.exports = { addUser, getUserByUsername, storeSession, cleanupSchedule, getSession, getUserByUserID, deleteSession };

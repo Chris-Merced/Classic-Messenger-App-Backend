@@ -8,6 +8,7 @@ const WebSocket = require('ws');
 const http = require('http')
 const { cleanupSchedule } = require('./db/queries');
 const loginRouter = require("./routers/loginRouter");
+const logoutRouter = require("./routers/logoutRouter");
 const signupRouter = require("./routers/signuprouter");
 const userProfileRouter = require('./routers/userProfileRouter');
 
@@ -26,6 +27,7 @@ app.use(Express.json());
 
 //Routers
 app.use("/login", loginRouter);
+app.use("/logout", logoutRouter);
 app.use("/signup", signupRouter);
 app.use("/userProfile", userProfileRouter);
 
