@@ -22,9 +22,9 @@ async function loginHandler(req, res) {
                     sameSite: "Lax",
                     maxAge: 86400 * 1000
                 })
-
+                
                 res.status(201).json({
-                    message: "Server contact!"
+                    username: user.username 
                 });
 
                 console.log("cookie sent");
