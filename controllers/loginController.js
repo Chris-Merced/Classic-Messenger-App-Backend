@@ -26,18 +26,19 @@ async function loginHandler(req, res) {
                 res.status(201).json({
                     username: user.username 
                 });
-
+                
                 console.log("cookie sent");
+                
             } else {
                 res.status(401).json({
                     message: "Incorrect Password"
                 })
             }
         } else {
-            res.status(402).json({ message: "Sorry there is no user that matches those credentials" })
+            res.status(401).json({ message: "Sorry there is no user that matches those credentials" })
         }
     } catch (err) {
-        res.status(402).json({message: err})
+        res.status(401).json({message: err})
     }
 }
 
