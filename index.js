@@ -22,7 +22,7 @@ const limiter = rateLimit({
 })
 
 
-//Cron to clean up expired sessions
+//Database Query to clean up expired sessions
 cron.schedule('* * * * *', cleanupSchedule);
 
 
