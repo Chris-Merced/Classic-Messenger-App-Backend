@@ -18,4 +18,15 @@ async function getUser(req, res) {
     }
 }
 
-module.exports = {getUser}
+async function getUserPublicProfile(req, res) {
+    try {
+        const userData = await db.getUserByUserID(req.query.ID);
+        const {id, password, email, is_admin, ...user} = userData;
+        res.status(200).json({user: user})
+    } catch (err) {
+        console.error("Error Retrieving Profile: ", err);
+        res.status(404).json({ message: "Error Retrieving Profile" });
+    }
+}
+
+module.exports = {getUser, getUserPublicProfile}
