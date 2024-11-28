@@ -20,6 +20,21 @@ async function getUserByUsername(username) {
     }
 }
 
+async function getUsersByUsernameSearch(username) {
+    try {
+        const {rows} = await pool.query("SELECT * FROM USERS WHERE username ILIKE $1", [`%${username}%`])
+        const users = rows.map((row) => {
+            const { id, username } = row;
+            const newRow = { id, username };
+            return newRow;
+        })
+        return users;
+    } catch (err) {
+        console.log("Problem with lookup: ", err)
+        throw err;
+    }
+}
+
 async function getUserByUserID(userID) {
     const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [userID]);
     const user = rows[0];
@@ -66,4 +81,4 @@ async function cleanupSchedule() {
 
 
 
-module.exports = { addUser, getUserByUsername, storeSession, cleanupSchedule, getSession, getUserByUserID, deleteSession };
+module.exports = { addUser, getUserByUsername, storeSession, cleanupSchedule, getSession, getUserByUserID, deleteSession, getUsersByUsernameSearch};

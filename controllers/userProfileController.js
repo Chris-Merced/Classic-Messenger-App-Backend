@@ -21,7 +21,7 @@ async function getUser(req, res) {
 async function getUserPublicProfile(req, res) {
     try {
         const userData = await db.getUserByUserID(req.query.ID);
-        const {id, password, email, is_admin, ...user} = userData;
+        const {password, email, is_admin, ...user} = userData;
         res.status(200).json({user: user})
     } catch (err) {
         console.error("Error Retrieving Profile: ", err);
@@ -29,4 +29,14 @@ async function getUserPublicProfile(req, res) {
     }
 }
 
-module.exports = {getUser, getUserPublicProfile}
+async function getUsersBySearch(req, res) {
+    try {
+        const users = await db.getUsersByUsernameSearch(req.query.username)
+        res.status(201).json({users: users})
+        
+    } catch (err) {
+        res.status(404).json({message: "There was a problem with the username lookup: " + err})
+    }
+}
+
+module.exports = {getUser, getUserPublicProfile, getUsersBySearch}

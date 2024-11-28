@@ -5,5 +5,6 @@ const userProfileRouter = Router();
 
 userProfileRouter.get('/', userProfileController.getUser);
 userProfileRouter.get('/publicProfile', userProfileController.getUserPublicProfile);
+userProfileRouter.get('/usersBySearch', userProfileController.getUsersBySearch)
 
 module.exports = userProfileRouter; 
