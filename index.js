@@ -1,6 +1,7 @@
 
 const Express = require('express');
 const app = Express();
+const db = require('./db/queries');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const cron = require('node-cron');
@@ -12,6 +13,13 @@ const logoutRouter = require("./routers/logoutRouter");
 const signupRouter = require("./routers/signuprouter");
 const userProfileRouter = require('./routers/userProfileRouter');
 const rateLimit = require('express-rate-limit');
+
+
+//DATABASE WORKING ON MAIN CHAT FUNCTIONALITY
+//YOU HAVE ADDED THE FUNCTIONALITY TO ADD MESSAGES TO DATABASE FROM MAIN CHAT
+//IF THE MAIN CHAT DOES NOT EXIST YET
+//YOU NOW NEED TO ADD THE FUNCTIONALITY FOR WHEN THE MAIN CHAT DOES EXIST
+//GO TO QUERIES.JS AND CHECK COMMENTS AT TOP
 
 
 //Define the rate limits
@@ -50,6 +58,9 @@ wss.on("connection", (ws) => {
     console.log('New Data Flow');
 
     ws.on('message', (message) => {
+        console.log(message.toString());
+        db.addMessageToConversations(message.toString());
+
         wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) { client.send(message.toString()); }  
         })

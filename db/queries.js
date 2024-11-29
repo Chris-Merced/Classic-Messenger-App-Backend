@@ -1,5 +1,13 @@
 const pool = require('./pool');
 
+//GO TO FUNCTION AT LINE 82
+//THIS FUNCTION CHECKS IF A CONVERSATION WITH A MATCHING NAME EXISTS AND 
+//SPLITS BASED ON THE EXISTENCE OF THE NAMED CONVERSATION
+//IT SEEMS AS THOUGH THE PRGORAM IS NOT MAKING IT TO THE LOG "DOES EXIST!"
+//EVEN IF THE CONVERSATION DOES ALREADY EXIST
+//MAKE SURE BOOLEAN VALUES ARE BEING CHECKED CORRECTLY FOR CONVERSATION NAME "MAIN" EXISTING THROUGH THE DB QUERY
+
+
 async function addUser(user) {
     try {
         await pool.query("INSERT INTO users (username,password) VALUES ($1, $2)", [user.username, user.password]);
@@ -79,6 +87,43 @@ async function cleanupSchedule() {
     }
 }
 
+async function addMessageToConversations(message) {
+    const data = await JSON.parse(message);
+    if (data.conversationName) {
+        const doesExist = await CheckConversationByName(data.conversationName);
+        console.log(doesExist);
+        if (doesExist) {
+            console.log("it exists!")
+        }else{await createConversationByName(data)};
+    };
+}
 
+async function CheckConversationByName(res, conversationName) {
+    try {
+        const { rows } = await pool.query("SELECT * FROM conversations WHERE name = $1", [conversationName])
+        if (rows[0]) {
+            return true;
+        } else {
+            return false;
+        }
+    } catch (err) {
+        console.error("Error checking database name: " + err);
+        res.status(401).json({ message: "Error Checking Database Name: " + err });
+    }
+}
 
-module.exports = { addUser, getUserByUsername, storeSession, cleanupSchedule, getSession, getUserByUserID, deleteSession, getUsersByUsernameSearch};
+async function createConversationByName(data) {
+    try {
+        await pool.query("INSERT INTO conversations (name) VALUES ($1)", [data.conversationName]);
+        const { rows } = await pool.query("SELECT * FROM conversations WHERE name = $1", [data.conversationName]);
+        console.log(rows[0]);
+        console.log(data);
+        await pool.query("INSERT INTO conversation_participants (conversation_id, user_id) VALUES ($1, $2)", [rows[0].id, data.userID]);
+        await pool.query("INSERT INTO messages (conversation_id, sender_id, content) VALUES ($1, $2, $3)", [rows[0].id, data.userID, data.message]);
+    } catch (err) {
+        
+        console.error("Error adding the conversation to the database by name"+ err);
+    }
+}
+
+module.exports = { addUser, getUserByUsername, storeSession, cleanupSchedule, getSession, getUserByUserID, deleteSession, getUsersByUsernameSearch, addMessageToConversations};
