@@ -1,12 +1,8 @@
 const pool = require('./pool');
 
-//GO TO FUNCTION AT LINE 82
-//THIS FUNCTION CHECKS IF A CONVERSATION WITH A MATCHING NAME EXISTS AND 
-//SPLITS BASED ON THE EXISTENCE OF THE NAMED CONVERSATION
-//IT SEEMS AS THOUGH THE PRGORAM IS NOT MAKING IT TO THE LOG "DOES EXIST!"
-//EVEN IF THE CONVERSATION DOES ALREADY EXIST
-//MAKE SURE BOOLEAN VALUES ARE BEING CHECKED CORRECTLY FOR CONVERSATION NAME "MAIN" EXISTING THROUGH THE DB QUERY
-
+//PROOF OF CONCEPT FOR NAMED CHATS HAS BEEN APPLIED
+//NOW NEED TO WORK ON APPLYING AN INFRASTRUCTURE FOR DMS
+//WE ARE KINDA SO CLOSE 
 
 async function addUser(user) {
     try {
@@ -38,7 +34,7 @@ async function getUsersByUsernameSearch(username) {
         })
         return users;
     } catch (err) {
-        console.log("Problem with lookup: ", err)
+        console.error("Problem with lookup: ", err)
         throw err;
     }
 }
@@ -89,19 +85,28 @@ async function cleanupSchedule() {
 
 async function addMessageToConversations(message) {
     const data = await JSON.parse(message);
+    //If Conversation Has A Name
     if (data.conversationName) {
-        const doesExist = await CheckConversationByName(data.conversationName);
-        console.log(doesExist);
+        const doesExist = await checkConversationByName(data.conversationName);
         if (doesExist) {
-            console.log("it exists!")
-        }else{await createConversationByName(data)};
+            console.log("conversation does exist, checking participant");
+            await checkIfParticipant(data);
+            await addMessage(data);
+        } else {
+            console.log("Conversation doesn't exist, added to db");
+            await createConversationByName(data)
+        };
+    }
+    //If Conversation Does Not Have A Name (DM's)
+    else {
+
     };
 }
 
-async function CheckConversationByName(res, conversationName) {
+async function checkConversationByName(conversationName, res) {
     try {
-        const { rows } = await pool.query("SELECT * FROM conversations WHERE name = $1", [conversationName])
-        if (rows[0]) {
+        const conversation = await getConversationByName(conversationName);
+        if (conversation) {
             return true;
         } else {
             return false;
@@ -115,15 +120,49 @@ async function CheckConversationByName(res, conversationName) {
 async function createConversationByName(data) {
     try {
         await pool.query("INSERT INTO conversations (name) VALUES ($1)", [data.conversationName]);
-        const { rows } = await pool.query("SELECT * FROM conversations WHERE name = $1", [data.conversationName]);
-        console.log(rows[0]);
-        console.log(data);
-        await pool.query("INSERT INTO conversation_participants (conversation_id, user_id) VALUES ($1, $2)", [rows[0].id, data.userID]);
-        await pool.query("INSERT INTO messages (conversation_id, sender_id, content) VALUES ($1, $2, $3)", [rows[0].id, data.userID, data.message]);
+        const conversation = await getConversationByName(data.conversationName);
+        await addParticipant(conversation, data);
+        await pool.query("INSERT INTO messages (conversation_id, sender_id, content) VALUES ($1, $2, $3)", [conversation.id, data.userID, data.message]);
     } catch (err) {
-        
-        console.error("Error adding the conversation to the database by name"+ err);
+        console.error("Error adding the conversation to the database by name", err);
     }
 }
 
+async function getConversationByName(name) {
+    try {
+        const { rows } = await pool.query("SELECT * FROM conversations WHERE name = $1", [name]);
+        return rows[0];
+    } catch (err) {
+        console.error("Error getting conversation by name: ", err);
+    }
+}
+
+async function checkIfParticipant(data) {
+    const conversation = await getConversationByName(data.conversationName);
+    const participants = await getParticipantsByConversationID(conversation.id);
+    const isParticipant = participants.some((participant) => {
+        return participant.user_id === data.userID;
+    });
+    if (!isParticipant) {
+        await addParticipant(conversation, data);
+    }
+}
+
+async function addParticipant(conversation, data) {
+    await pool.query("INSERT INTO conversation_participants (conversation_id, user_id) VALUES ($1, $2)", [conversation.id, data.userID]);
+}
+
+async function getParticipantsByConversationID(conversationID) {
+    try {
+        const { rows } = await pool.query("SELECT * FROM conversation_participants WHERE conversation_id = $1", [conversationID]);
+        return rows;
+    } catch (err) {
+        console.error("Error finding conversation participants by conversation ID: ", err);
+    }
+}
+
+async function addMessage(data) {
+    const conversation = await getConversationByName(data.conversationName);
+    await pool.query("INSERT INTO messages (conversation_id, sender_id, content) VALUES ($1, $2, $3)", [conversation.id, data.userID, data.message]);
+}
 module.exports = { addUser, getUserByUsername, storeSession, cleanupSchedule, getSession, getUserByUserID, deleteSession, getUsersByUsernameSearch, addMessageToConversations};

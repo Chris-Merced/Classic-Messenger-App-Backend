@@ -23,8 +23,10 @@ async function loginHandler(req, res) {
                     maxAge: 86400 * 1000
                 })
                 
+
                 res.status(201).json({
-                    username: user.username 
+                    username: user.username,
+                    id: user.id
                 });
                 
                 console.log("cookie sent");
