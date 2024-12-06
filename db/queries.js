@@ -40,9 +40,13 @@ async function getUsersByUsernameSearch(username) {
 }
 
 async function getUserByUserID(userID) {
-    const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [userID]);
-    const user = rows[0];
-    return user;
+    try {
+        const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [userID]);
+        const user = rows[0];
+        return user;
+    } catch (err) {
+        console.error("Error getting user from database with userID: ", err);
+    }
 }
 
 async function getSession(sessionID) {
@@ -77,30 +81,31 @@ async function deleteSession(sessionID) {
 async function cleanupSchedule() {
     try {
         await pool.query("DELETE FROM sessions WHERE expires_at<NOW();");
-        console.log("Deleted expired session");
     } catch (err) {
         console.error("Error cleaning up sessions", err);
     }
 }
 
 async function addMessageToConversations(message) {
-    const data = await JSON.parse(message);
-    //If Conversation Has A Name
-    if (data.conversationName) {
-        const doesExist = await checkConversationByName(data.conversationName);
-        if (doesExist) {
-            console.log("conversation does exist, checking participant");
-            await checkIfParticipant(data);
-            await addMessage(data);
-        } else {
-            console.log("Conversation doesn't exist, added to db");
-            await createConversationByName(data)
-        };
-    }
-    //If Conversation Does Not Have A Name (DM's)
-    else {
+    try {
+        const data = await JSON.parse(message);
+        //If Conversation Has A Name
+        if (data.conversationName) {
+            const doesExist = await checkConversationByName(data.conversationName);
+            if (doesExist) {
+                await checkIfParticipant(data);
+                await addMessage(data);
+            } else {
+                await createConversationByName(data)
+            };
+        }
+        //If Conversation Does Not Have A Name (DM's)
+        else {
 
-    };
+        };
+    } catch (err) {
+        console.error("Error adding message to database", err);
+    }
 }
 
 async function checkConversationByName(conversationName, res) {
@@ -138,13 +143,19 @@ async function getConversationByName(name) {
 }
 
 async function checkIfParticipant(data) {
-    const conversation = await getConversationByName(data.conversationName);
-    const participants = await getParticipantsByConversationID(conversation.id);
-    const isParticipant = participants.some((participant) => {
-        return participant.user_id === data.userID;
-    });
-    if (!isParticipant) {
-        await addParticipant(conversation, data);
+    try {
+        const conversation = await getConversationByName(data.conversationName);
+        const participants = await getParticipantsByConversationID(conversation.id);
+    
+        const isParticipant = participants.some((participant) => {
+            return participant.user_id === data.userID;
+        });
+    
+        if (!isParticipant) {
+            await addParticipant(conversation, data);
+        }
+    } catch (err) {
+        console.err("Error Checking if User is a participant of conversation: ", err);
     }
 }
 
@@ -162,7 +173,21 @@ async function getParticipantsByConversationID(conversationID) {
 }
 
 async function addMessage(data) {
-    const conversation = await getConversationByName(data.conversationName);
-    await pool.query("INSERT INTO messages (conversation_id, sender_id, content) VALUES ($1, $2, $3)", [conversation.id, data.userID, data.message]);
+    try {
+        const conversation = await getConversationByName(data.conversationName);
+        await pool.query("INSERT INTO messages (conversation_id, sender_id, content) VALUES ($1, $2, $3)", [conversation.id, data.userID, data.message]);
+    } catch (err) {
+        console.error("Error adding message to the database: ", err);
+    }
+        
 }
-module.exports = { addUser, getUserByUsername, storeSession, cleanupSchedule, getSession, getUserByUserID, deleteSession, getUsersByUsernameSearch, addMessageToConversations};
+
+async function getChatMessagesByName(name) {
+    try {
+        const conversation = await getConversationByName(name);
+        const { rows } = await pool.query("SELECT * FROM messages WHERE conversation_id = $1", [conversation.id]);
+        return rows
+    }catch(err){console.error("Error retrieving messages from database", err)}
+}
+
+module.exports = { addUser, getUserByUsername, storeSession, cleanupSchedule, getSession, getUserByUserID, deleteSession, getUsersByUsernameSearch, addMessageToConversations, getChatMessagesByName};

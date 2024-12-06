@@ -12,17 +12,16 @@ const loginRouter = require("./routers/loginRouter");
 const logoutRouter = require("./routers/logoutRouter");
 const signupRouter = require("./routers/signuprouter");
 const userProfileRouter = require('./routers/userProfileRouter');
+const messagesRouter = require('./routers/messagesRouter')
 const rateLimit = require('express-rate-limit');
 
+//MAIN CHAT NOW AT NEAR FULL FUNCTIONALITY BY POPULATING THE 
+//CHAT ON PAGE LOAD WITH PREVIOUS MESSAGES FROM DB
 
-//DATABASE WORKING ON MAIN CHAT FUNCTIONALITY
-//YOU HAVE ADDED THE FUNCTIONALITY TO ADD MESSAGES TO DATABASE FROM MAIN CHAT
-//IF THE MAIN CHAT DOES NOT EXIST YET
-//YOU NOW NEED TO ADD THE FUNCTIONALITY FOR WHEN THE MAIN CHAT DOES EXIST
-//GO TO QUERIES.JS AND CHECK COMMENTS AT TOP
+//NEXT IDEA IS TO ADD DIRECT MESSAGE FUNCTIONALITY
+//AFTER THAT WE SEE IF WE CAN ADD THE ABILITY TO CREATE PUBLIC CHAT SPACES
 
 
-//Define the rate limits
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 9001,
@@ -48,6 +47,7 @@ app.use("/login", loginRouter);
 app.use("/logout", logoutRouter);
 app.use("/signup", signupRouter);
 app.use("/userProfile", userProfileRouter);
+app.use("/messages", messagesRouter);
 
 
 //Ensure Websocket and Express app are listening in on the same server port
@@ -58,7 +58,6 @@ wss.on("connection", (ws) => {
     console.log('New Data Flow');
 
     ws.on('message', (message) => {
-        console.log(message.toString());
         db.addMessageToConversations(message.toString());
 
         wss.clients.forEach((client) => {
