@@ -30,7 +30,7 @@ const limiter = rateLimit({
 
 
 //Database Query to clean up expired sessions
-cron.schedule('* * * * *', cleanupSchedule);
+global.cleanupTask = cron.schedule('* * * * *', cleanupSchedule);
 
 
 //Middleware
@@ -76,4 +76,6 @@ wss.on("connection", (ws) => {
 
 //Start Server
 server.listen(3000, console.log("We're Listening"));
+
+module.exports = server;
 
