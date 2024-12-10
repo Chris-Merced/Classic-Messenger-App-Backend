@@ -1,9 +1,13 @@
-const db = require('../db/queries');
+const db = require("../db/queries");
 
 async function logoutUser(req, res) {
+  try {
     const data = JSON.parse(req.cookies.sessionToken);
-    db.deleteSession(data.sessionID)
-    res.status(200).json({ message: "Session Deleted" });
+    await db.deleteSession(data.sessionID);
+    res.status(205).end();
+  } catch (err) {
+    res.status(500).json({ message: "Error: " + err.message });
+  }
 }
 
 module.exports = { logoutUser };

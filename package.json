@@ -4,7 +4,7 @@
   "description": "Backend infrastructure to support a rendition of a classic messenger application",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npx jest --detectOpenHandles"
   },
   "repository": {
     "type": "git",
