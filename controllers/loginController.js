@@ -39,6 +39,7 @@ async function loginHandler(req, res) {
       });
     }
   } catch (err) {
+    console.error("Error in Handling Login: " + err.message);
     res.status(401).json({ message: "Error: " + err.message });
   }
 }
@@ -47,8 +48,9 @@ async function verifyPassword(hashedPassword, inputPassword) {
   try {
     const isMatch = await argon2.verify(hashedPassword, inputPassword);
     return isMatch;
-  } catch (error) {
-    console.error("Error in password Verification", error.message);
+  } catch (err) {
+    console.error("Error in password verification: " + err.message);
+    throw new Error("Error in password verification: " + err.message);
   }
 }
 

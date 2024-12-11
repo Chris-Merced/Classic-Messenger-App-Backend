@@ -17,7 +17,8 @@ async function getChatMessagesByName(req, res) {
 
     res.status(200).json({ messages: newMessages });
   } catch (err) {
-    res.status(401).json({ message: "Error" + err.message });
+    console.error("Error getting chat messages by name: " + err.message);
+    res.status(401).json({ message: "Error getting chat messages by name: " + err.message });
   }
 }
 

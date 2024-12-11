@@ -1,6 +1,7 @@
 const db = require("../db/queries");
 
 async function getUser(req, res) {
+  console.log("You have made it to getUser");
   try {
     const sessionData = JSON.parse(req.cookies.sessionToken);
     if (sessionData.sessionID) {
@@ -12,7 +13,8 @@ async function getUser(req, res) {
       return res.status(401).json({ message: "No SessionID Stored" });
     }
   } catch (err) {
-    res.status(500).json({ message: "Error: " + err.message });
+    console.error("Error getting user from database: " + err.message);
+    res.status(500).json({ message: "Error getting user from database: " + err.message });
   }
 }
 
@@ -32,6 +34,7 @@ async function getUsersBySearch(req, res) {
     const users = await db.getUsersByUsernameSearch(req.query.username);
     res.status(201).json({ users: users });
   } catch (err) {
+    console.error("Error getting users during search" + err.message);
     res.status(404).json({
       message: "There was a problem with the username lookup: " + err.message,
     });

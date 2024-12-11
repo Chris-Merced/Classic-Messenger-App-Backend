@@ -20,7 +20,7 @@ describe("DELETE /logout", () => {
     await new Promise((resolve) => server.close(resolve));
   });
 
-  it("should return 205 and delete session on successful logout", async () => {
+  it("should return 200 and delete session on successful logout", async () => {
     const mockSessionData = {
       sessionID: "session123",
     };
@@ -34,9 +34,8 @@ describe("DELETE /logout", () => {
       .delete("/logout")
       .set("Cookie", `sessionToken=${mockCookie.sessionToken}`);
 
-    console.log("Full response:", response.status, response.body, response.text);
-    console.log("Response headers:", response.headers);
-    expect(response.status).toBe(205);
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ message: "Logout Successful" });
 
     expect(db.deleteSession).toHaveBeenCalledWith("session123");
   });

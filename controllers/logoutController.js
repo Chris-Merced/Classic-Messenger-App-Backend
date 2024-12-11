@@ -4,9 +4,10 @@ async function logoutUser(req, res) {
   try {
     const data = JSON.parse(req.cookies.sessionToken);
     await db.deleteSession(data.sessionID);
-    res.status(205).end();
+    res.status(200).json({ message: "Logout Successful" });
   } catch (err) {
-    res.status(500).json({ message: "Error: " + err.message });
+    console.error("Error in logging out user: " + err.message);
+    res.status(500).json({ message: "Error in logging out user: " + err.message });
   }
 }
 
