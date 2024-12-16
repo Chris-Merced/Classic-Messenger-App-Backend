@@ -32,7 +32,8 @@ global.cleanupTask = cron.schedule("* * * * *", cleanupSchedule);
 //Middleware
 app.use(
   cors({
-    origin: "http://localhost:9000",
+    origin:
+      process.env.NODE_ENV === "production" ? process.env.FRONTEND_URL : "http://localhost:9000",
     credentials: true,
   })
 );
@@ -75,6 +76,7 @@ wss.on("connection", (ws) => {
 });
 
 //Start Server
-server.listen(3000, console.log("We're Listening"));
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
 
 module.exports = server;

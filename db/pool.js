@@ -1,5 +1,4 @@
 const { Pool } = require("pg");
+const config = require("../config");
 
-module.exports = new Pool({
-  connectionString: "postgresql://christopher:Mrc12598!@localhost:5432/classicmessenger",
-});
+module.exports = new Pool(config);
