@@ -18,7 +18,7 @@ async function loginHandler(req, res) {
         res.cookie("sessionToken", JSON.stringify(sessionToken), {
           httpOnly: true,
           secure: true,
-          sameSite: "Lax",
+          sameSite: "none",
           maxAge: 86400 * 1000,
         });
 

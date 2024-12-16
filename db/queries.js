@@ -6,9 +6,10 @@ const pool = require("./pool");
 
 async function addUser(user) {
   try {
-    await pool.query("INSERT INTO users (username,password) VALUES ($1, $2)", [
+    await pool.query("INSERT INTO users (username,password, email) VALUES ($1, $2, $3)", [
       user.username,
       user.password,
+      user.email
     ]);
     return;
   } catch (err) {
