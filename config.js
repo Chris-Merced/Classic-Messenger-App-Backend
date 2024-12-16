@@ -4,7 +4,7 @@ const config = {
   development: {
     connectionString:
       process.env.DATABASE_URL ||
-      "postgresql://christopher:Mrc12598!@localhost:5432/classicmessenger",
+      process.env.LOCAL_DATABASE_URL,
   },
   production: {
     connectionString: process.env.DATABASE_URL,
