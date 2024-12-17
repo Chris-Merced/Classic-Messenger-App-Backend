@@ -2,9 +2,6 @@ const argon2 = require("argon2");
 const db = require("../db/queries");
 
 async function signupHandler(req, res) {
-  
-  console.log("Signup request received");
-  console.log("Request body:", { ...req.body, password: "[REDACTED]" });
   try {
     const hashedPassword = await hashPassword(req.body.password);
     const user = { ...req.body, password: hashedPassword };
