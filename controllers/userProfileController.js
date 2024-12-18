@@ -1,7 +1,6 @@
 const db = require("../db/queries");
 
 async function getUser(req, res) {
-  console.log("You have made it to getUser");
   try {
     const sessionData = JSON.parse(req.cookies.sessionToken);
     if (sessionData.sessionID) {

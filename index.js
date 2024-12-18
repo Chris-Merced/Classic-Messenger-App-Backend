@@ -55,10 +55,20 @@ const wss = new WebSocket.Server({ server });
 
 wss.on("connection", (ws) => {
   console.log("New Data Flow");
+  console.log(ws);
+  
 
   ws.on("message", (message) => {
+    //ensure that this is parsing the data to figure out where to add the message (as dm or main chat)
     db.addMessageToConversations(message.toString());
 
+    //CHECK THE MESSAGE JSON FOR TYPE OF MESSAGE
+    //IF REGISTRATION ADD TO DICT
+    //IF CHAT NAME EXISTS CHECK NAME
+    //IF DM SEND VIA DM USING RECIPIENT AND SENDER VARIABLES
+
+    console.log(message.toString());
+  
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(message.toString());
