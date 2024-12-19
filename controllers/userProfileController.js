@@ -5,7 +5,15 @@ async function getUser(req, res) {
     const sessionData = JSON.parse(req.cookies.sessionToken);
     if (sessionData.sessionID) {
       const userID = await db.getSessionBySessionID(sessionData.sessionID);
+      if (!userID) {
+        return res.status(401).json({ message: "Invalid session ID" });
+      }
+
       const user = await db.getUserByUserID(userID);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
       const { password, ...userWithoutPassword } = user;
       res.status(200).json({ user: userWithoutPassword });
     } else {

@@ -55,7 +55,6 @@ const wss = new WebSocket.Server({ server });
 
 wss.on("connection", (ws) => {
   console.log("New Data Flow");
-  console.log(ws);
   
 
   ws.on("message", (message) => {

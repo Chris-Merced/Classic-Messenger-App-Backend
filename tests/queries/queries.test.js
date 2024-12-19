@@ -12,19 +12,27 @@ describe("Database Queries", () => {
 
   describe("addUser", () => {
     it("should insert a user into the users table", async () => {
-      const mockUser = { username: "testuser", password: "hashedPassword" };
+      const mockUser = {
+        username: "testuser",
+        password: "hashedPassword",
+        email: "test@example.com",
+      };
       pool.query.mockResolvedValue({});
 
       await db.addUser(mockUser);
 
       expect(pool.query).toHaveBeenCalledWith(
-        "INSERT INTO users (username,password) VALUES ($1, $2)",
-        [mockUser.username, mockUser.password]
+        "INSERT INTO users (username,password, email) VALUES ($1, $2, $3)",
+        [mockUser.username, mockUser.password, mockUser.email]
       );
     });
 
     it("should throw an error if the query fails", async () => {
-      const mockUser = { username: "testuser", password: "hashedPassword" };
+      const mockUser = {
+        username: "testuser",
+        password: "hashedPassword",
+        email: "test@example.com",
+      };
       pool.query.mockRejectedValue(new Error("Database error"));
 
       await expect(db.addUser(mockUser)).rejects.toThrow("Error adding user");
@@ -39,7 +47,7 @@ describe("Database Queries", () => {
       const result = await db.getUserByUsername("testuser");
 
       expect(result).toEqual(mockUser);
-      expect(pool.query).toHaveBeenCalledWith("SELECT * FROM users WHERE username = ($1)", [
+      expect(pool.query).toHaveBeenCalledWith("SELECT * FROM users WHERE username = ($1) ", [
         "testuser",
       ]);
     });
@@ -167,6 +175,42 @@ describe("Database Queries", () => {
       pool.query.mockRejectedValue(new Error("Database error"));
 
       await expect(db.cleanupSchedule()).rejects.toThrow("Error in scheduled database cleanup");
+    });
+  });
+
+  describe("getUserChats", () => {
+    it("should retrieve all unique chats for a user", async () => {
+      const mockChats = [
+        { conversation_id: 1, name: "Chat1" },
+        { conversation_id: 2, name: "Chat2" },
+      ];
+      pool.query.mockResolvedValue({ rows: mockChats });
+
+      const result = await db.getUserChats(1);
+
+      expect(result).toEqual(mockChats);
+      expect(pool.query).toHaveBeenCalledWith(
+        "SELECT DISTINCT messages.conversation_id, conversations.name FROM messages JOIN conversations ON conversations.id = messages.conversation_id WHERE sender_id = $1",
+        [1]
+      );
+    });
+
+    it("should return empty array when user has no chats", async () => {
+      pool.query.mockResolvedValue({ rows: [] });
+
+      const result = await db.getUserChats(1);
+
+      expect(result).toEqual([]);
+      expect(pool.query).toHaveBeenCalledWith(
+        "SELECT DISTINCT messages.conversation_id, conversations.name FROM messages JOIN conversations ON conversations.id = messages.conversation_id WHERE sender_id = $1",
+        [1]
+      );
+    });
+
+    it("should throw an error if the query fails", async () => {
+      pool.query.mockRejectedValue(new Error("Database error"));
+
+      await expect(db.getUserChats(1)).rejects.toThrow("Error retrieving user chats");
     });
   });
 });

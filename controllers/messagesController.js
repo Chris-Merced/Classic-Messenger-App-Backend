@@ -22,4 +22,18 @@ async function getChatMessagesByName(req, res) {
   }
 }
 
-module.exports = { getChatMessagesByName };
+async function getUserChats(req, res) {
+  try {
+    console.log("You made it to getUserChats " + req.query.userID);
+    const userChats = await db.getUserChats(req.query.userID);
+    res.status(200).json({ userChats: userChats });
+  } catch (err) {
+    console.error("Error getting user chats: " + err.message);
+    res.status(500).json({
+      error: "Error getting user chats",
+      message: err.message,
+    });
+  }
+}
+
+module.exports = { getChatMessagesByName, getUserChats };
