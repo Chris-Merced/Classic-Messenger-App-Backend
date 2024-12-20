@@ -243,8 +243,11 @@ async function getChatMessagesByName(name) {
 
 async function getUserChats(userID) {
   try {
+    //WHEN GETTING USER CHATS WE NEED TO GET USERNAMES FOR THE GROUP OR DMS SO THIS
+    //RETURNED ROWS IS GREAT FOR NAMED CHATS
+    //WE THEN NEED TO CHECK ---IF NAME==NULL THEN GET PARTICIPANTS FROM CONVERSATION_ID--
     const { rows } = await pool.query(
-      "SELECT DISTINCT messages.conversation_id, conversations.name FROM messages JOIN conversations ON conversations.id = messages.conversation_id WHERE sender_id = $1",
+      "SELECT DISTINCT messages.conversation_id, conversations.is_group, conversations.name FROM messages JOIN conversations ON conversations.id = messages.conversation_id WHERE sender_id = $1",
       [userID]
     );
     return rows;
