@@ -1,4 +1,5 @@
 const argon2 = require("argon2");
+const crypto = require("crypto");
 const db = require("../db/queries");
 
 async function loginHandler(req, res) {

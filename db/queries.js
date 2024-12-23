@@ -58,7 +58,6 @@ async function getUserByUserID(userID) {
 }
 
 async function getSessionBySessionID(sessionID) {
-  
   try {
     if (sessionID !== undefined) {
       const { rows } = await pool.query("SELECT * FROM sessions WHERE session_id = $1", [
@@ -125,7 +124,8 @@ async function addMessageToConversations(message) {
       }
     }
     //If Conversation Does Not Have A Name (DM's)
-    else {
+    else if (data.conversationID) {
+      //SIMPLY ADD THE MESSAGE WITH THE ID
     }
   } catch (err) {
     console.error("Error adding message to database " + err.message);
@@ -231,13 +231,23 @@ async function addMessage(data) {
 async function getChatMessagesByName(name) {
   try {
     const conversation = await getConversationByName(name);
-    const { rows } = await pool.query("SELECT * FROM messages WHERE conversation_id = $1", [
-      conversation.id,
-    ]);
+    const rows = await getChatMessagesByConversationID(conversation.id);
     return rows;
   } catch (err) {
     console.error("Error retrieving messages from database " + err.message);
     throw new Error("Error getting chat messages by name " + err.message);
+  }
+}
+
+async function getChatMessagesByConversationID(conversationID) {
+  try {
+    const { rows } = await pool.query("SELECT * FROM messages WHERE conversation_id = $1", [
+      conversationID,
+    ]);
+    return rows;
+  } catch (err) {
+    console.Error("Error retrieving the chat messages by conversationID: " + err.message);
+    throw new Error("Error retrieving chat messages by conversationID: " + err.message);
   }
 }
 
@@ -268,5 +278,6 @@ module.exports = {
   getUsersByUsernameSearch,
   addMessageToConversations,
   getChatMessagesByName,
+  getChatMessagesByConversationID,
   getUserChats,
 };

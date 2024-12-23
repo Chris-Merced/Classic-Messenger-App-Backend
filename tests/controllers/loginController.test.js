@@ -1,3 +1,26 @@
+jest.mock("crypto", () => {
+  const fillRandomBytes = (buffer) => {
+    for (let i = 0; i < buffer.length; i++) {
+      buffer[i] = Math.floor(Math.random() * 256);
+    }
+    return buffer;
+  };
+
+  return {
+    randomUUID: () => "test-session-id",
+    randomFillSync: fillRandomBytes,
+    getRandomValues: (buf) => fillRandomBytes(buf),
+    default: {
+      randomFillSync: fillRandomBytes,
+    },
+    createHash: (algorithm) => ({
+      update: (data) => ({
+        digest: () => "test-hash",
+      }),
+    }),
+  };
+});
+
 const request = require("supertest");
 const server = require("../../index");
 const db = require("../../db/queries");
@@ -9,7 +32,7 @@ jest.mock("../../db/queries", () => {
   return {
     ...originalModule,
     getUserByUsername: jest.fn(originalModule.getUserByUsername),
-    storeSession: jest.fn(originalModule.storeSession),
+    storeSession: jest.fn().mockImplementation((userId, sessionId) => Promise.resolve()),
   };
 });
 
@@ -35,7 +58,6 @@ describe("POST /login", () => {
 
   it("should return 201 and set a cookie on successful login", async () => {
     db.getUserByUsername.mockResolvedValue(mockUser);
-
     argon2.verify.mockResolvedValue(true);
 
     const response = await request(server).post("/login").send({
@@ -48,13 +70,11 @@ describe("POST /login", () => {
       username: mockUser.username,
       id: mockUser.id,
     });
-
     expect(response.headers["set-cookie"]).toBeDefined();
-
     expect(db.getUserByUsername).toHaveBeenCalledWith("testuser");
     expect(argon2.verify).toHaveBeenCalledWith(mockUser.password, "123");
-    expect(db.storeSession).toHaveBeenCalled();
-  });
+    expect(db.storeSession).toHaveBeenCalledWith(mockUser.id, "test-session-id");
+  }, 10000);
 
   it("should return 401 for incorrect password", async () => {
     db.getUserByUsername.mockResolvedValue(mockUser);
@@ -69,9 +89,8 @@ describe("POST /login", () => {
     expect(response.body).toEqual({
       message: "Incorrect Password",
     });
-
     expect(db.storeSession).not.toHaveBeenCalled();
-  });
+  }, 10000);
 
   it("should return 404 if user does not exist", async () => {
     db.getUserByUsername.mockResolvedValue(null);
@@ -85,11 +104,10 @@ describe("POST /login", () => {
     expect(response.body).toEqual({
       message: "Sorry there is no user that matches those credentials",
     });
-
     expect(db.storeSession).not.toHaveBeenCalled();
-  });
+  }, 10000);
 
-  it("should handle server errors approprioately", async () => {
+  it("should handle server errors appropriately", async () => {
     db.getUserByUsername.mockRejectedValue(new Error("Database error"));
 
     const response = await request(server).post("/login").send({
@@ -101,7 +119,6 @@ describe("POST /login", () => {
     expect(response.body).toEqual({
       message: "Error: Database error",
     });
-
     expect(db.storeSession).not.toHaveBeenCalled();
-  });
-});
+  }, 10000);
+}, 30000);

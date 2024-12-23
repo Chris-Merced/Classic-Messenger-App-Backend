@@ -190,7 +190,7 @@ describe("Database Queries", () => {
 
       expect(result).toEqual(mockChats);
       expect(pool.query).toHaveBeenCalledWith(
-        "SELECT DISTINCT messages.conversation_id, conversations.name FROM messages JOIN conversations ON conversations.id = messages.conversation_id WHERE sender_id = $1",
+        "SELECT DISTINCT messages.conversation_id, conversations.is_group, conversations.name FROM messages JOIN conversations ON conversations.id = messages.conversation_id WHERE sender_id = $1",
         [1]
       );
     });
@@ -202,7 +202,7 @@ describe("Database Queries", () => {
 
       expect(result).toEqual([]);
       expect(pool.query).toHaveBeenCalledWith(
-        "SELECT DISTINCT messages.conversation_id, conversations.name FROM messages JOIN conversations ON conversations.id = messages.conversation_id WHERE sender_id = $1",
+        "SELECT DISTINCT messages.conversation_id, conversations.is_group, conversations.name FROM messages JOIN conversations ON conversations.id = messages.conversation_id WHERE sender_id = $1",
         [1]
       );
     });

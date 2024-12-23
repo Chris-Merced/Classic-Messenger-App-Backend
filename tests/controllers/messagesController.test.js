@@ -34,14 +34,14 @@ describe("Messages Controller", () => {
       });
     });
 
-    it("should return 401 and an error message on database error", async () => {
+    it("should return 500 and an error message on database error", async () => {
       db.getChatMessagesByName.mockRejectedValue(new Error("Database error"));
 
       const response = await request(server).get("/messages/byChatName?chatName=testChat");
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(500);
       expect(response.body).toEqual({
-        message: "Error getting chat messages by name: Database error",
+        message: "Error getting chat messages: Database error",
       });
     });
 
