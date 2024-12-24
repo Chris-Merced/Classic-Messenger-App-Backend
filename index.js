@@ -10,6 +10,7 @@ const { cleanupSchedule } = require("./db/queries");
 const loginRouter = require("./routers/loginRouter");
 const logoutRouter = require("./routers/logoutRouter");
 const signupRouter = require("./routers/signuprouter");
+const conversationRouter = require("./routers/conversationRouter");
 const userProfileRouter = require("./routers/userProfileRouter");
 const messagesRouter = require("./routers/messagesRouter");
 const rateLimit = require("express-rate-limit");
@@ -47,6 +48,7 @@ app.use("/logout", logoutRouter);
 app.use("/signup", signupRouter);
 app.use("/userProfile", userProfileRouter);
 app.use("/messages", messagesRouter);
+app.use("/conversations", conversationRouter);
 
 //http server to use express routing
 const server = http.createServer(app);

@@ -112,9 +112,12 @@ async function cleanupSchedule() {
 
 async function addMessageToConversations(message) {
   try {
+    console.log("Made it to addmessage to conversations function");
     const data = await JSON.parse(message);
     //If Conversation Has A Name
+    console.log(data);
     if (data.conversationName) {
+      console.log("Made it past conversation name check for message");
       const doesExist = await checkConversationByName(data.conversationName);
       if (doesExist) {
         await checkIfParticipant(data);
@@ -125,7 +128,8 @@ async function addMessageToConversations(message) {
     }
     //If Conversation Does Not Have A Name (DM's)
     else if (data.conversationID) {
-      //SIMPLY ADD THE MESSAGE WITH THE ID
+      console.log("wow");
+      await addMessage(data);
     }
   } catch (err) {
     console.error("Error adding message to database " + err.message);
@@ -182,7 +186,7 @@ async function checkIfParticipant(data) {
     });
 
     if (!isParticipant) {
-      await addParticipant(conversation, data);
+      await addParticipant(conversation.id, data.userID);
     }
   } catch (err) {
     console.err("Error Checking if User is a participant of conversation: " + err);
@@ -190,11 +194,11 @@ async function checkIfParticipant(data) {
   }
 }
 
-async function addParticipant(conversation, data) {
+async function addParticipant(conversation_id, user_id) {
   try {
     await pool.query(
       "INSERT INTO conversation_participants (conversation_id, user_id) VALUES ($1, $2)",
-      [conversation.id, data.userID]
+      [conversation_id, user_id]
     );
   } catch (err) {
     console.error("Error adding participant to conversation " + err.message);
@@ -217,10 +221,9 @@ async function getParticipantsByConversationID(conversationID) {
 
 async function addMessage(data) {
   try {
-    const conversation = await getConversationByName(data.conversationName);
     await pool.query(
       "INSERT INTO messages (conversation_id, sender_id, content) VALUES ($1, $2, $3)",
-      [conversation.id, data.userID, data.message]
+      [data.conversationID, data.userID, data.message]
     );
   } catch (err) {
     console.error("Error adding message to the database: " + err.message);
@@ -253,19 +256,73 @@ async function getChatMessagesByConversationID(conversationID) {
 
 async function getUserChats(userID) {
   try {
-    //WHEN GETTING USER CHATS WE NEED TO GET USERNAMES FOR THE GROUP OR DMS SO THIS
-    //RETURNED ROWS IS GREAT FOR NAMED CHATS
-    //WE THEN NEED TO CHECK ---IF NAME==NULL THEN GET PARTICIPANTS FROM CONVERSATION_ID--
     const { rows } = await pool.query(
-      "SELECT DISTINCT messages.conversation_id, conversations.is_group, conversations.name FROM messages JOIN conversations ON conversations.id = messages.conversation_id WHERE sender_id = $1",
+      "SELECT conversation_participants.conversation_id, conversations.is_group, conversations.name FROM conversation_participants JOIN conversations ON conversations.id = conversation_participants.conversation_id WHERE user_id = $1",
       [userID]
     );
-    return rows;
+    console.log(rows);
+
+    const chatList = await Promise.all(
+      rows.map(async (row) => {
+        if (!row.name) {
+          console.log(row.conversation_id);
+          const participants = await getParticipantsByConversationID(row.conversation_id);
+          console.log(participants);
+          const names = await parseNamesByUserID(participants, userID);
+
+          return { ...row, participants: names };
+        } else {
+          return { ...row, participants: null };
+        }
+      })
+    );
+
+    return chatList;
   } catch (err) {
     console.error("Error retrieving user chats: " + err.message);
     throw new Error("Error retrieving user chats: " + err.message);
   }
 }
+
+async function parseNamesByUserID(participants, userID) {
+  const ids = participants.map((participant) => {
+    const id = participant.user_id;
+    return id;
+  });
+  const filtered = ids.filter((id) => {
+    return Number(id) != Number(userID);
+  });
+
+  const names = Promise.all(
+    filtered.map(async (id) => {
+      const { rows } = await pool.query("SELECT users.username FROM users WHERE id=$1", [id]);
+      console.log("Username query result:", rows);
+      return rows[0].username;
+    })
+  );
+  return names;
+}
+
+async function checkDirectMessageConversationExists(userID, profileID) {
+  console.log(userID, profileID);
+  const { rows } = await pool.query(
+    "SELECT cp.conversation_id FROM conversation_participants cp WHERE cp.conversation_id IN ( SELECT conversation_id FROM conversation_participants GROUP BY conversation_id HAVING COUNT(*) = 2)AND cp.conversation_id IN (SELECT conversation_id FROM conversation_participants WHERE user_id IN ($1, $2) GROUP BY conversation_id HAVING COUNT(*) = 2)",
+    [userID, profileID]
+  );
+  console.log(rows[0]);
+  if (rows[0]) {
+    return true;
+  } else {
+    const { rows } = await pool.query("INSERT INTO conversations DEFAULT VALUES RETURNING id");
+    const conversation_id = rows[0].id;
+    await addParticipant(conversation_id, userID);
+    await addParticipant(conversation_id, profileID);
+
+    return true;
+  }
+}
+
+console.log("Is function defined?", typeof checkDirectMessageConversationExists); // Should print "function"
 
 module.exports = {
   addUser,
@@ -280,4 +337,5 @@ module.exports = {
   getChatMessagesByName,
   getChatMessagesByConversationID,
   getUserChats,
+  checkDirectMessageConversationExists,
 };
