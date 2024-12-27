@@ -57,6 +57,32 @@ async function getUserByUserID(userID) {
   }
 }
 
+async function getUserBySession(token) {
+  try {
+    const { rows } = await pool.query("SELECT users.username FROM users JOIN sessions ON users.id=sessions.user_id WHERE session_id = $1", [token]);
+    return rows[0];
+  } catch (err) {
+    console.error("Error getting the user ID by session");
+  }
+}
+
+async function checkSession(token, userID) {
+  try {
+    if (!userID || !token) {
+      console.log("checkSession: No User Information to Validate");
+      return false;
+    }
+    const { rows } = await pool.query("SELECT * FROM sessions WHERE session_id = $1 AND user_id = $2", [token, userID]);
+    if (rows[0].session_id) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    console.error("Error cross referencing tokens and userID: " + err.message);
+  }
+}
+
 async function getSessionBySessionID(sessionID) {
   try {
     if (sessionID !== undefined) {
@@ -112,10 +138,7 @@ async function cleanupSchedule() {
 
 async function addMessageToConversations(message) {
   try {
-    console.log("Made it to addmessage to conversations function");
     const data = await JSON.parse(message);
-    //If Conversation Has A Name
-    console.log(data);
     if (data.conversationName) {
       console.log("Made it past conversation name check for message");
       const doesExist = await checkConversationByName(data.conversationName);
@@ -125,10 +148,7 @@ async function addMessageToConversations(message) {
       } else {
         await createConversationByName(data);
       }
-    }
-    //If Conversation Does Not Have A Name (DM's)
-    else if (data.conversationID) {
-      console.log("wow");
+    } else if (data.conversationID) {
       await addMessage(data);
     }
   } catch (err) {
@@ -244,12 +264,16 @@ async function getChatMessagesByName(name) {
 
 async function getChatMessagesByConversationID(conversationID) {
   try {
+    if (!conversationID || conversationID === "undefined") {
+      console.log("getChatMessagesByConversationID: No user information to retrieve messages for");
+      return;
+    }
     const { rows } = await pool.query("SELECT * FROM messages WHERE conversation_id = $1", [
       conversationID,
     ]);
     return rows;
   } catch (err) {
-    console.Error("Error retrieving the chat messages by conversationID: " + err.message);
+    console.error("Error retrieving the chat messages by conversationID: " + err.message);
     throw new Error("Error retrieving chat messages by conversationID: " + err.message);
   }
 }
@@ -260,14 +284,11 @@ async function getUserChats(userID) {
       "SELECT conversation_participants.conversation_id, conversations.is_group, conversations.name FROM conversation_participants JOIN conversations ON conversations.id = conversation_participants.conversation_id WHERE user_id = $1",
       [userID]
     );
-    console.log(rows);
 
     const chatList = await Promise.all(
       rows.map(async (row) => {
         if (!row.name) {
-          console.log(row.conversation_id);
           const participants = await getParticipantsByConversationID(row.conversation_id);
-          console.log(participants);
           const names = await parseNamesByUserID(participants, userID);
 
           return { ...row, participants: names };
@@ -296,7 +317,6 @@ async function parseNamesByUserID(participants, userID) {
   const names = Promise.all(
     filtered.map(async (id) => {
       const { rows } = await pool.query("SELECT users.username FROM users WHERE id=$1", [id]);
-      console.log("Username query result:", rows);
       return rows[0].username;
     })
   );
@@ -304,12 +324,10 @@ async function parseNamesByUserID(participants, userID) {
 }
 
 async function checkDirectMessageConversationExists(userID, profileID) {
-  console.log(userID, profileID);
   const { rows } = await pool.query(
     "SELECT cp.conversation_id FROM conversation_participants cp WHERE cp.conversation_id IN ( SELECT conversation_id FROM conversation_participants GROUP BY conversation_id HAVING COUNT(*) = 2)AND cp.conversation_id IN (SELECT conversation_id FROM conversation_participants WHERE user_id IN ($1, $2) GROUP BY conversation_id HAVING COUNT(*) = 2)",
     [userID, profileID]
   );
-  console.log(rows[0]);
   if (rows[0]) {
     return true;
   } else {
@@ -322,15 +340,17 @@ async function checkDirectMessageConversationExists(userID, profileID) {
   }
 }
 
-console.log("Is function defined?", typeof checkDirectMessageConversationExists); // Should print "function"
+
 
 module.exports = {
   addUser,
   getUserByUsername,
   storeSession,
   cleanupSchedule,
+  checkSession,
   getSessionBySessionID,
   getUserByUserID,
+  getUserBySession,
   deleteSession,
   getUsersByUsernameSearch,
   addMessageToConversations,

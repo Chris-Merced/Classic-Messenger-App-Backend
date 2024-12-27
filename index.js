@@ -53,28 +53,55 @@ app.use("/conversations", conversationRouter);
 //http server to use express routing
 const server = http.createServer(app);
 //Set websocket to listen in on http server
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ noServer: true });
 
-wss.on("connection", (ws) => {
+server.on("upgrade", async (request, socket, head) => {
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    wss.emit("connection", ws, request);
+  });
+});
+
+const activeUsers = {};
+
+wss.on("connection", (ws, req) => {
   console.log("New Data Flow");
-  
 
-  ws.on("message", (message) => {
-    //ensure that this is parsing the data to figure out where to add the message (as dm or main chat)
-    db.addMessageToConversations(message.toString());
+  ws.on("message", async (message) => {
+    
+    const data = (message.toString());
+    const info = JSON.parse(data);
+    console.log("Recieved");
+    if (!info.registration) {
+      db.addMessageToConversations(message.toString());
 
-    //CHECK THE MESSAGE JSON FOR TYPE OF MESSAGE
-    //IF REGISTRATION ADD TO DICT
-    //IF CHAT NAME EXISTS CHECK NAME
-    //IF DM SEND VIA DM USING RECIPIENT AND SENDER VARIABLES
+      //CHECK THE MESSAGE JSON FOR TYPE OF MESSAGE
+      //IF REGISTRATION ADD TO DICT
+      //IF CHAT NAME EXISTS CHECK NAME
+      //IF DM SEND VIA DM USING RECIPIENT AND SENDER VARIABLES
 
-    console.log(message.toString());
-  
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message.toString());
+    
+
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          console.log(message.toString());
+          client.send(message.toString());
+              console.log("Message sent to client");
+        }
+      });
+    } else {
+      const cookieStr = req.headers.cookie; 
+      if (cookieStr) {
+        const sessionTokenStr = cookieStr.split("=")[1]; 
+        const decodedSession = decodeURIComponent(sessionTokenStr); 
+        const sessionObj = JSON.parse(decodedSession); 
+        const data = await db.getUserBySession(sessionObj.sessionID);
+        if (data) {
+          activeUsers[data.username] = ws;
+        }
+        console.log(activeUsers);
       }
-    });
+      
+    }
   });
 
   ws.on("close", () => {
