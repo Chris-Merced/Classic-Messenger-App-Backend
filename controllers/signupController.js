@@ -9,8 +9,8 @@ async function signupHandler(req, res) {
     await db.addUser(user);
     res.status(201).json({ message: "User Created Successfully" });
   } catch (err) {
-    console.error("Error Adding User", err.message);
-    res.status(500).json({ message: "Error: " + err.message });
+    console.error(err.message);
+    res.status(409).json({ message: "User Already Exists" });
   }
 }
 

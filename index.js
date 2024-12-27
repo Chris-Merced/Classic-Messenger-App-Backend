@@ -67,8 +67,7 @@ wss.on("connection", (ws, req) => {
   console.log("New Data Flow");
 
   ws.on("message", async (message) => {
-    
-    const data = (message.toString());
+    const data = message.toString();
     const info = JSON.parse(data);
     console.log("Recieved");
     if (!info.registration) {
@@ -79,28 +78,23 @@ wss.on("connection", (ws, req) => {
       //IF CHAT NAME EXISTS CHECK NAME
       //IF DM SEND VIA DM USING RECIPIENT AND SENDER VARIABLES
 
-    
-
       wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
-          console.log(message.toString());
           client.send(message.toString());
-              console.log("Message sent to client");
         }
       });
     } else {
-      const cookieStr = req.headers.cookie; 
+      const cookieStr = req.headers.cookie;
       if (cookieStr) {
-        const sessionTokenStr = cookieStr.split("=")[1]; 
-        const decodedSession = decodeURIComponent(sessionTokenStr); 
-        const sessionObj = JSON.parse(decodedSession); 
+        const sessionTokenStr = cookieStr.split("=")[1];
+        const decodedSession = decodeURIComponent(sessionTokenStr);
+        const sessionObj = JSON.parse(decodedSession);
         const data = await db.getUserBySession(sessionObj.sessionID);
         if (data) {
           activeUsers[data.username] = ws;
         }
         console.log(activeUsers);
       }
-      
     }
   });
 
@@ -112,7 +106,6 @@ wss.on("connection", (ws, req) => {
     console.error("Websocket Backend Error:", error);
   });
 });
-
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));

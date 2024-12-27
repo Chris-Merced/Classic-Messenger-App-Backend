@@ -2,7 +2,6 @@ const db = require("../db/queries");
 const authentication = require("../authentication");
 
 async function getChatMessagesByName(req, res) {
-  console.log("Incoming chatName:", req.query.chatName);
   try {
     if (req.query.chatName && req.query.chatName !== "undefined" && req.query.chatName !== "null") {
       console.log("Processing valid chatName:", req.query.chatName);

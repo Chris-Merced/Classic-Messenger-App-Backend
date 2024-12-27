@@ -6,15 +6,19 @@ const pool = require("./pool");
 
 async function addUser(user) {
   try {
+    const { rows } = await pool.query("SELECT * FROM users WHERE username ILIKE $1", [user.username.trim()])
+    if (rows[0]) {
+      console.log("User Already Exists");
+      throw new Error("User Already Exists");
+    }
     await pool.query("INSERT INTO users (username,password, email) VALUES ($1, $2, $3)", [
-      user.username,
+      user.username.trim(),
       user.password,
       user.email,
     ]);
     return;
   } catch (err) {
-    console.error("Error adding user " + err.message);
-    throw new Error("Error adding user " + err.message);
+    throw new Error("Error adding user: " + err.message);
   }
 }
 
@@ -139,8 +143,8 @@ async function cleanupSchedule() {
 async function addMessageToConversations(message) {
   try {
     const data = await JSON.parse(message);
+    console.log(data);
     if (data.conversationName) {
-      console.log("Made it past conversation name check for message");
       const doesExist = await checkConversationByName(data.conversationName);
       if (doesExist) {
         await checkIfParticipant(data);
@@ -329,14 +333,15 @@ async function checkDirectMessageConversationExists(userID, profileID) {
     [userID, profileID]
   );
   if (rows[0]) {
-    return true;
+    console.log(rows[0].conversation_id);
+    return rows[0].conversation_id;
   } else {
     const { rows } = await pool.query("INSERT INTO conversations DEFAULT VALUES RETURNING id");
     const conversation_id = rows[0].id;
     await addParticipant(conversation_id, userID);
     await addParticipant(conversation_id, profileID);
 
-    return true;
+    return conversation_id;
   }
 }
 
