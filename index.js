@@ -14,12 +14,49 @@ const conversationRouter = require("./routers/conversationRouter");
 const userProfileRouter = require("./routers/userProfileRouter");
 const messagesRouter = require("./routers/messagesRouter");
 const rateLimit = require("express-rate-limit");
-
+const { createClient } = require("redis");
 //MAIN CHAT NOW AT NEAR FULL FUNCTIONALITY BY POPULATING THE
 //CHAT ON PAGE LOAD WITH PREVIOUS MESSAGES FROM DB
 
 //NEXT IDEA IS TO ADD DIRECT MESSAGE FUNCTIONALITY
 //AFTER THAT WE SEE IF WE CAN ADD THE ABILITY TO CREATE PUBLIC CHAT SPACES
+
+const currentServerId = process.env.DYNO || "local-server";
+
+const redisPublisher = createClient({
+  url: process.env.REDIS_URL || "redis://localhost:6379",
+});
+
+const redisSubscriber = createClient({
+  url: process.env.REDIS_URL || "redis://localhost:6379",
+});
+
+redisPublisher.on("Error: ", (err) => console.error("Redis Publisher Error:", err));
+redisSubscriber.on("Error: ", (err) => console.error("Redis Subscriber Error:", err));
+
+async function connectToRedis() {
+  try {
+    await redisPublisher.connect();
+    await redisSubscriber.connect();
+    console.log("Redis connected successfully");
+
+    await redisSubscriber.subscribe("chatMessages", (message) => {
+      try {
+        const messageData = JSON.parse(message);
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(messageData));
+          }
+        });
+      } catch (error) {
+        console.error("Error processing Redis message:", error);
+      }
+    });
+  } catch (error) {
+    console.error("Redis connection error:", error);
+    setTimeout(connectToRedis, 5000);
+  }
+}
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -65,6 +102,7 @@ const activeUsers = {};
 
 wss.on("connection", (ws, req) => {
   console.log("New Data Flow");
+  let userIdentifier = null;
 
   ws.on("message", async (message) => {
     const data = message.toString();
@@ -73,16 +111,10 @@ wss.on("connection", (ws, req) => {
     if (!info.registration) {
       db.addMessageToConversations(message.toString());
 
-      //CHECK THE MESSAGE JSON FOR TYPE OF MESSAGE
-      //IF REGISTRATION ADD TO DICT
       //IF CHAT NAME EXISTS CHECK NAME
       //IF DM SEND VIA DM USING RECIPIENT AND SENDER VARIABLES
 
-      wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(message.toString());
-        }
-      });
+      await redisPublisher.publish("chatMessages", message.toString());
     } else {
       const cookieStr = req.headers.cookie;
       if (cookieStr) {
@@ -91,21 +123,68 @@ wss.on("connection", (ws, req) => {
         const sessionObj = JSON.parse(decodedSession);
         const data = await db.getUserBySession(sessionObj.sessionID);
         if (data) {
-          activeUsers[data.username] = ws;
+          userIdentifier = data.username;
+
+          await redisPublisher.hSet(
+            "activeUsers",
+            data.username,
+            JSON.stringify({
+              serverID: currentServerId,
+              lastSeen: Date.now(),
+            })
+          );
+
+          activeUsers[data.username] = {
+            ws: ws,
+            lastActive: Date.now(),
+          };
+          console.log(activeUsers);
         }
-        console.log(activeUsers);
       }
     }
   });
 
-  ws.on("close", () => {
-    console.log("Client Disconnected");
+  ws.on("close", async () => {
+    try {
+      if (userIdentifier) {
+        await redisPublisher.hDel("activeUsers", userIdentifier);
+        delete activeUsers[userIdentifier];
+        console.log(`User ${userIdentifier} disconnected from ${currentServerId}`);
+      }
+    } catch (error) {
+      console.error("Error handling WebSocket close:", error);
+    }
   });
 
   ws.on("error", (error) => {
     console.error("Websocket Backend Error:", error);
   });
 });
+
+connectToRedis();
+
+async function cleanup() {
+  try {
+    wss.clients.forEach((client) => {
+      client.close();
+    });
+
+    await redisPublisher.quit();
+    await redisSubscriber.quit();
+
+    server.close(() => {
+      console.log("HTTP server closed");
+    });
+
+    console.log("Cleanup completed");
+  } catch (error) {
+    console.error("Error during cleanup:", error);
+    process.exit(1);
+  }
+}
+
+process.on("SIGTERM", cleanup);
+process.on("SIGINT", cleanup);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
