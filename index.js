@@ -61,7 +61,7 @@ async function connectToRedis() {
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 9001,
-  message: "Too Many Requedsts, please try again later.",
+  message: "Too Many Requests, please try again later.",
 });
 
 //Database Query to clean up expired sessions
