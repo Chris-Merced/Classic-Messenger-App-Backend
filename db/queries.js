@@ -328,16 +328,22 @@ async function parseNamesByUserID(participants, userID) {
 }
 
 async function checkDirectMessageConversationExists(userID, profileID) {
+  console.log("userID: " + userID);
+  console.log("ProfileID: " + profileID);
   const { rows } = await pool.query(
-    "SELECT cp.conversation_id FROM conversation_participants cp WHERE cp.conversation_id IN ( SELECT conversation_id FROM conversation_participants GROUP BY conversation_id HAVING COUNT(*) = 2)AND cp.conversation_id IN (SELECT conversation_id FROM conversation_participants WHERE user_id IN ($1, $2) GROUP BY conversation_id HAVING COUNT(*) = 2)",
+    "SELECT DISTINCT cp.conversation_id, c.name FROM conversation_participants cp JOIN conversations c ON cp.conversation_id = c.id WHERE cp.conversation_id IN ( SELECT conversation_id FROM conversation_participants GROUP BY conversation_id HAVING COUNT(*) = 2)AND cp.conversation_id IN (SELECT conversation_id FROM conversation_participants WHERE user_id IN ($1, $2) GROUP BY conversation_id HAVING COUNT(*) = 2) AND c.name IS NULL",
     [userID, profileID]
   );
   if (rows[0]) {
-    console.log(rows[0].conversation_id);
+    const conversation = JSON.stringify(rows[0]);
+    console.log("Conversation exists: " + conversation);
     return rows[0].conversation_id;
   } else {
+    console.log("Attempting to create Conversation: ")
     const { rows } = await pool.query("INSERT INTO conversations DEFAULT VALUES RETURNING id");
+    console.log("new conversation: " + rows[0]);
     const conversation_id = rows[0].id;
+    console.log("conversation id assigned: " + conversation_id);
     await addParticipant(conversation_id, userID);
     await addParticipant(conversation_id, profileID);
 
