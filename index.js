@@ -109,8 +109,29 @@ wss.on("connection", (ws, req) => {
     const info = JSON.parse(data);
     console.log("Recieved");
     if (!info.registration) {
+      console.log(info.reciever);
       db.addMessageToConversations(message.toString());
+      
+      const  usersResponse = await Promise.all(info.reciever.map(async (username)=>{
+        const user = await redisPublisher.hGet("activeUsers", username);
+        const parsedUser = JSON.parse(user);
+        return completeUser = {...parsedUser, username}
+        
+      }))
+      
+      const recipients = JSON.stringify(responseUsers);
+      //YOU NOW HAVE AN ARRAY OF THE RECIPIENTS SERVER VALUES
 
+      //FOR EACH recipient IN recipients
+      //IF
+      //SERVER ID IS THE SAME
+      //THEN CHECK LOCAL ACTIVE USERS KEY-VALUE PAIR TO GET WEBSOCKET AND SEND MESSAGE
+      //ELSE
+      //SEND MESSAGE TO APPROPRIATE SERVER WITHIN recipient TO HANDLE
+
+      
+      console.log("Mapping Reciever results: " + JSON.stringify(usersResponse));
+      
       //IF CHAT NAME EXISTS CHECK NAME
       //IF DM SEND VIA DM USING RECIPIENT AND SENDER VARIABLES
 
@@ -147,8 +168,8 @@ wss.on("connection", (ws, req) => {
   ws.on("close", async () => {
     try {
       if (userIdentifier) {
-        await redisPublisher.hDel("activeUsers", userIdentifier);
-        delete activeUsers[userIdentifier];
+        //await redisPublisher.hDel("activeUsers", userIdentifier);
+        //delete activeUsers[userIdentifier];
         console.log(`User ${userIdentifier} disconnected from ${currentServerId}`);
       }
     } catch (error) {
