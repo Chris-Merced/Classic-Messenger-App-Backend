@@ -15,4 +15,14 @@ async function checkDirectMessageConversation(req, res) {
     }
 }
 
-module.exports = {checkDirectMessageConversation}
+async function addMessageToConversations(req, res) {
+    console.log("try again");
+    try{
+        await db.addMessageToConversations(JSON.stringify(req.body));
+        return true;
+    }catch(err){
+        console.error("Error adding message to conversation: " + err.message)
+    }
+}
+
+module.exports = {checkDirectMessageConversation, addMessageToConversations}
