@@ -21,6 +21,7 @@ const { createClient } = require("redis");
 //NEXT IDEA IS TO ADD DIRECT MESSAGE FUNCTIONALITY
 //AFTER THAT WE SEE IF WE CAN ADD THE ABILITY TO CREATE PUBLIC CHAT SPACES
 
+//Keep track of the current server for websocket verification
 const currentServerId = process.env.DYNO || "local-server";
 
 const redisPublisher = createClient({
@@ -43,6 +44,7 @@ async function connectToRedis() {
     await redisSubscriber.subscribe("chatMessages", (message) => {
       try {
         const messageData = JSON.parse(message);
+        console.log("TESTING TO SEE MESSAGE DATA \n" + message);
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify(messageData));
@@ -105,7 +107,7 @@ wss.on("connection", (ws, req) => {
   let userIdentifier = null;
 
   ws.on("message", async (message) => {
-    var usersResponse;
+    var recipients;
     console.log("Message: " + message)
     const data = message.toString();
     console.log("data: " + data)
@@ -113,9 +115,10 @@ wss.on("connection", (ws, req) => {
     console.log("info: " + info);
     console.log("Recieved");
     if (!info.registration) {
-      console.log(info.reciever);
+      console.log("Checking the info for people who are going to recieve the message \n" + 
+        info.reciever);
       if (info.reciever){
-        usersResponse = await Promise.all(info.reciever.map(async (username)=>{
+        recipients = await Promise.all(info.reciever.map(async (username)=>{
         const user = await redisPublisher.hGet("activeUsers", username);
         const parsedUser = JSON.parse(user);
         
@@ -127,21 +130,33 @@ wss.on("connection", (ws, req) => {
       }
       //const recipients = JSON.stringify(responseUsers);
       //YOU NOW HAVE AN ARRAY OF THE RECIPIENTS SERVER VALUES
+      if (recipients){
+        recipients.forEach(async (recipient)=>{
+          console.log("Testing: \n" + JSON.stringify(recipient.username));
+          if (recipient.serverID === currentServerId){
+            const userData = activeUsers[recipient.username];
+            userData.ws.send(message.toString())
+            return;
+          }
+          else{
+            await redisPublisher.publish("chatMessages", message.toString());
+          }
+        });
+        return;
+      }
 
-      //FOR EACH recipient IN recipients
-      //IF
-      //SERVER ID IS THE SAME
-      //THEN CHECK LOCAL ACTIVE USERS KEY-VALUE PAIR TO GET WEBSOCKET AND SEND MESSAGE
-      //ELSE
-      //SEND MESSAGE TO APPROPRIATE SERVER WITHIN recipient TO HANDLE
+      //MESSAGE HANDLING WHILE ON THE SAME SERVER WORKS FINE
+      //NEED TO MESSAGE TO ALSO HOLD WEBSOCKET INFORMATION AND THEN PASS THROUGH TO REDISPUBLISHER
+      //THE SUBSCRIBER THEN NEEDS TO BE MODIFIED WHEREIN IF THERE ARE RECIPIENTS THEN THE SUBSCRIBER
+      //CHECK THE RECIPIENTS WS VALUES AND CROSS EXAMINES THEM WITH THE ACTIVE USERS DICT, IF ON THE SAME SERVER THEN SEND IF NOT DO NOTHING
+      
 
-      console.log("Mapping Reciever results: " + JSON.stringify(usersResponse));
+      console.log("Mapping Reciever results: " + JSON.stringify(recipients));
       
-      
+      await redisPublisher.publish("chatMessages", message.toString());
       //IF CHAT NAME EXISTS CHECK NAME
       //IF DM SEND VIA DM USING RECIPIENT AND SENDER VARIABLES
 
-      await redisPublisher.publish("chatMessages", message.toString());
     } else {
       const cookieStr = req.headers.cookie;
       if (cookieStr) {
