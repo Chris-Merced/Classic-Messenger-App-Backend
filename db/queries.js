@@ -143,7 +143,6 @@ async function cleanupSchedule() {
 async function addMessageToConversations(message) {
   try {
     const data = await JSON.parse(message);
-    console.log(data);
     if (data.conversationName) {
       const doesExist = await checkConversationByName(data.conversationName);
       if (doesExist) {

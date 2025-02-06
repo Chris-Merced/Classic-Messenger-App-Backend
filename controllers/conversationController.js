@@ -1,7 +1,6 @@
 const db = require("../db/queries");
-//CLEAN THIS UP TO RETURN INFORMATION TO FRONT END IF DM MADE OR ALREADY THERE
-//RETURN THE CONVERSATION ID TO THE FRONT END
-//THEN SET UP WEBSOCKETS FOR DIRECT MESSAGES
+
+
 async function checkDirectMessageConversation(req, res) {
     //CHECK IF PUBLIC OR PRIVATE ACCOUNT VIA QUERY
     //IF PRIVATE CHECK IF FRIENDS
@@ -16,7 +15,6 @@ async function checkDirectMessageConversation(req, res) {
 }
 
 async function addMessageToConversations(req, res) {
-    console.log("try again");
     try{
         await db.addMessageToConversations(JSON.stringify(req.body));
         return true;

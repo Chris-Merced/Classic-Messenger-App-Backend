@@ -15,11 +15,9 @@ const userProfileRouter = require("./routers/userProfileRouter");
 const messagesRouter = require("./routers/messagesRouter");
 const rateLimit = require("express-rate-limit");
 const { createClient } = require("redis");
-//MAIN CHAT NOW AT NEAR FULL FUNCTIONALITY BY POPULATING THE
-//CHAT ON PAGE LOAD WITH PREVIOUS MESSAGES FROM DB
 
-//NEXT IDEA IS TO ADD DIRECT MESSAGE FUNCTIONALITY
-//AFTER THAT WE SEE IF WE CAN ADD THE ABILITY TO CREATE PUBLIC CHAT SPACES
+//THINK ABOUT CREATING A FRIEND FUNCTIONALITY FOR PRIVATE AND PUBLIC DMS
+//GET PRETTIER WORKING
 
 //Keep track of the current server for websocket verification
 const currentServerId = process.env.DYNO || "local-server";
@@ -44,12 +42,22 @@ async function connectToRedis() {
     await redisSubscriber.subscribe("chatMessages", (message) => {
       try {
         const messageData = JSON.parse(message);
-        console.log("TESTING TO SEE MESSAGE DATA \n" + message);
-        wss.clients.forEach((client) => {
+        if (messageData.reciever){
+          messageData.reciever.forEach(async (reciever)=>{
+            const userGET = await redisPublisher.hGet("activeUsers", reciever);
+            const user = JSON.parse(userGET);
+            if (user.serverID === currentServerId){
+              userInformation = activeUsers[reciever]
+              userInformation.ws.send(message.toString())
+            }
+          })
+        }else{
+          wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify(messageData));
           }
-        });
+          });
+        }
       } catch (error) {
         console.error("Error processing Redis message:", error);
       }
@@ -108,34 +116,27 @@ wss.on("connection", (ws, req) => {
 
   ws.on("message", async (message) => {
     var recipients;
-    console.log("Message: " + message)
     const data = message.toString();
-    console.log("data: " + data)
     const info = JSON.parse(data);
-    console.log("info: " + info);
-    console.log("Recieved");
+
     if (!info.registration) {
-      console.log("Checking the info for people who are going to recieve the message \n" + 
-        info.reciever);
       if (info.reciever){
         recipients = await Promise.all(info.reciever.map(async (username)=>{
-        const user = await redisPublisher.hGet("activeUsers", username);
-        const parsedUser = JSON.parse(user);
+          const user = await redisPublisher.hGet("activeUsers", username);
+          const parsedUser = JSON.parse(user);
         
 
-        return completeUser = {...parsedUser, username}
+          return completeUser = {...parsedUser, username}
         }))
       
       
       }
-      //const recipients = JSON.stringify(responseUsers);
-      //YOU NOW HAVE AN ARRAY OF THE RECIPIENTS SERVER VALUES
+
       if (recipients){
         recipients.forEach(async (recipient)=>{
-          console.log("Testing: \n" + JSON.stringify(recipient.username));
           if (recipient.serverID === currentServerId){
             const userData = activeUsers[recipient.username];
-            userData.ws.send(message.toString())
+            if(userData){userData.ws.send(message.toString())}
             return;
           }
           else{
@@ -144,18 +145,10 @@ wss.on("connection", (ws, req) => {
         });
         return;
       }
-
-      //MESSAGE HANDLING WHILE ON THE SAME SERVER WORKS FINE
-      //NEED TO MESSAGE TO ALSO HOLD WEBSOCKET INFORMATION AND THEN PASS THROUGH TO REDISPUBLISHER
-      //THE SUBSCRIBER THEN NEEDS TO BE MODIFIED WHEREIN IF THERE ARE RECIPIENTS THEN THE SUBSCRIBER
-      //CHECK THE RECIPIENTS WS VALUES AND CROSS EXAMINES THEM WITH THE ACTIVE USERS DICT, IF ON THE SAME SERVER THEN SEND IF NOT DO NOTHING
       
 
-      console.log("Mapping Reciever results: " + JSON.stringify(recipients));
       
       await redisPublisher.publish("chatMessages", message.toString());
-      //IF CHAT NAME EXISTS CHECK NAME
-      //IF DM SEND VIA DM USING RECIPIENT AND SENDER VARIABLES
 
     } else {
       const cookieStr = req.headers.cookie;
@@ -180,7 +173,6 @@ wss.on("connection", (ws, req) => {
             ws: ws,
             lastActive: Date.now(),
           };
-          console.log(activeUsers);
         }
       }
     }
@@ -189,8 +181,8 @@ wss.on("connection", (ws, req) => {
   ws.on("close", async () => {
     try {
       if (userIdentifier) {
-        //await redisPublisher.hDel("activeUsers", userIdentifier);
-        //delete activeUsers[userIdentifier];
+        await redisPublisher.hDel("activeUsers", userIdentifier);
+        delete activeUsers[userIdentifier];
         console.log(`User ${userIdentifier} disconnected from ${currentServerId}`);
       }
     } catch (error) {

@@ -4,7 +4,6 @@ const authentication = require("../authentication");
 async function getChatMessagesByName(req, res) {
   try {
     if (req.query.chatName && req.query.chatName !== "undefined" && req.query.chatName !== "null") {
-      console.log("Processing valid chatName:", req.query.chatName);
 
       const messages = await db.getChatMessagesByName(req.query.chatName);
 
@@ -21,7 +20,6 @@ async function getChatMessagesByName(req, res) {
 
       res.status(200).json({ messages: newMessages });
     } else if (req.query.conversationID !== "undefined") {
-      console.log("You made to message by conversation ID management" + req.query.userID);
       const data = JSON.parse(req.cookies.sessionToken);
       const sessionToken = data.sessionID;
       const isValid = await authentication.compareSessionToken(sessionToken, req.query.userID);
