@@ -114,7 +114,7 @@ server.on('upgrade', async (request, socket, head) => {
   })
 })
 
-const activeUsers = { Jerry: 'Pog' }
+const activeUsers = {}
 
 wss.on('connection', (ws, req) => {
   console.log('New Data Flow')

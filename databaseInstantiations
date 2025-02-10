@@ -1,0 +1,16 @@
+CREATE TABLE friend_requests (
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    request_id INT REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(10) CHECK (status IN ('pending', 'accepted', 'rejected')),
+    PRIMARY KEY (user_id, request_id)
+);
+
+
+
+
+CREATE TABLE friends (
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    friend_id INT REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, friend_id),
+    CHECK (user_id < friend_id)
+);
