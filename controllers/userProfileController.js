@@ -3,6 +3,7 @@ const db = require('../db/queries')
 async function getUser(req, res) {
   try {
     const sessionData = JSON.parse(req.cookies.sessionToken)
+
     if (sessionData.sessionID) {
       const userID = await db.getSessionBySessionID(sessionData.sessionID)
       if (!userID) {
@@ -61,26 +62,65 @@ async function addFriendRequest(req, res) {
     console.log(
       'There was an error adding Friend Request to Database: \n' + err,
     )
+    res.status(500).json({
+      message: 'There was an error adding Friend Request to Database:' + err,
+    })
+  }
+}
+
+async function getFriendRequests(req, res) {
+  try {
+    const userID = req.query.userID
+    const data = await db.getFriendRequests(userID)
+    res.status(200).json({ friendRequests: data })
+  } catch (err) {
+    console.log('Error while attempting to get Friend Requests: \n' + err)
+    res.status(404).json({
+      message: 'Error while attempting to get Friend Requests \n' + err,
+    })
+  }
+}
+
+async function addFriend(req, res) {
+  try {
+    const userID = req.body.userID
+    const requestID = req.body.requestID
+
+    const response = await db.addFriend(userID, requestID)
+    res.status(200).json({ message: response })
+  } catch (err) {
+    console.log(
+      'There was an error while attempting to add friend to database \n' + err,
+    )
+    res.status(500).json({
+      message:
+        'There was an error attempting to add friend to the database \n' + err,
+    })
+  }
+}
+
+async function denyFriend(req, res) {
+  try {
+    //swap values so that the users friend request 
+    //is not deleted but the requesters friend request is
+    const requestID = req.body.userID
+    const userID = req.body.requestID
+
+    await db.denyFriend(userID, requestID)
+    res.status(200).json({message:"friend request denied"})
+  } catch (err) {
+    console.log('There was an error in denying a friend request \n' + err)
     res
-      .status(400)
+      .status(500)
       .json({
-        message: 'There was an error adding Friend Request to Database:' + err,
+        message: 'There was an error in denying a friend request \n' + err,
       })
   }
 }
 
-async function getFriendRequests(req, res){
-  try{
-    const userID = req.query.userID;
-    console.log("Without Parse: " + userID);
-    console.log("WITH PARSE" + JSON.parse(userID));
-    const data = await db.getFriendRequests(userID);
-    res.status(200).json({friendRequests: data});
-  }catch(err){
-    console.log("Error while attempting to get Friend Requests: \n" + err);
-  }
-}
-
+//NEED TO SET UP A FRIENDS LIST
+//NEED TO SET IT UP TO WHERE IF USERS
+//  ARE ALREADY FRIENDS THEY CANNOT SEND FRIEND REQUESTS
 
 module.exports = {
   getUser,
@@ -88,4 +128,6 @@ module.exports = {
   getUsersBySearch,
   addFriendRequest,
   getFriendRequests,
+  addFriend,
+  denyFriend,
 }

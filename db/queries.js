@@ -1,3 +1,4 @@
+const { request } = require('express')
 const pool = require('./pool')
 
 //PROOF OF CONCEPT FOR NAMED CHATS HAS BEEN APPLIED
@@ -427,14 +428,11 @@ async function checkDirectMessageConversationExists(userID, profileID) {
 }
 
 async function addFriendRequestToDatabase(userID, profileID) {
-  //The lower value of userID and profileID will always be stored as the userID value
-  //in the database to prevent duplicates
   try {
     await pool.query(
       'INSERT INTO friend_requests (user_id, request_id, status) VALUES ($1, $2, $3)',
       [userID, profileID, 'pending'],
     )
-    return 'Welcome'
   } catch (err) {
     return err
   }
@@ -442,21 +440,74 @@ async function addFriendRequestToDatabase(userID, profileID) {
 
 async function getFriendRequests(userID) {
   try {
-    console.log(userID);
     const { rows } = await pool.query(
-      'SELECT * FROM friend_requests WHERE user_id = $1',
+      'SELECT * FROM friend_requests WHERE request_id = $1',
       [userID],
     )
-    console.log(rows[0]);
-    const users = await Promise.all(rows.map(async (friendRequest)=>{
-      const user = await getUserByUserID(friendRequest.user_id);
-      const {password, email, is_admin, created_at, ...strippedUser} = user;
-      
-      return strippedUser;
-    }))
-    return users;
+    const users = await Promise.all(
+      rows.map(async (friendRequest) => {
+        const user = await getUserByUserID(friendRequest.user_id)
+        const { password, email, is_admin, created_at, ...strippedUser } = user
+
+        return strippedUser
+      }),
+    )
+    return users
   } catch (err) {
     throw new Error('Error when getting friend requests from database \n' + err)
+  }
+}
+
+async function addFriend(userID, requestID) {
+  let smaller = null
+  let larger = null
+
+  try {
+    if (userID < requestID) {
+      smaller = userID
+      larger = requestID
+    } else {
+      smaller = requestID
+      larger = userID
+    }
+
+    await pool.query(
+      'INSERT INTO friends (user_id, friend_id) VALUES ($1, $2)',
+      [smaller, larger],
+    )
+
+    await pool.query(
+      'DELETE FROM friend_requests WHERE (user_id = $1 AND request_id = $2) OR (user_id = $2 AND request_id=$1)',
+      [userID, requestID],
+    )
+  } catch (err) {
+    if (err.code === '23505') {
+      console.log(
+        'Users are already Friends \n UserID1: ' +
+          userID +
+          '\n UserID2: ' +
+          requestID,
+      )
+      res.status(409).json({ message: 'Users are already Friends' })
+    }
+    console.log('Error in database query for add friend \n' + err)
+    throw new Error('Error while adding to database \n' + err)
+  }
+}
+
+async function denyFriend(userID, requestID) {
+  try {
+    const response = await pool.query(
+      'DELETE FROM friend_requests WHERE user_ID=$1 AND request_id=$2',
+      [userID, requestID],
+    )
+    console.log('Made it to deny friend')
+    console.log(userID)
+    console.log(requestID)
+    console.log(response)
+  } catch (err) {
+    console.log('Error in database query while denying friend request')
+    throw new Error('There was an error while denying friend request' + err)
   }
 }
 
@@ -478,4 +529,6 @@ module.exports = {
   checkDirectMessageConversationExists,
   addFriendRequestToDatabase,
   getFriendRequests,
+  addFriend,
+  denyFriend,
 }
