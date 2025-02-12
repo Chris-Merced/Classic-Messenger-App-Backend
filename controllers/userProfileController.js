@@ -101,23 +101,41 @@ async function addFriend(req, res) {
 
 async function denyFriend(req, res) {
   try {
-    //swap values so that the users friend request 
+    //swap values so that the users friend request
     //is not deleted but the requesters friend request is
     const requestID = req.body.userID
     const userID = req.body.requestID
 
     await db.denyFriend(userID, requestID)
-    res.status(200).json({message:"friend request denied"})
+    res.status(200).json({ message: 'friend request denied' })
   } catch (err) {
     console.log('There was an error in denying a friend request \n' + err)
-    res
-      .status(500)
-      .json({
-        message: 'There was an error in denying a friend request \n' + err,
-      })
+    res.status(500).json({
+      message: 'There was an error in denying a friend request \n' + err,
+    })
   }
 }
 
+async function checkIfFriends(req, res) {
+  try {
+    const userID = req.query.userID
+    const friendID = req.query.friendID
+    const friendRow = await db.checkIfFriends(userID, friendID)
+
+    if (friendRow) {
+      res.status(200).json({ friendStatus: true })
+    } else {
+      res.status(200).json({ friendStatus: false })
+    }
+  } catch (err) {
+    console.log(
+      'There was an error in checking friend status in controller \n' + err,
+    )
+    res
+      .status(500)
+      .json({ message: 'There was an error checking friend status \n' + err })
+  }
+}
 //NEED TO SET UP A FRIENDS LIST
 //NEED TO SET IT UP TO WHERE IF USERS
 //  ARE ALREADY FRIENDS THEY CANNOT SEND FRIEND REQUESTS
@@ -130,4 +148,5 @@ module.exports = {
   getFriendRequests,
   addFriend,
   denyFriend,
+  checkIfFriends,
 }

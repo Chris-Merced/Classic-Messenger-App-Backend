@@ -511,6 +511,29 @@ async function denyFriend(userID, requestID) {
   }
 }
 
+async function checkIfFriends(userID, friendID){
+  let smaller = null
+  let larger = null
+
+  try {
+    if (userID < friendID) {
+      smaller = userID
+      larger = friendID
+    } else {
+      smaller = friendID
+      larger = userID
+    }
+  
+  
+  const {rows} = await pool.query("SELECT * FROM friends WHERE user_id=$1 AND friend_id=$2", [smaller, larger])
+  return rows[0]
+  }catch(err){
+    console.log("There was an error in checking friend status in database")
+    throw new Error("There was an error in checking friend status in database \n" + err)
+  }
+
+}
+
 module.exports = {
   addUser,
   getUserByUsername,
@@ -531,4 +554,5 @@ module.exports = {
   getFriendRequests,
   addFriend,
   denyFriend,
+  checkIfFriends,
 }

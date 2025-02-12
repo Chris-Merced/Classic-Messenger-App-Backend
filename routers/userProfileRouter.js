@@ -10,5 +10,6 @@ userProfileRouter.post('/friendRequest', userProfileController.addFriendRequest)
 userProfileRouter.get('/friendRequest', userProfileController.getFriendRequests)
 userProfileRouter.post('/addFriend', userProfileController.addFriend)
 userProfileRouter.delete('/denyFriend', userProfileController.denyFriend)
+userProfileRouter.get('/checkIfFriends', userProfileController.checkIfFriends)
 
 module.exports = userProfileRouter
