@@ -62,7 +62,8 @@ async function getUserByUserID(userID) {
     const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [
       userID,
     ])
-    const user = rows[0]
+    const userData = rows[0]
+    const {password, ...user} = userData;
     return user
   } catch (err) {
     console.error('Error getting user by user ID ' + err.message)
@@ -511,7 +512,7 @@ async function denyFriend(userID, requestID) {
   }
 }
 
-async function checkIfFriends(userID, friendID){
+async function checkIfFriends(userID, friendID) {
   let smaller = null
   let larger = null
 
@@ -523,15 +524,37 @@ async function checkIfFriends(userID, friendID){
       smaller = friendID
       larger = userID
     }
-  
-  
-  const {rows} = await pool.query("SELECT * FROM friends WHERE user_id=$1 AND friend_id=$2", [smaller, larger])
-  return rows[0]
-  }catch(err){
-    console.log("There was an error in checking friend status in database")
-    throw new Error("There was an error in checking friend status in database \n" + err)
-  }
 
+    const { rows } = await pool.query(
+      'SELECT * FROM friends WHERE user_id=$1 AND friend_id=$2',
+      [smaller, larger],
+    )
+    return rows[0]
+  } catch (err) {
+    console.log('There was an error in checking friend status in database')
+    throw new Error(
+      'There was an error in checking friend status in database \n' + err,
+    )
+  }
+}
+
+async function getFriends(userID) {
+  try {
+    const { rows } = await pool.query(
+      'SELECT friend_id AS id FROM friends WHERE user_id=$1 UNION SELECT user_id AS id FROM friends WHERE friend_id=$1',
+      [userID],
+    )
+    console.log(rows);
+    const friendsList = rows.map((row)=>{
+      console.log(row.id);
+      return (row.id);
+    })
+
+    return friendsList
+  } catch (err) {
+    console.log('Error in retrieval of user friends during query: \n' + err)
+    throw new Error('Error in retrieval of user friends during query: \n' + err)
+  }
 }
 
 module.exports = {
@@ -555,4 +578,5 @@ module.exports = {
   addFriend,
   denyFriend,
   checkIfFriends,
+  getFriends,
 }

@@ -136,9 +136,29 @@ async function checkIfFriends(req, res) {
       .json({ message: 'There was an error checking friend status \n' + err })
   }
 }
-//NEED TO SET UP A FRIENDS LIST
-//NEED TO SET IT UP TO WHERE IF USERS
-//  ARE ALREADY FRIENDS THEY CANNOT SEND FRIEND REQUESTS
+
+async function getFriends(req, res) {
+  try {
+    const friendIDs = await db.getFriends(req.query.userID)
+    const userData = await Promise.all(
+      friendIDs.map(async (ID) => {
+        return await db.getUserByUserID(ID)
+      }),
+    )
+
+    const friendsList = userData.map((user) => {
+      const {password, email, is_admin, ...newUser} = user;
+      return newUser;
+    })
+
+    res.status(200).json({friendsList});
+
+    console.log(friendsList);
+  } catch (err) {
+    console.log('Error retrieving user friends: \n' + err)
+    res.status(404).json({ message: 'Error retrieving user friends: \n' + err })
+  }
+}
 
 module.exports = {
   getUser,
@@ -149,4 +169,5 @@ module.exports = {
   addFriend,
   denyFriend,
   checkIfFriends,
+  getFriends,
 }
