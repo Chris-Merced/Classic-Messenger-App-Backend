@@ -17,7 +17,6 @@ const rateLimit = require('express-rate-limit')
 const { createClient } = require('redis')
 
 //THINK ABOUT CREATING A FRIEND FUNCTIONALITY FOR PRIVATE AND PUBLIC DMS
-//GET PRETTIER WORKING
 
 //Keep track of the current server for websocket verification
 const currentServerId = process.env.DYNO || 'local-server'
@@ -49,8 +48,8 @@ async function connectToRedis() {
         if (messageData.reciever) {
           messageData.reciever.forEach(async (reciever) => {
             const userGET = await redisPublisher.hGet('activeUsers', reciever)
-            const user = JSON.parse(userGET)
-            if (user.serverID === currentServerId) {
+            const user = {reciever, userGET}
+            if (user.serverID !== null && user.serverID === currentServerId) {
               userInformation = activeUsers[reciever]
               userInformation.ws.send(message.toString())
             }
@@ -124,7 +123,6 @@ wss.on('connection', (ws, req) => {
     var recipients
     const data = message.toString()
     const info = JSON.parse(data)
-
     if (!info.registration) {
       if (info.reciever) {
         recipients = await Promise.all(
@@ -136,7 +134,6 @@ wss.on('connection', (ws, req) => {
           }),
         )
       }
-
       if (recipients) {
         recipients.forEach(async (recipient) => {
           if (recipient.serverID === currentServerId) {
@@ -146,13 +143,13 @@ wss.on('connection', (ws, req) => {
             }
             return
           } else {
-            await redisPublisher.publish('chatMessages', message.toString())
+            await redisPublisher.publish('chatMessages', {...message, receiver: [recipient.username]}.toString())
           }
         })
         return
       }
 
-      await redisPublisher.publish('chatMessages', message.toString())
+      //await redisPublisher.publish('chatMessages', message.toString())
     } else {
       const cookieStr = req.headers.cookie
       if (cookieStr) {
@@ -228,4 +225,4 @@ process.on('SIGINT', cleanup)
 const PORT = process.env.PORT || 3000
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`))
 
-module.exports = server
+module.exports = {server, redisPublisher, redisSubscriber}
