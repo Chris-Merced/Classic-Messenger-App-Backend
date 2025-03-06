@@ -1,5 +1,6 @@
 const db = require('../db/queries')
-const { redisPublisher, redisSubscriber } = require('../index')
+const{redisPublisher, redisSubscriber} = require('../redisClient')
+
 
 async function checkDirectMessageConversation(req, res) {
   //CHECK IF PUBLIC OR PRIVATE ACCOUNT VIA QUERY
@@ -28,8 +29,19 @@ async function addMessageToConversations(req, res) {
 
 //REMEMBER THIS STILL EXISTS ONCE YOU HAVE FIGURED OUT BASE FUNCTIONALTIY CORRECTONS
 async function getOnlineUsers(req, res) {
-  console.log('checking query is met')
-  console.log(req.query.userList)
+  var activeUsers={};
+
+  const userList=req.query.userList.split(',');
+
+  for (user of userList){
+    const response = await redisPublisher.hGet('activeUsers', user);
+    const userExist = JSON.parse(response);
+    if (userExist){
+      activeUsers[user] = true;
+    }else{activeUsers[user]=false}
+  };
+  res.status(200).json({activeUsers});
+
 }
 
 module.exports = {

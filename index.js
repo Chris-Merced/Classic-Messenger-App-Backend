@@ -15,33 +15,19 @@ const userProfileRouter = require('./routers/userProfileRouter')
 const messagesRouter = require('./routers/messagesRouter')
 const rateLimit = require('express-rate-limit')
 const { createClient } = require('redis')
+const { redisPublisher, redisSubscriber, connectToRedis } = require('./redisClient');
+
 
 //THINK ABOUT CREATING A FRIEND FUNCTIONALITY FOR PRIVATE AND PUBLIC DMS
 
 //Keep track of the current server for websocket verification
 const currentServerId = process.env.DYNO || 'local-server'
 
-const redisPublisher = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-})
 
-const redisSubscriber = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-})
+connectToRedis();
 
-redisPublisher.on('Error: ', (err) =>
-  console.error('Redis Publisher Error:', err),
-)
-redisSubscriber.on('Error: ', (err) =>
-  console.error('Redis Subscriber Error:', err),
-)
-
-async function connectToRedis() {
+async function setUpSubscriber() {
   try {
-    await redisPublisher.connect()
-    await redisSubscriber.connect()
-    console.log('Redis connected successfully')
-
     await redisSubscriber.subscribe('chatMessages', (message) => {
       try {
         const messageData = JSON.parse(message)
@@ -70,6 +56,8 @@ async function connectToRedis() {
     setTimeout(connectToRedis, 5000)
   }
 }
+
+setUpSubscriber();
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -168,7 +156,8 @@ wss.on('connection', (ws, req) => {
               lastSeen: Date.now(),
             }),
           )
-
+          
+          
           activeUsers[data.username] = {
             ws: ws,
             lastActive: Date.now(),
@@ -197,7 +186,7 @@ wss.on('connection', (ws, req) => {
   })
 })
 
-connectToRedis()
+
 
 async function cleanup() {
   try {
