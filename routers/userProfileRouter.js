@@ -12,5 +12,9 @@ userProfileRouter.post('/addFriend', userProfileController.addFriend)
 userProfileRouter.delete('/denyFriend', userProfileController.denyFriend)
 userProfileRouter.get('/checkIfFriends', userProfileController.checkIfFriends)
 userProfileRouter.get('/getFriends', userProfileController.getFriends)
+userProfileRouter.delete('/removeFriend', userProfileController.removeFriend)
+userProfileRouter.post('/blockUser', userProfileController.blockUser)
+userProfileRouter.get('/checkIfBlocked', userProfileController.checkIfBlocked)
+userProfileRouter.delete('/unblockUser', userProfileController.unblockUser)
 
 module.exports = userProfileRouter

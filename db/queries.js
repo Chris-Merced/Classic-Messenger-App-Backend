@@ -63,7 +63,7 @@ async function getUserByUserID(userID) {
       userID,
     ])
     const userData = rows[0]
-    const {password, ...user} = userData;
+    const { password, ...user } = userData
     return user
   } catch (err) {
     console.error('Error getting user by user ID ' + err.message)
@@ -512,6 +512,28 @@ async function denyFriend(userID, requestID) {
   }
 }
 
+async function removeFriend(userID, friendID) {
+  try {
+    console.log(userID, friendID)
+    let smaller = null
+    let larger = null
+    if (userID < friendID) {
+      smaller = userID
+      larger = friendID
+    } else {
+      smaller = friendID
+      larger = userID
+    }
+
+    pool.query('DELETE FROM friends WHERE user_id=$1 AND friend_id=$2', [
+      smaller,
+      larger,
+    ])
+  } catch (err) {
+    throw new Error('Error while removing friend from database: \n' + err)
+  }
+}
+
 async function checkIfFriends(userID, friendID) {
   let smaller = null
   let larger = null
@@ -544,16 +566,55 @@ async function getFriends(userID) {
       'SELECT friend_id AS id FROM friends WHERE user_id=$1 UNION SELECT user_id AS id FROM friends WHERE friend_id=$1',
       [userID],
     )
-    console.log(rows);
-    const friendsList = rows.map((row)=>{
-      console.log(row.id);
-      return (row.id);
+    const friendsList = rows.map((row) => {
+      return row.id
     })
 
     return friendsList
   } catch (err) {
     console.log('Error in retrieval of user friends during query: \n' + err)
     throw new Error('Error in retrieval of user friends during query: \n' + err)
+  }
+}
+
+async function blockUser(userID, blockedID) {
+  try {
+    pool.query('INSERT INTO blocked (user_id, blocked_id) VALUES ($1, $2)', [
+      userID,
+      blockedID,
+    ])
+  } catch (err) {
+    console.log('Error within blockUser function in database query')
+    throw new Error(err)
+  }
+}
+
+async function checkifBlocked(userID, blockedID) {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM blocked WHERE user_id=$1 AND blocked_id=$2',
+      [userID, blockedID],
+    )
+    if (rows[0]) {
+      return true
+    } else {
+      return false
+    }
+  } catch (err) {
+    console.log('Error in checking the database: \n' + err)
+    throw new Error('Error checking database: \n' + err)
+  }
+}
+
+async function unblockUser(userID, unblockedID) {
+  try {
+    await pool.query('DELETE FROM blocked WHERE user_id=$1 AND blocked_id=$2', [
+      userID,
+      unblockedID,
+    ])
+  } catch (err) {
+    console.log('Error in unblocking user within query')
+    throw new Error('Error in unblocking user: \n' + err)
   }
 }
 
@@ -579,4 +640,8 @@ module.exports = {
   denyFriend,
   checkIfFriends,
   getFriends,
+  removeFriend,
+  blockUser,
+  unblockUser,
+  checkifBlocked,
 }

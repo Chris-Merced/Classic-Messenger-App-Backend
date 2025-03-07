@@ -116,6 +116,18 @@ async function denyFriend(req, res) {
   }
 }
 
+async function removeFriend(req, res) {
+  try {
+    db.removeFriend(req.body.userID, req.body.friendID)
+    res.status(200).json({ message: 'You did it' })
+  } catch (err) {
+    console.log('Error while attempting to remove friend: \n' + err)
+    res
+      .status(500)
+      .json({ message: 'Error attempting to remove friend from database' })
+  }
+}
+
 async function checkIfFriends(req, res) {
   try {
     const userID = req.query.userID
@@ -147,16 +159,47 @@ async function getFriends(req, res) {
     )
 
     const friendsList = userData.map((user) => {
-      const {password, email, is_admin, ...newUser} = user;
-      return newUser;
+      const { password, email, is_admin, ...newUser } = user
+      return newUser
     })
 
-    res.status(200).json({friendsList});
-
-    console.log(friendsList);
+    res.status(200).json({ friendsList })
   } catch (err) {
     console.log('Error retrieving user friends: \n' + err)
     res.status(404).json({ message: 'Error retrieving user friends: \n' + err })
+  }
+}
+
+async function blockUser(req, res) {
+  try {
+    db.blockUser(req.body.userID, req.body.blockedID)
+    res.status(200).json({ message: 'Successfully Blocked User' })
+  } catch (err) {
+    console.log('Error in blocking user:  \n' + err)
+    res
+      .status(500)
+      .json({ message: 'There was an error in blocking user to database' })
+  }
+}
+
+async function checkIfBlocked(req, res) {
+  try {
+    const isBlocked = await db.checkifBlocked(req.query.userID, req.query.blockedID);
+    res.status(200).json({isBlocked: isBlocked})
+  } catch (err) {
+    console.log("There was an error while checking blocked status" + err)
+    res
+      .status(500)
+      .json({ message: 'There was an error while checking blocked status' })
+  }
+}
+async function unblockUser(req, res) {
+  try {
+    db.unblockUser(req.body.userID, req.body.unblockedID)
+    res.status(200).json({message:"Unblocked user"})
+  } catch (err) {
+    console.log('Error in unblocking user: \n' + err)
+    res.status(500).json({ message: 'Error in unblocking user' })
   }
 }
 
@@ -170,4 +213,8 @@ module.exports = {
   denyFriend,
   checkIfFriends,
   getFriends,
+  removeFriend,
+  blockUser,
+  unblockUser,
+  checkIfBlocked
 }

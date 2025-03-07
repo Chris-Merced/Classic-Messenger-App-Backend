@@ -14,3 +14,9 @@ CREATE TABLE friends (
     PRIMARY KEY (user_id, friend_id),
     CHECK (user_id < friend_id)
 );
+
+CREATE TABLE blocked (
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    blocked_id INT REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, blocked_id)
+);
