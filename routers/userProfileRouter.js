@@ -16,5 +16,6 @@ userProfileRouter.delete('/removeFriend', userProfileController.removeFriend)
 userProfileRouter.post('/blockUser', userProfileController.blockUser)
 userProfileRouter.get('/checkIfBlocked', userProfileController.checkIfBlocked)
 userProfileRouter.delete('/unblockUser', userProfileController.unblockUser)
+userProfileRouter.get('/blockedByProfile', userProfileController.checkIfBlockedByProfile)
 
 module.exports = userProfileRouter

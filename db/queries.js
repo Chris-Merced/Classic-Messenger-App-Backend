@@ -613,7 +613,7 @@ async function unblockUser(userID, unblockedID) {
       unblockedID,
     ])
   } catch (err) {
-    console.log('Error in unblocking user within query')
+    console.log('Error in unblocking user within query: \n' + err)
     throw new Error('Error in unblocking user: \n' + err)
   }
 }

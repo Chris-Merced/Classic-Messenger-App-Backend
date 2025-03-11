@@ -184,10 +184,13 @@ async function blockUser(req, res) {
 
 async function checkIfBlocked(req, res) {
   try {
-    const isBlocked = await db.checkifBlocked(req.query.userID, req.query.blockedID);
-    res.status(200).json({isBlocked: isBlocked})
+    const isBlocked = await db.checkifBlocked(
+      req.query.userID,
+      req.query.blockedID,
+    )
+    res.status(200).json({ isBlocked: isBlocked })
   } catch (err) {
-    console.log("There was an error while checking blocked status" + err)
+    console.log('There was an error while checking blocked status' + err)
     res
       .status(500)
       .json({ message: 'There was an error while checking blocked status' })
@@ -196,10 +199,25 @@ async function checkIfBlocked(req, res) {
 async function unblockUser(req, res) {
   try {
     db.unblockUser(req.body.userID, req.body.unblockedID)
-    res.status(200).json({message:"Unblocked user"})
+    res.status(200).json({ message: 'Unblocked user' })
   } catch (err) {
     console.log('Error in unblocking user: \n' + err)
     res.status(500).json({ message: 'Error in unblocking user' })
+  }
+}
+
+async function checkIfBlockedByProfile(req, res) {
+  try {
+    const userID = req.query.profileID
+    const blockedID = req.query.userID
+
+    const isBlockedByProfile = await db.checkifBlocked(userID, blockedID)
+    res.status(200).json(isBlockedByProfile)
+  } catch (err) {
+    console.log('There was an error in checking blocked status: \n' + err)
+    res
+      .status(500)
+      .json({ message: 'There was an error in checking blocked status' })
   }
 }
 
@@ -216,5 +234,6 @@ module.exports = {
   removeFriend,
   blockUser,
   unblockUser,
-  checkIfBlocked
+  checkIfBlocked,
+  checkIfBlockedByProfile,
 }
