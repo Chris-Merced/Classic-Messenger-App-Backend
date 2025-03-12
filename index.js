@@ -15,16 +15,18 @@ const userProfileRouter = require('./routers/userProfileRouter')
 const messagesRouter = require('./routers/messagesRouter')
 const rateLimit = require('express-rate-limit')
 const { createClient } = require('redis')
-const { redisPublisher, redisSubscriber, connectToRedis } = require('./redisClient');
-
+const {
+  redisPublisher,
+  redisSubscriber,
+  connectToRedis,
+} = require('./redisClient')
 
 //THINK ABOUT CREATING A FRIEND FUNCTIONALITY FOR PRIVATE AND PUBLIC DMS
 
 //Keep track of the current server for websocket verification
 const currentServerId = process.env.DYNO || 'local-server'
 
-
-connectToRedis();
+connectToRedis()
 
 async function setUpSubscriber() {
   try {
@@ -34,7 +36,7 @@ async function setUpSubscriber() {
         if (messageData.reciever) {
           messageData.reciever.forEach(async (reciever) => {
             const userGET = await redisPublisher.hGet('activeUsers', reciever)
-            const user = {reciever, userGET}
+            const user = { reciever, userGET }
             if (user.serverID !== null && user.serverID === currentServerId) {
               userInformation = activeUsers[reciever]
               userInformation.ws.send(message.toString())
@@ -57,7 +59,7 @@ async function setUpSubscriber() {
   }
 }
 
-setUpSubscriber();
+setUpSubscriber()
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -123,15 +125,27 @@ wss.on('connection', (ws, req) => {
         )
       }
       if (recipients) {
+        console.log(info)
         recipients.forEach(async (recipient) => {
-          if (recipient.serverID === currentServerId) {
-            const userData = activeUsers[recipient.username]
-            if (userData) {
-              userData.ws.send(message.toString())
+          const userID = recipient.username
+          const blockedUserID = info.userID
+          const { id } = await db.getUserByUsername(userID)
+          const isBlocked = await db.checkIfBlocked(id, blockedUserID)
+          if (!isBlocked) {
+            if (recipient.serverID === currentServerId) {
+              const userData = activeUsers[recipient.username]
+              if (userData) {
+                userData.ws.send(message.toString())
+              }
+              return
+            } else {
+              await redisPublisher.publish(
+                'chatMessages',
+                { ...message, receiver: [recipient.username] }.toString(),
+              )
             }
-            return
           } else {
-            await redisPublisher.publish('chatMessages', {...message, receiver: [recipient.username]}.toString())
+            return
           }
         })
         return
@@ -156,8 +170,7 @@ wss.on('connection', (ws, req) => {
               lastSeen: Date.now(),
             }),
           )
-          
-          
+
           activeUsers[data.username] = {
             ws: ws,
             lastActive: Date.now(),
@@ -186,8 +199,6 @@ wss.on('connection', (ws, req) => {
   })
 })
 
-
-
 async function cleanup() {
   try {
     wss.clients.forEach((client) => {
@@ -214,4 +225,4 @@ process.on('SIGINT', cleanup)
 const PORT = process.env.PORT || 3000
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`))
 
-module.exports = {server, redisPublisher, redisSubscriber}
+module.exports = { server, redisPublisher, redisSubscriber }

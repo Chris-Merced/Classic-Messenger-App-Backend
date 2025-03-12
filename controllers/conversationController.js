@@ -19,17 +19,15 @@ async function checkDirectMessageConversation(req, res) {
 
 async function addMessageToConversations(req, res) {
   try {
-    console.log('made it to the add message to conversations')
     const userID = req.body.reciever[0]
     const blockedUserID = req.body.userID
     const { id } = await db.getUserByUsername(userID)
     const isBlocked = await db.checkIfBlocked(id, blockedUserID)
-    console.log(isBlocked)
 
     if (!isBlocked) {
       await db.addMessageToConversations(JSON.stringify(req.body))
       return
-    }else{
+    } else {
       return
     }
   } catch (err) {
