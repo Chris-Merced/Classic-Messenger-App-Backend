@@ -184,7 +184,7 @@ async function blockUser(req, res) {
 
 async function checkIfBlocked(req, res) {
   try {
-    const isBlocked = await db.checkifBlocked(
+    const isBlocked = await db.checkIfBlocked(
       req.query.userID,
       req.query.blockedID,
     )
@@ -196,6 +196,7 @@ async function checkIfBlocked(req, res) {
       .json({ message: 'There was an error while checking blocked status' })
   }
 }
+
 async function unblockUser(req, res) {
   try {
     db.unblockUser(req.body.userID, req.body.unblockedID)
@@ -211,7 +212,7 @@ async function checkIfBlockedByProfile(req, res) {
     const userID = req.query.profileID
     const blockedID = req.query.userID
 
-    const isBlockedByProfile = await db.checkifBlocked(userID, blockedID)
+    const isBlockedByProfile = await db.checkIfBlocked(userID, blockedID)
     res.status(200).json(isBlockedByProfile)
   } catch (err) {
     console.log('There was an error in checking blocked status: \n' + err)

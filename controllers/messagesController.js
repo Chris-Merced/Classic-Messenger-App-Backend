@@ -24,9 +24,6 @@ async function getChatMessagesByName(req, res) {
       const sessionToken = data.sessionID;
       const isValid = await authentication.compareSessionToken(sessionToken, req.query.userID);
 
-      //MIDDLEWARE HERE TO CHECK AND CONFIRM THE SESSIONTOKEN AND THE USERID MATCHUP
-      //IF SESSION IS AUTHORIZED SEND THROUGH
-      //IF NOT REJECT AND SEND NOTHING
 
       const messages = await db.getChatMessagesByConversationID(req.query.conversationID);
       if (isValid) {

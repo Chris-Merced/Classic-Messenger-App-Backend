@@ -589,7 +589,7 @@ async function blockUser(userID, blockedID) {
   }
 }
 
-async function checkifBlocked(userID, blockedID) {
+async function checkIfBlocked(userID, blockedID) {
   try {
     const { rows } = await pool.query(
       'SELECT * FROM blocked WHERE user_id=$1 AND blocked_id=$2',
@@ -643,5 +643,5 @@ module.exports = {
   removeFriend,
   blockUser,
   unblockUser,
-  checkifBlocked,
+  checkIfBlocked,
 }

@@ -30,7 +30,7 @@ async function setUpSubscriber() {
   try {
     await redisSubscriber.subscribe('chatMessages', (message) => {
       try {
-        const messageData = JSON.parse(message)
+        const messageData = message
         if (messageData.reciever) {
           messageData.reciever.forEach(async (reciever) => {
             const userGET = await redisPublisher.hGet('activeUsers', reciever)
