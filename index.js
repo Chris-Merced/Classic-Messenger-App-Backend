@@ -96,7 +96,6 @@ app.use('/conversations', conversationRouter)
 const server = http.createServer(app)
 //Set websocket to listen in on http server
 const wss = new WebSocket.Server({ noServer: true })
-
 server.on('upgrade', async (request, socket, head) => {
   wss.handleUpgrade(request, socket, head, (ws) => {
     wss.emit('connection', ws, request)

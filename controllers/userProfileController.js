@@ -222,6 +222,19 @@ async function checkIfBlockedByProfile(req, res) {
   }
 }
 
+async function checkIfPublic(req, res) {
+  try {
+    console.log("Made it to check if public")
+    console.log(req.query.profileID);
+    const isPublic = await db.checkIfPublic(req.query.profileID)
+    res.status(200).json(isPublic)
+  } catch (err) {
+    console.log("There was an error in checking profile status" + err);
+    res.status(500).json({message: "There was an error in checking profile status"
+    })
+  }
+}
+
 module.exports = {
   getUser,
   getUserPublicProfile,
@@ -237,4 +250,5 @@ module.exports = {
   unblockUser,
   checkIfBlocked,
   checkIfBlockedByProfile,
+  checkIfPublic,
 }

@@ -2,18 +2,35 @@ const db = require('../db/queries')
 const { redisPublisher, redisSubscriber } = require('../redisClient')
 
 async function checkDirectMessageConversation(req, res) {
-  //CHECK IF PUBLIC OR PRIVATE ACCOUNT VIA QUERY
-  //IF PRIVATE CHECK IF FRIENDS
-  //ELSE DO THIS
-  const userID = req.query.userID
-  const profileID = req.query.profileID
-  console.log('You made it to checkDirectMessageConversation')
-  const conversation_id = await db.checkDirectMessageConversationExists(
-    userID,
-    profileID,
-  )
-  if (conversation_id) {
-    res.status(200).json({ conversation_id: conversation_id })
+  try {
+    const userID = req.query.userID
+    const profileID = req.query.profileID
+    const isPublic = await db.checkIfPublic(profileID)
+    let areFriends = false
+
+    if (!isPublic) {
+      areFriends = await db.checkIfFriends(userID, profileID)
+    }
+
+    if (areFriends || isPublic) {
+      console.log('You made it to checkDirectMessageConversation')
+      const conversation_id = await db.checkDirectMessageConversationExists(
+        userID,
+        profileID,
+      )
+      if (conversation_id) {
+        res.status(200).json({ conversation_id: conversation_id })
+      }
+    }
+  } catch (err) {
+    console.log(
+      'There was an error in checking direct message conversation: \n' + err,
+    )
+    res
+      .status(500)
+      .json({
+        message: 'There was an error in checking direct message conversation',
+      })
   }
 }
 

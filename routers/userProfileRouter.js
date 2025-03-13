@@ -17,5 +17,6 @@ userProfileRouter.post('/blockUser', userProfileController.blockUser)
 userProfileRouter.get('/checkIfBlocked', userProfileController.checkIfBlocked)
 userProfileRouter.delete('/unblockUser', userProfileController.unblockUser)
 userProfileRouter.get('/blockedByProfile', userProfileController.checkIfBlockedByProfile)
+userProfileRouter.get('/profileStatus', userProfileController.checkIfPublic)
 
 module.exports = userProfileRouter

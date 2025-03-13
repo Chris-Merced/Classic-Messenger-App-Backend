@@ -618,6 +618,18 @@ async function unblockUser(userID, unblockedID) {
   }
 }
 
+async function checkIfPublic(userID){
+  try{
+    console.log("Made it to database checkIfPublic");
+    const {rows} = await pool.query("SELECT is_public FROM users WHERE id=$1", [userID])
+    const isPublic = rows[0].is_public;
+    console.log(isPublic)
+    return isPublic;
+  }catch(err){
+    throw new Error("There was a problem in checking database for profile status: \n" + err)
+  }
+}
+
 module.exports = {
   addUser,
   getUserByUsername,
@@ -644,4 +656,5 @@ module.exports = {
   blockUser,
   unblockUser,
   checkIfBlocked,
+  checkIfPublic
 }
