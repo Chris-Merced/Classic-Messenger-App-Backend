@@ -1,4 +1,5 @@
 const db = require('../db/queries')
+const authentication = require('../authentication')
 
 async function getUser(req, res) {
   try {
@@ -224,14 +225,33 @@ async function checkIfBlockedByProfile(req, res) {
 
 async function checkIfPublic(req, res) {
   try {
-    console.log("Made it to check if public")
-    console.log(req.query.profileID);
+    console.log('Made it to check if public')
+    console.log(req.query.profileID)
     const isPublic = await db.checkIfPublic(req.query.profileID)
     res.status(200).json(isPublic)
   } catch (err) {
-    console.log("There was an error in checking profile status" + err);
-    res.status(500).json({message: "There was an error in checking profile status"
-    })
+    console.log('There was an error in checking profile status' + err)
+    res
+      .status(500)
+      .json({ message: 'There was an error in checking profile status' })
+  }
+}
+
+async function changeProfileStatus(req, res) {
+  
+  try{const sessionToken = JSON.parse(req.cookies.sessionToken).sessionID;
+  
+  const authenticated = authentication.compareSessionToken(
+    sessionToken,
+    req.body.userID,
+  )
+  if (authenticated){
+    const response = await db.changeProfileStatus(req.body.userID, req.body.status)
+     res.status(200).json({message: "Profile Status Changed", changed:true})
+  }else{response.status(403).json({message: "You do not have permission to modify this value", changed: false})}
+  }catch(err){
+    console.log("There was an error in changing the profile status: \n" + err)
+    res.status(500).json({message: "There was an error in changing the profile status", changed: false})
   }
 }
 
@@ -251,4 +271,5 @@ module.exports = {
   checkIfBlocked,
   checkIfBlockedByProfile,
   checkIfPublic,
+  changeProfileStatus,
 }

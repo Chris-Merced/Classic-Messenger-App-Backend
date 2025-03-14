@@ -630,6 +630,20 @@ async function checkIfPublic(userID){
   }
 }
 
+async function changeProfileStatus(userID, status){
+  try{
+    if(status){
+      const response = await pool.query("UPDATE users SET is_public = FALSE WHERE id=$1 RETURNING *", [userID])
+      return response
+    }else{
+      const response = await pool.query("UPDATE users SET is_public = TRUE WHERE id=$1 RETURNING *", [userID])
+      return response
+    }
+  }catch(err){
+    throw new Error("There was a problem changing profile status within database: \n" + err)
+  }
+}
+
 module.exports = {
   addUser,
   getUserByUsername,
@@ -656,5 +670,6 @@ module.exports = {
   blockUser,
   unblockUser,
   checkIfBlocked,
-  checkIfPublic
+  checkIfPublic,
+  changeProfileStatus
 }

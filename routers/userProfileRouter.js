@@ -18,5 +18,6 @@ userProfileRouter.get('/checkIfBlocked', userProfileController.checkIfBlocked)
 userProfileRouter.delete('/unblockUser', userProfileController.unblockUser)
 userProfileRouter.get('/blockedByProfile', userProfileController.checkIfBlockedByProfile)
 userProfileRouter.get('/profileStatus', userProfileController.checkIfPublic)
+userProfileRouter.patch('/changeProfileStatus', userProfileController.changeProfileStatus)
 
 module.exports = userProfileRouter
