@@ -53,7 +53,7 @@ async function addMessageToConversations(req, res) {
 }
 
 async function getOnlineUsers(req, res) {
-  var activeUsers = {}
+  try{var activeUsers = {}
 
   const userList = req.query.userList.split(',')
 
@@ -66,7 +66,10 @@ async function getOnlineUsers(req, res) {
       activeUsers[user] = false
     }
   }
-  res.status(200).json({ activeUsers })
+  res.status(200).json({ activeUsers })}catch(err){
+    console.log("Error in retrieving online users list: \n" + err)
+    resizeBy.status(500).json({message: "Error in retrieving online users list"})
+  }
 }
 
 async function checkIfBlockedByReciever(req, res) {
