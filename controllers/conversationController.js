@@ -49,7 +49,9 @@ async function addMessageToConversations(req, res) {
       return
     }
   } catch (err) {
+    console.log("is this where the error is")
     console.error('Error adding message to conversation: ' + err.message)
+    console.log("just checking")
   }
 }
 

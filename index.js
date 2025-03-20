@@ -104,13 +104,30 @@ server.on('upgrade', async (request, socket, head) => {
 
 const activeUsers = {}
 
+const interval = setInterval(function ping() {
+  wss.clients.forEach(function each(ws) {
+    if (ws.isAlive === false) {
+      console.log('Terminating stale connection')
+      return ws.terminate()
+    }
+    ws.isAlive = false // mark as not alive until we receive a pong
+    ws.ping() // send a ping
+  })
+}, 20000) // ping every 20 seconds
+
 wss.on('connection', (ws, req) => {
   console.log('New Data Flow')
   let userIdentifier = null
 
+  ws.isAlive = true
+
+  ws.on('pong', () => {
+    ws.isAlive = true
+  })
+
   ws.on('message', async (message) => {
     var recipients
-    console.log("made it to websocket OnMessage");
+    console.log('made it to websocket OnMessage')
     const data = message.toString()
     const info = JSON.parse(data)
     if (!info.registration) {
@@ -153,7 +170,7 @@ wss.on('connection', (ws, req) => {
 
       //await redisPublisher.publish('chatMessages', message.toString())
     } else {
-      console.log("made it to user registration to active users")
+      console.log('made it to user registration to active users')
       const cookieStr = req.headers.cookie
       if (cookieStr) {
         const sessionTokenStr = cookieStr.split('=')[1]
@@ -161,7 +178,7 @@ wss.on('connection', (ws, req) => {
         const sessionObj = JSON.parse(decodedSession)
         const data = await db.getUserBySession(sessionObj.sessionID)
         if (data) {
-          console.log("made it to data exists for: ")
+          console.log('made it to data exists for: ')
           console.log(data.username)
           userIdentifier = data.username
 
@@ -222,8 +239,14 @@ async function cleanup() {
   }
 }
 
-process.on('SIGTERM', cleanup)
-process.on('SIGINT', cleanup)
+process.on('SIGTERM', () => {
+  clearInterval(interval)
+  cleanup()
+})
+process.on('SIGINT', () => {
+  clearInterval(interval)
+  cleanup()
+})
 
 const PORT = process.env.PORT || 3000
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`))
