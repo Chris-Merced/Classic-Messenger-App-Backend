@@ -21,9 +21,11 @@ const {
   connectToRedis,
 } = require('./redisClient')
 
-//THINK ABOUT CREATING A FRIEND FUNCTIONALITY FOR PRIVATE AND PUBLIC DMS
+//THE MAIN CHAT DOES NOT SHOW UP FOR NEW USERS
 
-//Keep track of the current server for websocket verification
+//SEEMS ITS TIME TO CLEAN UP AND MAKE THINGS LOOK PRETTIER
+
+//ID for redis tracking
 const currentServerId = process.env.DYNO || 'local-server'
 
 connectToRedis()
