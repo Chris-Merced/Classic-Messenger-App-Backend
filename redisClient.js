@@ -1,12 +1,14 @@
 const { createClient } = require('redis');
 
-const redisPublisher = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-});
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
-const redisSubscriber = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-});
+const isProduction = process.env.NODE_ENV === 'production';
+const clientOptions = isProduction
+  ? { url: redisUrl, tls: { rejectUnauthorized: true } } 
+  : { url: redisUrl }; 
+
+const redisPublisher = createClient(clientOptions);
+const redisSubscriber = createClient(clientOptions);
 
 redisPublisher.on('error', (err) => console.error('Redis Publisher Error:', err));
 redisSubscriber.on('error', (err) => console.error('Redis Subscriber Error:', err));
