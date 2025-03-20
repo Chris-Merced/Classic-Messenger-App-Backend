@@ -36,6 +36,7 @@ async function checkDirectMessageConversation(req, res) {
 
 async function addMessageToConversations(req, res) {
   try {
+    console.log(req.body);
     const userID = req.body.reciever[0]
     const blockedUserID = req.body.userID
     const { id } = await db.getUserByUsername(userID)
