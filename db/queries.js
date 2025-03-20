@@ -339,16 +339,12 @@ async function getUserChats(userID) {
 
     const chatList = await Promise.all(
       rows.map(async (row) => {
-        if (!row.name) {
           const participants = await getParticipantsByConversationID(
             row.conversation_id,
           )
           const names = await parseNamesByUserID(participants, userID)
 
           return { ...row, participants: names }
-        } else {
-          return { ...row, participants: null }
-        }
       }),
     )
 

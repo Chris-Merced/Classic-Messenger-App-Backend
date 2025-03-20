@@ -110,10 +110,10 @@ const interval = setInterval(function ping() {
       console.log('Terminating stale connection')
       return ws.terminate()
     }
-    ws.isAlive = false // mark as not alive until we receive a pong
-    ws.ping() // send a ping
+    ws.isAlive = false 
+    ws.ping() 
   })
-}, 20000) // ping every 20 seconds
+}, 20000)
 
 wss.on('connection', (ws, req) => {
   console.log('New Data Flow')
@@ -168,7 +168,7 @@ wss.on('connection', (ws, req) => {
         return
       }
 
-      //await redisPublisher.publish('chatMessages', message.toString())
+      await redisPublisher.publish('chatMessages', message.toString())
     } else {
       console.log('made it to user registration to active users')
       const cookieStr = req.headers.cookie
