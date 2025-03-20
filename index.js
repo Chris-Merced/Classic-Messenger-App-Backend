@@ -110,6 +110,7 @@ wss.on('connection', (ws, req) => {
 
   ws.on('message', async (message) => {
     var recipients
+    console.log("made it to websocket OnMessage");
     const data = message.toString()
     const info = JSON.parse(data)
     if (!info.registration) {
@@ -152,6 +153,7 @@ wss.on('connection', (ws, req) => {
 
       //await redisPublisher.publish('chatMessages', message.toString())
     } else {
+      console.log("made it to user registration to active users")
       const cookieStr = req.headers.cookie
       if (cookieStr) {
         const sessionTokenStr = cookieStr.split('=')[1]
@@ -159,6 +161,8 @@ wss.on('connection', (ws, req) => {
         const sessionObj = JSON.parse(decodedSession)
         const data = await db.getUserBySession(sessionObj.sessionID)
         if (data) {
+          console.log("made it to data exists for: ")
+          console.log(data.username)
           userIdentifier = data.username
 
           await redisPublisher.hSet(
