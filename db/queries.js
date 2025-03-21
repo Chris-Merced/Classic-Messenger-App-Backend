@@ -7,7 +7,7 @@ const pool = require('./pool')
 
 async function addUser(user) {
   try {
-    const { rows } = await pool.query(
+    let { rows } = await pool.query(
       'SELECT * FROM users WHERE username ILIKE $1',
       [user.username.trim()],
     )
@@ -19,9 +19,29 @@ async function addUser(user) {
       'INSERT INTO users (username,password, email) VALUES ($1, $2, $3)',
       [user.username.trim(), user.password, user.email],
     )
+    const id = await getUserIDByUsername(user.username.trim())
+    await addParticipant(1, id)
     return
   } catch (err) {
     throw new Error('Error adding user: ' + err.message)
+  }
+}
+
+async function getUserIDByUsername(username) {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id FROM users WHERE username=$1',
+      [username],
+    )
+    if (rows[0]) {
+      return rows[0].id
+    } else {
+      console.log('Within getUserIDByUsername: \n Username does not exist')
+    }
+  } catch (err) {
+    console.log(
+      'There was an error in retrieving User ID By Username: \n' + err,
+    )
   }
 }
 
@@ -339,12 +359,12 @@ async function getUserChats(userID) {
 
     const chatList = await Promise.all(
       rows.map(async (row) => {
-          const participants = await getParticipantsByConversationID(
-            row.conversation_id,
-          )
-          const names = await parseNamesByUserID(participants, userID)
+        const participants = await getParticipantsByConversationID(
+          row.conversation_id,
+        )
+        const names = await parseNamesByUserID(participants, userID)
 
-          return { ...row, participants: names }
+        return { ...row, participants: names }
       }),
     )
 
@@ -614,29 +634,42 @@ async function unblockUser(userID, unblockedID) {
   }
 }
 
-async function checkIfPublic(userID){
-  try{
-    console.log("Made it to database checkIfPublic");
-    const {rows} = await pool.query("SELECT is_public FROM users WHERE id=$1", [userID])
-    const isPublic = rows[0].is_public;
+async function checkIfPublic(userID) {
+  try {
+    console.log('Made it to database checkIfPublic')
+    const { rows } = await pool.query(
+      'SELECT is_public FROM users WHERE id=$1',
+      [userID],
+    )
+    const isPublic = rows[0].is_public
     console.log(isPublic)
-    return isPublic;
-  }catch(err){
-    throw new Error("There was a problem in checking database for profile status: \n" + err)
+    return isPublic
+  } catch (err) {
+    throw new Error(
+      'There was a problem in checking database for profile status: \n' + err,
+    )
   }
 }
 
-async function changeProfileStatus(userID, status){
-  try{
-    if(status){
-      const response = await pool.query("UPDATE users SET is_public = FALSE WHERE id=$1 RETURNING *", [userID])
+async function changeProfileStatus(userID, status) {
+  try {
+    if (status) {
+      const response = await pool.query(
+        'UPDATE users SET is_public = FALSE WHERE id=$1 RETURNING *',
+        [userID],
+      )
       return response
-    }else{
-      const response = await pool.query("UPDATE users SET is_public = TRUE WHERE id=$1 RETURNING *", [userID])
+    } else {
+      const response = await pool.query(
+        'UPDATE users SET is_public = TRUE WHERE id=$1 RETURNING *',
+        [userID],
+      )
       return response
     }
-  }catch(err){
-    throw new Error("There was a problem changing profile status within database: \n" + err)
+  } catch (err) {
+    throw new Error(
+      'There was a problem changing profile status within database: \n' + err,
+    )
   }
 }
 
@@ -667,5 +700,5 @@ module.exports = {
   unblockUser,
   checkIfBlocked,
   checkIfPublic,
-  changeProfileStatus
+  changeProfileStatus,
 }
