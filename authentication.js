@@ -2,6 +2,7 @@ const db = require("./db/queries");
 
 async function compareSessionToken(token, userID) {
     try {
+
         const isValid = await db.checkSession(token, userID);
         if (isValid) {
             return true;

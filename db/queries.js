@@ -111,9 +111,9 @@ async function checkSession(token, userID) {
     }
     const { rows } = await pool.query(
       'SELECT * FROM sessions WHERE session_id = $1 AND user_id = $2',
-      [token, userID],
+      [JSON.parse(token).sessionID, userID],
     )
-    if (rows[0].session_id) {
+    if (rows[0]) {
       return true
     } else {
       return false

@@ -4,8 +4,6 @@ const authentication = require('../authentication')
 async function getUser(req, res) {
   try {
     const sessionData = JSON.parse(req.cookies.sessionToken)
-    console.log("CHECKING COOKIES WITHIN GETUSER: ")
-    console.log(req.cookies.sessionToken)
     if (sessionData.sessionID) {
       const userID = await db.getSessionBySessionID(sessionData.sessionID)
       if (!userID) {
@@ -74,11 +72,10 @@ async function getFriendRequests(req, res) {
   try {
     const sessionToken = req.cookies.sessionToken;
     
-    const authenticated = authentication.compareSessionToken(
+    const authenticated = await authentication.compareSessionToken(
     sessionToken,
     req.query.userID,
   )
-
   if(authenticated){
     const userID = req.query.userID
     const data = await db.getFriendRequests(userID)
@@ -253,7 +250,7 @@ async function changeProfileStatus(req, res) {
   
   try{const sessionToken = JSON.parse(req.cookies.sessionToken).sessionID;
   
-  const authenticated = authentication.compareSessionToken(
+  const authenticated = await authentication.compareSessionToken(
     sessionToken,
     req.body.userID,
   )
