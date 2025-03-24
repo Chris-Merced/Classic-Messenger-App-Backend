@@ -76,7 +76,7 @@ async function getFriendRequests(req, res) {
     
     const authenticated = authentication.compareSessionToken(
     sessionToken,
-    req.body.userID,
+    req.query.userID,
   )
 
   if(authenticated){
