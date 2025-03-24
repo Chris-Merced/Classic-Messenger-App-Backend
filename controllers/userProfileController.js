@@ -71,9 +71,20 @@ async function addFriendRequest(req, res) {
 
 async function getFriendRequests(req, res) {
   try {
+
+    const sessionToken = JSON.parse(req.cookies.sessionToken).sessionID;
+  
+    const authenticated = authentication.compareSessionToken(
+    sessionToken,
+    req.query.userID,
+  )
+  if(authenticated){
     const userID = req.query.userID
     const data = await db.getFriendRequests(userID)
     res.status(200).json({ friendRequests: data })
+  }else{
+    res.status(403).json("You Do Not Have Permission To View This Data")
+  }
   } catch (err) {
     console.log('Error while attempting to get Friend Requests: \n' + err)
     res.status(404).json({
