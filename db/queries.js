@@ -1,10 +1,6 @@
 const { request } = require('express')
 const pool = require('./pool')
 
-//PROOF OF CONCEPT FOR NAMED CHATS HAS BEEN APPLIED
-//NOW NEED TO WORK ON APPLYING AN INFRASTRUCTURE FOR DMS
-//WE ARE KINDA SO CLOSE
-
 async function addUser(user) {
   try {
     let { rows } = await pool.query(
