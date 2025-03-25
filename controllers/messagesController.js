@@ -20,8 +20,7 @@ async function getChatMessagesByName(req, res) {
 
       res.status(200).json({ messages: newMessages });
     } else if (req.query.conversationID !== "undefined") {
-      const data = JSON.parse(req.cookies.sessionToken);
-      const sessionToken = data.sessionID;
+      const sessionToken = req.cookies.sessionToken;
       const isValid = await authentication.compareSessionToken(sessionToken, req.query.userID);
 
 

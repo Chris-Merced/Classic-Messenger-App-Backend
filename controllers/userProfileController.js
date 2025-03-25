@@ -70,19 +70,19 @@ async function addFriendRequest(req, res) {
 
 async function getFriendRequests(req, res) {
   try {
-    const sessionToken = req.cookies.sessionToken;
-    
+    const sessionToken = req.cookies.sessionToken
+
     const authenticated = await authentication.compareSessionToken(
-    sessionToken,
-    req.query.userID,
-  )
-  if(authenticated){
-    const userID = req.query.userID
-    const data = await db.getFriendRequests(userID)
-    res.status(200).json({ friendRequests: data })
-  }else{
-    res.status(403).json("You Do Not Have Permission To View This Data")
-  }
+      sessionToken,
+      req.query.userID,
+    )
+    if (authenticated) {
+      const userID = req.query.userID
+      const data = await db.getFriendRequests(userID)
+      res.status(200).json({ friendRequests: data })
+    } else {
+      res.status(403).json('You Do Not Have Permission To View This Data')
+    }
   } catch (err) {
     console.log('Error while attempting to get Friend Requests: \n' + err)
     res.status(404).json({
@@ -247,20 +247,34 @@ async function checkIfPublic(req, res) {
 }
 
 async function changeProfileStatus(req, res) {
-  
-  try{const sessionToken = JSON.parse(req.cookies.sessionToken).sessionID;
-  
-  const authenticated = await authentication.compareSessionToken(
-    sessionToken,
-    req.body.userID,
-  )
-  if (authenticated){
-    const response = await db.changeProfileStatus(req.body.userID, req.body.status)
-     res.status(200).json({message: "Profile Status Changed", changed:true})
-  }else{response.status(403).json({message: "You do not have permission to modify this value", changed: false})}
-  }catch(err){
-    console.log("There was an error in changing the profile status: \n" + err)
-    res.status(500).json({message: "There was an error in changing the profile status", changed: false})
+  try {
+    const sessionToken = req.cookies.sessionToken
+    const authenticated = await authentication.compareSessionToken(
+      sessionToken,
+      req.body.userID,
+    )
+    if (authenticated) {
+      const response = await db.changeProfileStatus(
+        req.body.userID,
+        req.body.status,
+      )
+      res.status(200).json({ message: 'Profile Status Changed', changed: true })
+    } else {
+      response
+        .status(403)
+        .json({
+          message: 'You do not have permission to modify this value',
+          changed: false,
+        })
+    }
+  } catch (err) {
+    console.log('There was an error in changing the profile status: \n' + err)
+    res
+      .status(500)
+      .json({
+        message: 'There was an error in changing the profile status',
+        changed: false,
+      })
   }
 }
 
