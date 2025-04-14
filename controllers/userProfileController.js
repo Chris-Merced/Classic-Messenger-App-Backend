@@ -1,6 +1,6 @@
 const db = require('../db/queries')
 const authentication = require('../authentication')
-
+const fileType = require('file-type')
 
 async function getUser(req, res) {
   try {
@@ -241,7 +241,7 @@ async function checkIfPublic(req, res) {
     res.status(200).json(isPublic)
   } catch (err) {
     console.log('There was an error in checking profile status' + err)
-    res
+    return res
       .status(500)
       .json({ message: 'There was an error in checking profile status' })
   }
@@ -261,27 +261,60 @@ async function changeProfileStatus(req, res) {
       )
       res.status(200).json({ message: 'Profile Status Changed', changed: true })
     } else {
-      response
-        .status(403)
-        .json({
-          message: 'You do not have permission to modify this value',
-          changed: false,
-        })
+      return res.status(403).json({
+        message: 'You do not have permission to modify this value',
+        changed: false,
+      })
     }
   } catch (err) {
     console.log('There was an error in changing the profile status: \n' + err)
-    res
-      .status(500)
-      .json({
-        message: 'There was an error in changing the profile status',
-        changed: false,
-      })
+    return res.status(500).json({
+      message: 'There was an error in changing the profile status',
+      changed: false,
+    })
   }
 }
 
-async function changeProfilePicture(req, res){
-  console.log("ChangeProfilePicture")
-  console.log(req.file)
+async function changeProfilePicture(req, res) {
+  try {
+    const sessionToken = req.cookies.sessionToken
+
+    console.log(sessionToken)
+    console.log(req.body.UserID)
+    const authenticated = await authentication.compareSessionToken(
+      sessionToken,
+      req.body.UserID,
+    )
+    
+
+    if (authenticated) {
+      const validTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp']
+      console.log('ChangeProfilePicture')
+      console.log(req.file)
+
+      if (!req.file || !req.file.buffer) {
+        return res.status(400).json('No File Was Uploaded')
+      }
+
+      const newFile = await fileType.fromBuffer(req.file.buffer)
+      console.log(newFile)
+
+      if (!validTypes.includes(newFile.mime)) {
+        console.log('Invalid Profile Picture Type, Not Supported')
+        return res.status(400).json('File Type Not Supported')
+      }
+    } else {
+      return res
+        .status(403)
+        .json('You do not have the permission to edit this profile')
+    }
+  } catch (err) {
+    console.log(
+      'userProfileController: \n changeProfilePicture: There was an error in processing the profile Picture' +
+        err,
+    )
+    res.status(500).json('There was an error in changing profile picture.')
+  }
 }
 
 module.exports = {
