@@ -1,5 +1,6 @@
 const userProfileController = require('../controllers/userProfileController')
 const { Router } = require('express')
+const upload = require('../middleware/multer')
 
 const userProfileRouter = Router()
 
@@ -19,5 +20,6 @@ userProfileRouter.delete('/unblockUser', userProfileController.unblockUser)
 userProfileRouter.get('/blockedByProfile', userProfileController.checkIfBlockedByProfile)
 userProfileRouter.get('/profileStatus', userProfileController.checkIfPublic)
 userProfileRouter.patch('/changeProfileStatus', userProfileController.changeProfileStatus)
+userProfileRouter.post('/profilePicture', upload.single('ProfilePicture'), userProfileController.changeProfilePicture)
 
 module.exports = userProfileRouter

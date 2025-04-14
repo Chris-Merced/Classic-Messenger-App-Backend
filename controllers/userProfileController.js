@@ -1,6 +1,7 @@
 const db = require('../db/queries')
 const authentication = require('../authentication')
 
+
 async function getUser(req, res) {
   try {
     const sessionData = JSON.parse(req.cookies.sessionToken)
@@ -278,6 +279,11 @@ async function changeProfileStatus(req, res) {
   }
 }
 
+async function changeProfilePicture(req, res){
+  console.log("ChangeProfilePicture")
+  console.log(req.file)
+}
+
 module.exports = {
   getUser,
   getUserPublicProfile,
@@ -295,4 +301,5 @@ module.exports = {
   checkIfBlockedByProfile,
   checkIfPublic,
   changeProfileStatus,
+  changeProfilePicture,
 }
