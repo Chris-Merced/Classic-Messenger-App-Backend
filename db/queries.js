@@ -1,5 +1,6 @@
 const { request } = require('express')
 const pool = require('./pool')
+const { changeProfilePicture } = require('../controllers/userProfileController')
 
 async function addUser(user) {
   try {
@@ -669,6 +670,15 @@ async function changeProfileStatus(userID, status) {
   }
 }
 
+async function addProfilePictureURL(key, UserID) {
+  try {
+    await pool.query('UPDATE users SET profile_picture=$1 WHERE id=$2', [key])
+  } catch (err) {
+    console.log('Error within Database adding profile picture')
+    throw new Error('Error adding to database profile picutre' + err)
+  }
+}
+
 module.exports = {
   addUser,
   getUserByUsername,
@@ -697,4 +707,5 @@ module.exports = {
   checkIfBlocked,
   checkIfPublic,
   changeProfileStatus,
+  changeProfilePicture,
 }

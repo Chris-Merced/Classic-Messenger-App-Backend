@@ -1,6 +1,9 @@
 const db = require('../db/queries')
 const authentication = require('../authentication')
 const fileType = require('file-type')
+const uploadToS3 = require('../utils/s3Uploader')
+const sharp = require('sharp')
+const crypto = require('crypto')
 
 async function getUser(req, res) {
   try {
@@ -285,7 +288,6 @@ async function changeProfilePicture(req, res) {
       sessionToken,
       req.body.UserID,
     )
-    
 
     if (authenticated) {
       const validTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp']
@@ -303,6 +305,18 @@ async function changeProfilePicture(req, res) {
         console.log('Invalid Profile Picture Type, Not Supported')
         return res.status(400).json('File Type Not Supported')
       }
+
+      const processedImageBuffer = await sharp(req.file.buffer)
+        .resize(512, 512)
+        .toFormat('jpeg')
+        .jpeg({ quality: 80 })
+        .toBuffer()
+
+      const key = `profile-pictures/${req.body.UserID}-${crypto.randomUUID()}.jpeg`
+      const imageUrl = await uploadToS3(processedImageBuffer, key, 'image/jpeg')
+      
+      const response =  await db.addProfilePictureURL(imageUrl, req.body.UserID)
+
     } else {
       return res
         .status(403)
