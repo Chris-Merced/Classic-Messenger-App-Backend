@@ -286,7 +286,7 @@ async function changeProfilePicture(req, res) {
     console.log(req.body.UserID)
     const authenticated = await authentication.compareSessionToken(
       sessionToken,
-      req.body.UserID,
+      req.body.userID,
     )
 
     if (authenticated) {
@@ -312,11 +312,11 @@ async function changeProfilePicture(req, res) {
         .jpeg({ quality: 80 })
         .toBuffer()
 
-      const key = `profile-pictures/${req.body.UserID}-${crypto.randomUUID()}.jpeg`
+      const key = `profile-pictures/${req.body.userID}-${crypto.randomUUID()}.jpeg`
       const imageUrl = await uploadToS3(processedImageBuffer, key, 'image/jpeg')
-      
-      const response =  await db.addProfilePictureURL(imageUrl, req.body.UserID)
 
+      const response = await db.addProfilePictureURL(imageUrl, req.body.userID)
+      return res.status(200).json(response)
     } else {
       return res
         .status(403)

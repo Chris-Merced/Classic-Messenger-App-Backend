@@ -670,18 +670,19 @@ async function changeProfileStatus(userID, status) {
   }
 }
 
-async function addProfilePictureURL(key, UserID) {
+async function addProfilePictureURL(key, userID) {
   try {
-    await pool.query('UPDATE users SET profile_picture=$1 WHERE id=$2', [key, UserID])
+    await pool.query('UPDATE users SET profile_picture=$1 WHERE id=$2', [key, userID])
+    return ("Profile Picutre Successfully uploaded");
   } catch (err) {
     console.log('Error within Database adding profile picture')
     throw new Error('Error adding to database profile picutre' + err)
   }
 }
 
-async function getProfilePictureURL(UserID){
+async function getProfilePictureURL(userID){
   try{
-      const {rows}=await pool.query('SELECT profile_picture FROM users WHERE id = $1', [UserID])
+      const {rows}=await pool.query('SELECT profile_picture FROM users WHERE id = $1', [userID])
       if (rows[0]){
         return rows[0]
       }else{
