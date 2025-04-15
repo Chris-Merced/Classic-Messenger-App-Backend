@@ -1,6 +1,5 @@
 const { request } = require('express')
 const pool = require('./pool')
-const { changeProfilePicture } = require('../controllers/userProfileController')
 
 async function addUser(user) {
   try {

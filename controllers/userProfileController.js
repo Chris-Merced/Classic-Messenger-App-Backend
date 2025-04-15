@@ -1,7 +1,7 @@
 const db = require('../db/queries')
 const authentication = require('../authentication')
 const fileType = require('file-type')
-const uploadToS3 = require('../utils/s3Uploader')
+const s3 = require('../utils/s3Uploader')
 const sharp = require('sharp')
 const crypto = require('crypto')
 
@@ -283,7 +283,7 @@ async function changeProfilePicture(req, res) {
     const sessionToken = req.cookies.sessionToken
 
     console.log(sessionToken)
-    console.log(req.body.UserID)
+
     const authenticated = await authentication.compareSessionToken(
       sessionToken,
       req.body.userID,
@@ -313,10 +313,16 @@ async function changeProfilePicture(req, res) {
         .toBuffer()
 
       const key = `profile-pictures/${req.body.userID}-${crypto.randomUUID()}.jpeg`
-      const imageUrl = await uploadToS3(processedImageBuffer, key, 'image/jpeg')
-
+      const profilePictureUrl = await db.getProfilePictureURL(req.body.userID)
+      const url = new URL(profilePictureUrl)
+      const deleteKey = decodeURIComponent(url.pathname.substring(1))
+      
+      const imageUrl = await s3.uploadToS3(processedImageBuffer, key, 'image/jpeg')
       const response = await db.addProfilePictureURL(imageUrl, req.body.userID)
+      
+      s3.deleteFromS3(deleteKey)
       return res.status(200).json(response)
+      
     } else {
       return res
         .status(403)
