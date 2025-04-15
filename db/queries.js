@@ -672,10 +672,24 @@ async function changeProfileStatus(userID, status) {
 
 async function addProfilePictureURL(key, UserID) {
   try {
-    await pool.query('UPDATE users SET profile_picture=$1 WHERE id=$2', [key])
+    await pool.query('UPDATE users SET profile_picture=$1 WHERE id=$2', [key, UserID])
   } catch (err) {
     console.log('Error within Database adding profile picture')
     throw new Error('Error adding to database profile picutre' + err)
+  }
+}
+
+async function getProfilePictureURL(UserID){
+  try{
+      const {rows}=await pool.query('SELECT profile_picture FROM users WHERE id = $1', [UserID])
+      if (rows[0]){
+        return rows[0]
+      }else{
+        return null
+      }
+  }catch(err){
+    console.log("There was an error in retrieving the profile picture url from the database: \n" + err)
+    throw new Error("There was an error in retrieving the profile picture url from the database")
   }
 }
 
@@ -707,5 +721,6 @@ module.exports = {
   checkIfBlocked,
   checkIfPublic,
   changeProfileStatus,
-  changeProfilePicture,
+  addProfilePictureURL,
+  getProfilePictureURL,
 }
