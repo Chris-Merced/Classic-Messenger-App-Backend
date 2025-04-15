@@ -671,11 +671,12 @@ async function changeProfileStatus(userID, status) {
 
 async function addProfilePictureURL(key, userID) {
   try {
-    await pool.query('UPDATE users SET profile_picture=$1 WHERE id=$2', [key, userID])
-    return ("Profile Picutre Successfully uploaded");
+    const {rows} = await pool.query('UPDATE users SET profile_picture=$1 WHERE id=$2 RETURNING *', [key, userID])
+    console.log("THIS IS THE PROFILE PICTURE: ")
+    return ({message: "Profile Picture Successfully uploaded", url: rows[0].profile_picture});
   } catch (err) {
     console.log('Error within Database adding profile picture')
-    throw new Error('Error adding to database profile picutre' + err)
+    throw new Error('Error adding to database profile picture' + err)
   }
 }
 

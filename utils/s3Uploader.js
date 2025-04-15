@@ -17,7 +17,7 @@ const deleteFromS3 = async (key) => {
   try {
     const deleteParams = {
       Bucket: process.env.AWS_S3_BUCKET,
-      key: key,
+      Key: key,
     }
     s3.send(new DeleteObjectCommand(deleteParams))
   } catch (err) {

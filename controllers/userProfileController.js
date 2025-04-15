@@ -313,16 +313,28 @@ async function changeProfilePicture(req, res) {
         .toBuffer()
 
       const key = `profile-pictures/${req.body.userID}-${crypto.randomUUID()}.jpeg`
-      const profilePictureUrl = await db.getProfilePictureURL(req.body.userID)
-      const url = new URL(profilePictureUrl)
-      const deleteKey = decodeURIComponent(url.pathname.substring(1))
-      
-      const imageUrl = await s3.uploadToS3(processedImageBuffer, key, 'image/jpeg')
+
+      const profilePictureUrlObject = await db.getProfilePictureURL(
+        req.body.userID,
+      )
+      const imageUrl = await s3.uploadToS3(
+        processedImageBuffer,
+        key,
+        'image/jpeg',
+      )
       const response = await db.addProfilePictureURL(imageUrl, req.body.userID)
-      
-      s3.deleteFromS3(deleteKey)
-      return res.status(200).json(response)
-      
+
+      if (profilePictureUrlObject && profilePictureUrlObject.profile_picture) {
+        const profilePictureUrl = profilePictureUrlObject.profile_picture
+        const url = new URL(profilePictureUrl)
+        const deleteKey = decodeURIComponent(url.pathname.substring(1))
+
+        console.log(deleteKey)
+        s3.deleteFromS3(deleteKey)
+      }
+      return res
+        .status(200)
+        .json({ response: response.message, pictureURL: response.url })
     } else {
       return res
         .status(403)
@@ -330,7 +342,7 @@ async function changeProfilePicture(req, res) {
     }
   } catch (err) {
     console.log(
-      'userProfileController: \n changeProfilePicture: There was an error in processing the profile Picture' +
+      'userProfileController: \n changeProfilePicture: There was an error in changing the profile Picture' +
         err,
     )
     res.status(500).json('There was an error in changing profile picture.')
