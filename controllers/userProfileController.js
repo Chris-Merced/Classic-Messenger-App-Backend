@@ -282,7 +282,6 @@ async function changeProfilePicture(req, res) {
   try {
     const sessionToken = req.cookies.sessionToken
 
-    console.log(sessionToken)
 
     const authenticated = await authentication.compareSessionToken(
       sessionToken,
@@ -291,15 +290,12 @@ async function changeProfilePicture(req, res) {
 
     if (authenticated) {
       const validTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp']
-      console.log('ChangeProfilePicture')
-      console.log(req.file)
 
       if (!req.file || !req.file.buffer) {
         return res.status(400).json('No File Was Uploaded')
       }
 
       const newFile = await fileType.fromBuffer(req.file.buffer)
-      console.log(newFile)
 
       if (!validTypes.includes(newFile.mime)) {
         console.log('Invalid Profile Picture Type, Not Supported')
@@ -329,7 +325,6 @@ async function changeProfilePicture(req, res) {
         const url = new URL(profilePictureUrl)
         const deleteKey = decodeURIComponent(url.pathname.substring(1))
 
-        console.log(deleteKey)
         s3.deleteFromS3(deleteKey)
       }
       return res

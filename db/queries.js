@@ -694,6 +694,16 @@ async function getProfilePictureURL(userID){
   }
 }
 
+async function getProfilePictureURLByUserName(userName){
+  try{
+      const {rows} = await pool.query("SELECT profile_picture FROM users WHERE username=$1", [userName])
+      return rows[0].profile_picture;
+  }catch(err){
+    console.log("There was an error in retrieving the profile picture by user name: \n" + err)
+    throw new Error("There was an error in retrieving the profile picture by user name \n")
+  }
+}
+
 module.exports = {
   addUser,
   getUserByUsername,
@@ -724,4 +734,5 @@ module.exports = {
   changeProfileStatus,
   addProfilePictureURL,
   getProfilePictureURL,
+  getProfilePictureURLByUserName
 }

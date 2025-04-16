@@ -4,7 +4,7 @@ const db = require("../db/queries");
 
 async function loginHandler(req, res) {
   try {
-    console.log("HELLLLOOOOOOO")
+    
     const user = await db.getUserByUsername(req.body.username);
 
     if (user) {

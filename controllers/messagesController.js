@@ -55,7 +55,19 @@ async function getChatMessagesByName(req, res) {
 
 async function getUserChats(req, res) {
   try {
-    const userChats = await db.getUserChats(req.query.userID);
+    const userChatsWithoutProfilePictures = await db.getUserChats(req.query.userID);
+    const userChats = await Promise.all(userChatsWithoutProfilePictures.map( async (chat)=>{
+      if (!chat.name && chat.participants.length === 1){
+        const profilePicture = await db.getProfilePictureURLByUserName(chat.participants[0])
+        return {...chat, profilePicture: profilePicture}
+      }
+      return chat
+      
+    }))
+
+    console.log(userChats)
+    
+
     res.status(200).json({ userChats: userChats });
   } catch (err) {
     console.error("Error getting user chats: " + err.message);
