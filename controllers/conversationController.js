@@ -49,9 +49,7 @@ async function addMessageToConversations(req, res) {
       return
     }
   } catch (err) {
-    console.log("is this where the error is")
     console.error('Error adding message to conversation: ' + err.message)
-    console.log("just checking")
   }
 }
 
@@ -81,7 +79,6 @@ async function checkIfBlockedByReciever(req, res) {
     const blockedUserID = req.query.userID
     const { id } = await db.getUserByUsername(userID)
     const isBlocked = await db.checkIfBlocked(id, blockedUserID)
-    console.log(isBlocked)
     res.status(200).json(isBlocked)
   } catch (err) {
     console.log(

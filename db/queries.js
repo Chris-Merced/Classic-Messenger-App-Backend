@@ -405,8 +405,6 @@ async function parseNamesByUserID(participants, userID) {
 
 async function checkDirectMessageConversationExists(userID, profileID) {
   try {
-    console.log('userID: ' + userID)
-    console.log('ProfileID: ' + profileID)
     const { rows } = await pool.query(
       'SELECT DISTINCT cp.conversation_id, c.name FROM conversation_participants cp JOIN conversations c ON cp.conversation_id = c.id WHERE cp.conversation_id IN ( SELECT conversation_id FROM conversation_participants GROUP BY conversation_id HAVING COUNT(*) = 2)AND cp.conversation_id IN (SELECT conversation_id FROM conversation_participants WHERE user_id IN ($1, $2) GROUP BY conversation_id HAVING COUNT(*) = 2) AND c.name IS NULL',
       [userID, profileID],
@@ -514,10 +512,6 @@ async function denyFriend(userID, requestID) {
       'DELETE FROM friend_requests WHERE user_ID=$1 AND request_id=$2',
       [userID, requestID],
     )
-    console.log('Made it to deny friend')
-    console.log(userID)
-    console.log(requestID)
-    console.log(response)
   } catch (err) {
     console.log('Error in database query while denying friend request')
     throw new Error('There was an error while denying friend request' + err)
@@ -669,36 +663,57 @@ async function changeProfileStatus(userID, status) {
 
 async function addProfilePictureURL(key, userID) {
   try {
-    const {rows} = await pool.query('UPDATE users SET profile_picture=$1 WHERE id=$2 RETURNING *', [key, userID])
-    console.log("THIS IS THE PROFILE PICTURE: ")
-    return ({message: "Profile Picture Successfully uploaded", url: rows[0].profile_picture});
+    const { rows } = await pool.query(
+      'UPDATE users SET profile_picture=$1 WHERE id=$2 RETURNING *',
+      [key, userID],
+    )
+    return {
+      message: 'Profile Picture Successfully uploaded',
+      url: rows[0].profile_picture,
+    }
   } catch (err) {
     console.log('Error within Database adding profile picture')
     throw new Error('Error adding to database profile picture' + err)
   }
 }
 
-async function getProfilePictureURL(userID){
-  try{
-      const {rows}=await pool.query('SELECT profile_picture FROM users WHERE id = $1', [userID])
-      if (rows[0]){
-        return rows[0]
-      }else{
-        return null
-      }
-  }catch(err){
-    console.log("There was an error in retrieving the profile picture url from the database: \n" + err)
-    throw new Error("There was an error in retrieving the profile picture url from the database")
+async function getProfilePictureURL(userID) {
+  try {
+    const { rows } = await pool.query(
+      'SELECT profile_picture FROM users WHERE id = $1',
+      [userID],
+    )
+    if (rows[0]) {
+      return rows[0]
+    } else {
+      return null
+    }
+  } catch (err) {
+    console.log(
+      'There was an error in retrieving the profile picture url from the database: \n' +
+        err,
+    )
+    throw new Error(
+      'There was an error in retrieving the profile picture url from the database',
+    )
   }
 }
 
-async function getProfilePictureURLByUserName(userName){
-  try{
-      const {rows} = await pool.query("SELECT profile_picture FROM users WHERE username=$1", [userName])
-      return rows[0].profile_picture;
-  }catch(err){
-    console.log("There was an error in retrieving the profile picture by user name: \n" + err)
-    throw new Error("There was an error in retrieving the profile picture by user name \n")
+async function getProfilePictureURLByUserName(userName) {
+  try {
+    const { rows } = await pool.query(
+      'SELECT profile_picture FROM users WHERE username=$1',
+      [userName],
+    )
+    return rows[0].profile_picture
+  } catch (err) {
+    console.log(
+      'There was an error in retrieving the profile picture by user name: \n' +
+        err,
+    )
+    throw new Error(
+      'There was an error in retrieving the profile picture by user name \n',
+    )
   }
 }
 
@@ -732,5 +747,5 @@ module.exports = {
   changeProfileStatus,
   addProfilePictureURL,
   getProfilePictureURL,
-  getProfilePictureURLByUserName
+  getProfilePictureURLByUserName,
 }

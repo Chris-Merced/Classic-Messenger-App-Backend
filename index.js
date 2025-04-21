@@ -144,7 +144,6 @@ wss.on('connection', (ws, req) => {
         )
       }
       if (recipients) {
-        console.log(info)
         recipients.forEach(async (recipient) => {
           const userID = recipient.username
           const blockedUserID = info.userID
