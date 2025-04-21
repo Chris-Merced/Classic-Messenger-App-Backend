@@ -65,7 +65,6 @@ async function getUserChats(req, res) {
       
     }))
 
-    console.log(userChats)
     
 
     res.status(200).json({ userChats: userChats });

@@ -238,8 +238,6 @@ async function checkIfBlockedByProfile(req, res) {
 
 async function checkIfPublic(req, res) {
   try {
-    console.log('Made it to check if public')
-    console.log(req.query.profileID)
     const isPublic = await db.checkIfPublic(req.query.profileID)
     res.status(200).json(isPublic)
   } catch (err) {
