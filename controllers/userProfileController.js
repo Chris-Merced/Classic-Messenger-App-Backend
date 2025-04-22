@@ -344,7 +344,8 @@ async function changeProfilePicture(req, res) {
 
 async function changeAboutMe(req, res){
   try{
-    console.log("made it")
+    const aboutMe = req.body.aboutMe
+    const res = await db.setAboutMe
     res.status(200).json("bwahaha")
   }catch(err){
     console.log("There was an error in changing the user's about me section")
