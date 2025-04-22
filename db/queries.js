@@ -717,6 +717,12 @@ async function getProfilePictureURLByUserName(userName) {
   }
 }
 
+async function editAboutMe(aboutMe){
+  console.log("That's all folks")
+  return "weow";
+
+}
+
 module.exports = {
   addUser,
   getUserByUsername,
@@ -748,4 +754,5 @@ module.exports = {
   addProfilePictureURL,
   getProfilePictureURL,
   getProfilePictureURLByUserName,
+  editAboutMe,
 }

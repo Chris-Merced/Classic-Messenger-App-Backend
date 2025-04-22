@@ -21,6 +21,6 @@ userProfileRouter.get('/blockedByProfile', userProfileController.checkIfBlockedB
 userProfileRouter.get('/profileStatus', userProfileController.checkIfPublic)
 userProfileRouter.patch('/changeProfileStatus', userProfileController.changeProfileStatus)
 userProfileRouter.post('/profilePicture', upload.single('ProfilePicture'), userProfileController.changeProfilePicture)
-userProfileRouter.patch('/aboutMe', userProfileController.changeAboutMe)
+userProfileRouter.patch('/aboutMe', userProfileController.editAboutMe)
 
 module.exports = userProfileRouter
