@@ -343,17 +343,20 @@ async function changeProfilePicture(req, res) {
 
 async function editAboutMe(req, res) {
   try {
-
-    const authenticated = await authentication.compareSessionToken(req.cookies.sessionToken, req.body.userID)
-    if(authenticated){
+    const authenticated = await authentication.compareSessionToken(
+      req.cookies.sessionToken,
+      req.body.userID,
+    )
+    if (authenticated) {
       const aboutMe = req.body.aboutMe
-      const response = await db.editAboutMe(aboutMe)
-      res.status(200).json('bwahaha')
-    }else{
-      console.log("User does not have permission for this modification")
-      res.status(401).json("User Does not have permission for this modification")
+      const response = await db.editAboutMe(aboutMe, req.body.userID)
+      res.status(200).json('About Me Section Edit Successful')
+    } else {
+      console.log('User does not have permission for this modification')
+      res
+        .status(401)
+        .json('User Does not have permission for this modification')
     }
-
   } catch (err) {
     console.log("There was an error in changing the user's about me section")
     res.status(500).json('Could not change about me section')

@@ -717,10 +717,22 @@ async function getProfilePictureURLByUserName(userName) {
   }
 }
 
-async function editAboutMe(aboutMe){
-  console.log("That's all folks")
-  return "weow";
-
+async function editAboutMe(aboutMe, userID) {
+  try {
+    const { rows } = await pool.query(
+      'UPDATE users SET about_me=$1 WHERE id=$2 RETURNING *',
+      [aboutMe, userID],
+    )
+    console.log(rows[0])
+    return rows[0];
+  } catch (err) {
+    console.log(
+      'There was an error updating user about me in database: \n' + err,
+    )
+    throw new Error(
+      '\n There was an error updating user about me in database: \n' + err,
+    )
+  }
 }
 
 module.exports = {
