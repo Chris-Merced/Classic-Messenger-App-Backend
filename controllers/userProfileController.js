@@ -342,6 +342,16 @@ async function changeProfilePicture(req, res) {
   }
 }
 
+async function changeAboutMe(req, res){
+  try{
+    console.log("made it")
+    res.status(200).json("bwahaha")
+  }catch(err){
+    console.log("There was an error in changing the user's about me section")
+    res.status(500).json("Could not change about me section")
+  }
+}
+
 module.exports = {
   getUser,
   getUserPublicProfile,
@@ -360,4 +370,5 @@ module.exports = {
   checkIfPublic,
   changeProfileStatus,
   changeProfilePicture,
+  changeAboutMe
 }

@@ -21,7 +21,6 @@ const {
   connectToRedis,
 } = require('./redisClient')
 
-//THE MAIN CHAT DOES NOT SHOW UP FOR NEW USERS
 
 //SEEMS ITS TIME TO CLEAN UP AND MAKE THINGS LOOK PRETTIER
 
@@ -96,7 +95,9 @@ app.use('/conversations', conversationRouter)
 
 //http server to use express routing
 const server = http.createServer(app)
-//Set websocket to listen in on http server
+
+
+//Set http server to send request object through to websocket on connection upgrade
 const wss = new WebSocket.Server({ noServer: true })
 server.on('upgrade', async (request, socket, head) => {
   wss.handleUpgrade(request, socket, head, (ws) => {
@@ -104,6 +105,7 @@ server.on('upgrade', async (request, socket, head) => {
   })
 })
 
+//Keeps track of all users with verified sessions
 const activeUsers = {}
 
 const interval = setInterval(function ping() {
