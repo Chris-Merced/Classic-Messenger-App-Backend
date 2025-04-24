@@ -406,9 +406,32 @@ async function parseNamesByUserID(participants, userID) {
 async function checkDirectMessageConversationExists(userID, profileID) {
   try {
     const { rows } = await pool.query(
-      'SELECT DISTINCT cp.conversation_id, c.name FROM conversation_participants cp JOIN conversations c ON cp.conversation_id = c.id WHERE cp.conversation_id IN ( SELECT conversation_id FROM conversation_participants GROUP BY conversation_id HAVING COUNT(*) = 2)AND cp.conversation_id IN (SELECT conversation_id FROM conversation_participants WHERE user_id IN ($1, $2) GROUP BY conversation_id HAVING COUNT(*) = 2) AND c.name IS NULL',
-      [userID, profileID],
-    )
+      `
+      SELECT DISTINCT 
+        cp.conversation_id, 
+        c.name
+      FROM 
+        conversation_participants cp
+      JOIN 
+        conversations c ON cp.conversation_id = c.id
+      WHERE 
+        cp.conversation_id IN (
+          SELECT conversation_id 
+          FROM conversation_participants 
+          GROUP BY conversation_id 
+          HAVING COUNT(*) = 2
+        )
+        AND cp.conversation_id IN (
+          SELECT conversation_id 
+          FROM conversation_participants 
+          WHERE user_id IN ($1, $2) 
+          GROUP BY conversation_id 
+          HAVING COUNT(*) = 2
+        )
+        AND c.name IS NULL
+      `,
+      [userID, profileID]
+    );
     if (rows[0]) {
       const conversation = JSON.stringify(rows[0])
       console.log('Conversation exists: ' + conversation)
@@ -724,7 +747,7 @@ async function editAboutMe(aboutMe, userID) {
       [aboutMe, userID],
     )
     console.log(rows[0])
-    return rows[0];
+    return rows[0]
   } catch (err) {
     console.log(
       'There was an error updating user about me in database: \n' + err,
