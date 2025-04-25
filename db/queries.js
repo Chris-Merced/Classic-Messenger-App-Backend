@@ -359,15 +359,45 @@ async function getUserChats(userID) {
           row.conversation_id,
         )
         const names = await parseNamesByUserID(participants, userID)
-
         return { ...row, participants: names }
       }),
     )
+    
+    const chatListComplete = await Promise.all(chatList.map(async(chat)=>{
+      if(chat.name || chat.participants.length > 1){
+        return {...chat, is_read: true}
+      }else{
+        const id  = await getUserIDByUsername(chat.participants[0])
+        
+        const {rows}  = await pool.query("SELECT is_read FROM messages WHERE conversation_id = $1 AND sender_id = $2 ORDER BY id DESC LIMIT 1", [chat.conversation_id, id])
+        
+        if(!rows[0]){
+          return {...chat, is_read: true}
+        }else{
+          
+          return {...chat, is_read: rows[0].is_read}
+        }
+      }
+    }))
 
-    return chatList
+
+    //console.log(chatListComplete)
+
+    return chatListComplete
   } catch (err) {
     console.error('Error retrieving user chats: ' + err.message)
     throw new Error('Error retrieving user chats: ' + err.message)
+  }
+}
+
+
+
+async function setIsRead(conversationID, recieverID){
+  try{const isTrue=true;
+    await pool.query("UPDATE messages SET is_read=$1 WHERE id = (SELECT id FROM messages WHERE conversation_id=$2 AND sender_id = $3 ORDER BY id DESC LIMIT 1)", [isTrue, conversationID, recieverID])
+  }catch(err){
+    console.log("There was an error in updating is_read within the database: \n " + err)
+    throw new Error("There was an error in updating is_read within the database")
   }
 }
 
@@ -790,4 +820,5 @@ module.exports = {
   getProfilePictureURL,
   getProfilePictureURLByUserName,
   editAboutMe,
+  setIsRead
 }

@@ -22,13 +22,19 @@ async function getChatMessagesByName(req, res) {
     } else if (req.query.conversationID !== "undefined") {
       const sessionToken = req.cookies.sessionToken;
       const isValid = await authentication.compareSessionToken(sessionToken, req.query.userID);
-
+      let checkID = req.query.userID
+      let recieverID = null;
 
       const messages = await db.getChatMessagesByConversationID(req.query.conversationID);
+      console.log(messages[0])
+      console.log(req.query.userID)
       if (isValid) {
         const newMessages = await Promise.all(
           messages.map(async (message) => {
             const userObject = await db.getUserByUserID(message.sender_id);
+            if(message.sender_id!=req.query.userID){
+              recieverID=message.sender_id
+            }
             return {
               time: message.created_at,
               message: message.content,
@@ -36,7 +42,12 @@ async function getChatMessagesByName(req, res) {
             };
           })
         );
-
+        
+        if(recieverID){
+          console.log("made it to setisread")
+          console.log(req.query.conversationID + " " + recieverID + " " + req.query.userID)
+          await db.setIsRead(req.query.conversationID, recieverID);
+        }
         res.status(200).json({ messages: newMessages });
       } else {
         throw new Error("No chat name or conversation ID detected");
