@@ -26,27 +26,27 @@ async function checkDirectMessageConversation(req, res) {
     console.log(
       'There was an error in checking direct message conversation: \n' + err,
     )
-    res
-      .status(500)
-      .json({
-        message: 'There was an error in checking direct message conversation',
-      })
+    res.status(500).json({
+      message: 'There was an error in checking direct message conversation',
+    })
   }
 }
 
 async function addMessageToConversations(req, res) {
   try {
-    console.log(req.body);
+    console.log("MADE IT TO ADD MESSAGE")
+    console.log(req.body)
     const userID = req.body.reciever[0]
     const blockedUserID = req.body.userID
     const { id } = await db.getUserByUsername(userID)
     const isBlocked = await db.checkIfBlocked(id, blockedUserID)
 
     if (!isBlocked) {
+      console.log("made it to before db add message")
       await db.addMessageToConversations(JSON.stringify(req.body))
-      return
+      res.status(200).json("Added message to database")
     } else {
-      return
+      res.status(403).json("You do not have permission to send a message to this user")
     }
   } catch (err) {
     console.error('Error adding message to conversation: ' + err.message)
@@ -54,22 +54,26 @@ async function addMessageToConversations(req, res) {
 }
 
 async function getOnlineUsers(req, res) {
-  try{var activeUsers = {}
+  try {
+    var activeUsers = {}
 
-  const userList = req.query.userList.split(',')
+    const userList = req.query.userList.split(',')
 
-  for (user of userList) {
-    const response = await redisPublisher.hGet('activeUsers', user)
-    const userExist = JSON.parse(response)
-    if (userExist) {
-      activeUsers[user] = true
-    } else {
-      activeUsers[user] = false
+    for (user of userList) {
+      const response = await redisPublisher.hGet('activeUsers', user)
+      const userExist = JSON.parse(response)
+      if (userExist) {
+        activeUsers[user] = true
+      } else {
+        activeUsers[user] = false
+      }
     }
-  }
-  res.status(200).json({ activeUsers })}catch(err){
-    console.log("Error in retrieving online users list: \n" + err)
-    resizeBy.status(500).json({message: "Error in retrieving online users list"})
+    res.status(200).json({ activeUsers })
+  } catch (err) {
+    console.log('Error in retrieving online users list: \n' + err)
+    resizeBy
+      .status(500)
+      .json({ message: 'Error in retrieving online users list' })
   }
 }
 
@@ -91,9 +95,21 @@ async function checkIfBlockedByReciever(req, res) {
   }
 }
 
+async function changeIsRead(req, res) {
+  try {
+    console.log("made it to changeIsRead")
+    const response = await db.setIsRead(req.body.conversationID, req.body.senderID)
+    res.status(200).json("isRead Status Changed Successfully")
+  } catch (err) {
+    console.log("There was an error while attempting to change isRead status for conversaiton \n" + err)
+    res.status(500).JSON("Could not change isRead status for conversation")
+  }
+}
+
 module.exports = {
   checkDirectMessageConversation,
   addMessageToConversations,
   getOnlineUsers,
   checkIfBlockedByReciever,
+  changeIsRead,
 }

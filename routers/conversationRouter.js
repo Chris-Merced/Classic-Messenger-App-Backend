@@ -6,5 +6,6 @@ conversationRouter.get("/", conversationController.checkDirectMessageConversatio
 conversationRouter.post("/messageToConversation",conversationController.addMessageToConversations)
 conversationRouter.get("/getOnlineUsers", conversationController.getOnlineUsers)
 conversationRouter.get("/isBlocked", conversationController.checkIfBlockedByReciever)
+conversationRouter.patch("/isRead", conversationController.changeIsRead)
 
 module.exports = conversationRouter;

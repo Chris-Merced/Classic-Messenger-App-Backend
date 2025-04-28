@@ -177,12 +177,14 @@ async function cleanupSchedule() {
 
 async function addMessageToConversations(message) {
   try {
+    console.log("made it inside messageotconversations")
     const data = await JSON.parse(message)
     if (data.conversationName) {
       const doesExist = await checkConversationByName(data.conversationName)
       if (doesExist) {
         await checkIfParticipant(data)
-        await addMessage(data)
+        const response = await addMessage(data)
+        return response;
       } else {
         await createConversationByName(data)
       }
@@ -302,10 +304,13 @@ async function getParticipantsByConversationID(conversationID) {
 
 async function addMessage(data) {
   try {
-    await pool.query(
+    console.log("made it inside add message")
+    console.log(data)
+    const response = await pool.query(
       'INSERT INTO messages (conversation_id, sender_id, content) VALUES ($1, $2, $3)',
       [data.conversationID, data.userID, data.message],
     )
+    return response;
   } catch (err) {
     console.error('Error adding message to the database: ' + err.message)
     throw new Error('Error adding message to the database ' + err.message)
@@ -332,7 +337,7 @@ async function getChatMessagesByConversationID(conversationID) {
       return
     }
     const { rows } = await pool.query(
-      'SELECT * FROM messages WHERE conversation_id = $1',
+      'SELECT * FROM messages WHERE conversation_id = $1 ORDER BY created_at',
       [conversationID],
     )
     return rows
@@ -394,7 +399,13 @@ async function getUserChats(userID) {
 
 async function setIsRead(conversationID, recieverID){
   try{const isTrue=true;
-    await pool.query("UPDATE messages SET is_read=$1 WHERE id = (SELECT id FROM messages WHERE conversation_id=$2 AND sender_id = $3 ORDER BY id DESC LIMIT 1)", [isTrue, conversationID, recieverID])
+    
+    console.log("made it to change is read")
+    console.log(conversationID)
+    console.log(recieverID)
+   const response = await pool.query("UPDATE messages SET is_read=$1 WHERE id = (SELECT id FROM messages WHERE conversation_id=$2 AND sender_id = $3 ORDER BY id DESC LIMIT 1)", [isTrue, conversationID, recieverID])
+   console.log("QUERY RESPONSE TO CHANGING ISREAD")
+   console.log(response)
   }catch(err){
     console.log("There was an error in updating is_read within the database: \n " + err)
     throw new Error("There was an error in updating is_read within the database")
