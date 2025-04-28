@@ -1,10 +1,9 @@
-require("dotenv").config();
+require('dotenv').config()
 
 const config = {
   development: {
     connectionString:
-      process.env.DATABASE_URL ||
-      process.env.LOCAL_DATABASE_URL,
+      process.env.DATABASE_URL || process.env.LOCAL_DATABASE_URL,
   },
   production: {
     connectionString: process.env.DATABASE_URL,
@@ -12,6 +11,6 @@ const config = {
       rejectUnauthorized: false,
     },
   },
-};
+}
 
-module.exports = config[process.env.NODE_ENV || "development"];
+module.exports = config[process.env.NODE_ENV || 'development']

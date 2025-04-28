@@ -5,7 +5,10 @@ const upload = require('../middleware/multer')
 const userProfileRouter = Router()
 
 userProfileRouter.get('/', userProfileController.getUser)
-userProfileRouter.get('/publicProfile', userProfileController.getUserPublicProfile)
+userProfileRouter.get(
+  '/publicProfile',
+  userProfileController.getUserPublicProfile,
+)
 userProfileRouter.get('/usersBySearch', userProfileController.getUsersBySearch)
 userProfileRouter.post('/friendRequest', userProfileController.addFriendRequest)
 userProfileRouter.get('/friendRequest', userProfileController.getFriendRequests)
@@ -17,10 +20,20 @@ userProfileRouter.delete('/removeFriend', userProfileController.removeFriend)
 userProfileRouter.post('/blockUser', userProfileController.blockUser)
 userProfileRouter.get('/checkIfBlocked', userProfileController.checkIfBlocked)
 userProfileRouter.delete('/unblockUser', userProfileController.unblockUser)
-userProfileRouter.get('/blockedByProfile', userProfileController.checkIfBlockedByProfile)
+userProfileRouter.get(
+  '/blockedByProfile',
+  userProfileController.checkIfBlockedByProfile,
+)
 userProfileRouter.get('/profileStatus', userProfileController.checkIfPublic)
-userProfileRouter.patch('/changeProfileStatus', userProfileController.changeProfileStatus)
-userProfileRouter.post('/profilePicture', upload.single('ProfilePicture'), userProfileController.changeProfilePicture)
+userProfileRouter.patch(
+  '/changeProfileStatus',
+  userProfileController.changeProfileStatus,
+)
+userProfileRouter.post(
+  '/profilePicture',
+  upload.single('ProfilePicture'),
+  userProfileController.changeProfilePicture,
+)
 userProfileRouter.patch('/aboutMe', userProfileController.editAboutMe)
 
 module.exports = userProfileRouter

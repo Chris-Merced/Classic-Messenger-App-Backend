@@ -34,7 +34,7 @@ async function checkDirectMessageConversation(req, res) {
 
 async function addMessageToConversations(req, res) {
   try {
-    console.log("MADE IT TO ADD MESSAGE")
+    console.log('MADE IT TO ADD MESSAGE')
     console.log(req.body)
     const userID = req.body.reciever[0]
     const blockedUserID = req.body.userID
@@ -42,11 +42,13 @@ async function addMessageToConversations(req, res) {
     const isBlocked = await db.checkIfBlocked(id, blockedUserID)
 
     if (!isBlocked) {
-      console.log("made it to before db add message")
+      console.log('made it to before db add message')
       await db.addMessageToConversations(JSON.stringify(req.body))
-      res.status(200).json("Added message to database")
+      res.status(200).json('Added message to database')
     } else {
-      res.status(403).json("You do not have permission to send a message to this user")
+      res
+        .status(403)
+        .json('You do not have permission to send a message to this user')
     }
   } catch (err) {
     console.error('Error adding message to conversation: ' + err.message)
@@ -97,12 +99,18 @@ async function checkIfBlockedByReciever(req, res) {
 
 async function changeIsRead(req, res) {
   try {
-    console.log("made it to changeIsRead")
-    const response = await db.setIsRead(req.body.conversationID, req.body.senderID)
-    res.status(200).json("isRead Status Changed Successfully")
+    console.log('made it to changeIsRead')
+    const response = await db.setIsRead(
+      req.body.conversationID,
+      req.body.senderID,
+    )
+    res.status(200).json('isRead Status Changed Successfully')
   } catch (err) {
-    console.log("There was an error while attempting to change isRead status for conversaiton \n" + err)
-    res.status(500).JSON("Could not change isRead status for conversation")
+    console.log(
+      'There was an error while attempting to change isRead status for conversaiton \n' +
+        err,
+    )
+    res.status(500).JSON('Could not change isRead status for conversation')
   }
 }
 

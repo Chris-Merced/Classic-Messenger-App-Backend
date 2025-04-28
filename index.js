@@ -21,7 +21,6 @@ const {
   connectToRedis,
 } = require('./redisClient')
 
-
 //SEEMS ITS TIME TO CLEAN UP AND MAKE THINGS LOOK PRETTIER
 
 //ID for redis tracking
@@ -96,7 +95,6 @@ app.use('/conversations', conversationRouter)
 //http server to use express routing
 const server = http.createServer(app)
 
-
 //Set http server to send request object through to websocket on connection upgrade
 const wss = new WebSocket.Server({ noServer: true })
 server.on('upgrade', async (request, socket, head) => {
@@ -114,8 +112,8 @@ const interval = setInterval(function ping() {
       console.log('Terminating stale connection')
       return ws.terminate()
     }
-    ws.isAlive = false 
-    ws.ping() 
+    ws.isAlive = false
+    ws.ping()
   })
 }, 20000)
 

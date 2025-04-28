@@ -177,14 +177,14 @@ async function cleanupSchedule() {
 
 async function addMessageToConversations(message) {
   try {
-    console.log("made it inside messageotconversations")
+    console.log('made it inside messageotconversations')
     const data = await JSON.parse(message)
     if (data.conversationName) {
       const doesExist = await checkConversationByName(data.conversationName)
       if (doesExist) {
         await checkIfParticipant(data)
         const response = await addMessage(data)
-        return response;
+        return response
       } else {
         await createConversationByName(data)
       }
@@ -304,13 +304,13 @@ async function getParticipantsByConversationID(conversationID) {
 
 async function addMessage(data) {
   try {
-    console.log("made it inside add message")
+    console.log('made it inside add message')
     console.log(data)
     const response = await pool.query(
       'INSERT INTO messages (conversation_id, sender_id, content) VALUES ($1, $2, $3)',
       [data.conversationID, data.userID, data.message],
     )
-    return response;
+    return response
   } catch (err) {
     console.error('Error adding message to the database: ' + err.message)
     throw new Error('Error adding message to the database ' + err.message)
@@ -367,24 +367,27 @@ async function getUserChats(userID) {
         return { ...row, participants: names }
       }),
     )
-    
-    const chatListComplete = await Promise.all(chatList.map(async(chat)=>{
-      if(chat.name || chat.participants.length > 1){
-        return {...chat, is_read: true}
-      }else{
-        const id  = await getUserIDByUsername(chat.participants[0])
-        
-        const {rows}  = await pool.query("SELECT is_read FROM messages WHERE conversation_id = $1 AND sender_id = $2 ORDER BY id DESC LIMIT 1", [chat.conversation_id, id])
-        
-        if(!rows[0]){
-          return {...chat, is_read: true}
-        }else{
-          
-          return {...chat, is_read: rows[0].is_read}
-        }
-      }
-    }))
 
+    const chatListComplete = await Promise.all(
+      chatList.map(async (chat) => {
+        if (chat.name || chat.participants.length > 1) {
+          return { ...chat, is_read: true }
+        } else {
+          const id = await getUserIDByUsername(chat.participants[0])
+
+          const { rows } = await pool.query(
+            'SELECT is_read FROM messages WHERE conversation_id = $1 AND sender_id = $2 ORDER BY id DESC LIMIT 1',
+            [chat.conversation_id, id],
+          )
+
+          if (!rows[0]) {
+            return { ...chat, is_read: true }
+          } else {
+            return { ...chat, is_read: rows[0].is_read }
+          }
+        }
+      }),
+    )
 
     //console.log(chatListComplete)
 
@@ -395,20 +398,26 @@ async function getUserChats(userID) {
   }
 }
 
+async function setIsRead(conversationID, recieverID) {
+  try {
+    const isTrue = true
 
-
-async function setIsRead(conversationID, recieverID){
-  try{const isTrue=true;
-    
-    console.log("made it to change is read")
+    console.log('made it to change is read')
     console.log(conversationID)
     console.log(recieverID)
-   const response = await pool.query("UPDATE messages SET is_read=$1 WHERE id = (SELECT id FROM messages WHERE conversation_id=$2 AND sender_id = $3 ORDER BY id DESC LIMIT 1)", [isTrue, conversationID, recieverID])
-   console.log("QUERY RESPONSE TO CHANGING ISREAD")
-   console.log(response)
-  }catch(err){
-    console.log("There was an error in updating is_read within the database: \n " + err)
-    throw new Error("There was an error in updating is_read within the database")
+    const response = await pool.query(
+      'UPDATE messages SET is_read=$1 WHERE id = (SELECT id FROM messages WHERE conversation_id=$2 AND sender_id = $3 ORDER BY id DESC LIMIT 1)',
+      [isTrue, conversationID, recieverID],
+    )
+    console.log('QUERY RESPONSE TO CHANGING ISREAD')
+    console.log(response)
+  } catch (err) {
+    console.log(
+      'There was an error in updating is_read within the database: \n ' + err,
+    )
+    throw new Error(
+      'There was an error in updating is_read within the database',
+    )
   }
 }
 
@@ -471,8 +480,8 @@ async function checkDirectMessageConversationExists(userID, profileID) {
         )
         AND c.name IS NULL
       `,
-      [userID, profileID]
-    );
+      [userID, profileID],
+    )
     if (rows[0]) {
       const conversation = JSON.stringify(rows[0])
       console.log('Conversation exists: ' + conversation)
@@ -831,5 +840,5 @@ module.exports = {
   getProfilePictureURL,
   getProfilePictureURLByUserName,
   editAboutMe,
-  setIsRead
+  setIsRead,
 }
