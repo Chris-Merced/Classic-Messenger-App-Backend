@@ -32,20 +32,17 @@ async function setUpSubscriber() {
   try {
     await redisSubscriber.subscribe('chatMessages', (message) => {
       try {
-        const messageData = message
+        console.log("triggered")
+        const messageData = JSON.parse(message)
         if (messageData.reciever) {
           messageData.reciever.forEach(async (reciever) => {
             const userGET = await redisPublisher.hGet('activeUsers', reciever)
-            const user = { reciever, userGET }
-            if (user.serverID !== null && user.serverID === currentServerId) {
+            const user = JSON.parse(userGET)
+            console.log(user)
+            if (user && user.serverID === currentServerId && activeUsers[reciever]) {
+              console.log("made it")
               userInformation = activeUsers[reciever]
-              userInformation.ws.send(message.toString())
-            }
-          })
-        } else {
-          wss.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(messageData))
+              userInformation.ws.send(JSON.stringify(messageData))
             }
           })
         }
@@ -144,6 +141,8 @@ wss.on('connection', (ws, req) => {
         )
       }
       if (recipients) {
+        console.log("THESE ARE YOUR INFO ")
+        console.log(info)
         recipients.forEach(async (recipient) => {
           const userID = recipient.username
           const blockedUserID = info.userID
@@ -153,14 +152,14 @@ wss.on('connection', (ws, req) => {
             if (recipient.serverID === currentServerId) {
               const userData = activeUsers[recipient.username]
               if (userData) {
-                userData.ws.send(message.toString())
+                userData.ws.send(JSON.stringify(info))
               }
               return
             } else {
               await redisPublisher.publish(
                 'chatMessages',
-                { ...message, receiver: [recipient.username] }.toString(),
-              )
+                JSON.stringify({ ...info, reciever: [recipient.username] })
+              );
             }
           } else {
             return
@@ -169,7 +168,6 @@ wss.on('connection', (ws, req) => {
         return
       }
 
-      await redisPublisher.publish('chatMessages', message.toString())
     } else {
       console.log('made it to user registration to active users')
       const cookieStr = req.headers.cookie

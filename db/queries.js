@@ -177,7 +177,6 @@ async function cleanupSchedule() {
 
 async function addMessageToConversations(message) {
   try {
-    console.log('made it inside messageotconversations')
     const data = await JSON.parse(message)
     if (data.conversationName) {
       const doesExist = await checkConversationByName(data.conversationName)
@@ -304,8 +303,6 @@ async function getParticipantsByConversationID(conversationID) {
 
 async function addMessage(data) {
   try {
-    console.log('made it inside add message')
-    console.log(data)
     const response = await pool.query(
       'INSERT INTO messages (conversation_id, sender_id, content) VALUES ($1, $2, $3)',
       [data.conversationID, data.userID, data.message],
