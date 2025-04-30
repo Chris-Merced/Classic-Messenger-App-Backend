@@ -21,7 +21,6 @@ const {
   connectToRedis,
 } = require('./redisClient')
 
-//SEEMS ITS TIME TO CLEAN UP AND MAKE THINGS LOOK PRETTIER
 
 //ID for redis tracking
 const currentServerId = process.env.DYNO || 'local-server'
@@ -141,8 +140,6 @@ wss.on('connection', (ws, req) => {
         )
       }
       if (recipients) {
-        console.log("THESE ARE YOUR INFO ")
-        console.log(info)
         recipients.forEach(async (recipient) => {
           const userID = recipient.username
           const blockedUserID = info.userID

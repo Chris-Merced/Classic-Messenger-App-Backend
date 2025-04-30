@@ -53,13 +53,7 @@ async function getChatMessagesByName(req, res) {
 
         if (recieverID) {
           console.log('made it to setisread')
-          console.log(
-            req.query.conversationID +
-              ' ' +
-              recieverID +
-              ' ' +
-              req.query.userID,
-          )
+         
           await db.setIsRead(req.query.conversationID, recieverID)
         }
         res.status(200).json({ messages: newMessages })

@@ -406,8 +406,6 @@ async function setIsRead(conversationID, recieverID) {
       'UPDATE messages SET is_read=$1 WHERE id = (SELECT id FROM messages WHERE conversation_id=$2 AND sender_id = $3 ORDER BY id DESC LIMIT 1)',
       [isTrue, conversationID, recieverID],
     )
-    console.log('QUERY RESPONSE TO CHANGING ISREAD')
-    console.log(response)
   } catch (err) {
     console.log(
       'There was an error in updating is_read within the database: \n ' + err,

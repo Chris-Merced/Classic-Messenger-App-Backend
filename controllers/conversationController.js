@@ -34,15 +34,12 @@ async function checkDirectMessageConversation(req, res) {
 
 async function addMessageToConversations(req, res) {
   try {
-    console.log('MADE IT TO ADD MESSAGE')
-    console.log(req.body)
     const userID = req.body.reciever[0]
     const blockedUserID = req.body.userID
     const { id } = await db.getUserByUsername(userID)
     const isBlocked = await db.checkIfBlocked(id, blockedUserID)
 
     if (!isBlocked) {
-      console.log('made it to before db add message')
       await db.addMessageToConversations(JSON.stringify(req.body))
       res.status(200).json('Added message to database')
     } else {
@@ -100,6 +97,7 @@ async function checkIfBlockedByReciever(req, res) {
 async function changeIsRead(req, res) {
   try {
     console.log('made it to changeIsRead')
+    console.log(req.body)
     const response = await db.setIsRead(
       req.body.conversationID,
       req.body.senderID,
