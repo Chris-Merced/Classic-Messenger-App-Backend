@@ -96,8 +96,6 @@ async function checkIfBlockedByReciever(req, res) {
 
 async function changeIsRead(req, res) {
   try {
-    console.log('made it to changeIsRead')
-    console.log(req.body)
     const response = await db.setIsRead(
       req.body.conversationID,
       req.body.senderID,

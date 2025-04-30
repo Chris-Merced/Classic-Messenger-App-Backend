@@ -31,15 +31,12 @@ async function setUpSubscriber() {
   try {
     await redisSubscriber.subscribe('chatMessages', (message) => {
       try {
-        console.log("triggered")
         const messageData = JSON.parse(message)
         if (messageData.reciever) {
           messageData.reciever.forEach(async (reciever) => {
             const userGET = await redisPublisher.hGet('activeUsers', reciever)
             const user = JSON.parse(userGET)
-            console.log(user)
             if (user && user.serverID === currentServerId && activeUsers[reciever]) {
-              console.log("made it")
               userInformation = activeUsers[reciever]
               userInformation.ws.send(JSON.stringify(messageData))
             }

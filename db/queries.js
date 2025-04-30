@@ -386,7 +386,6 @@ async function getUserChats(userID) {
       }),
     )
 
-    //console.log(chatListComplete)
 
     return chatListComplete
   } catch (err) {
@@ -399,9 +398,6 @@ async function setIsRead(conversationID, recieverID) {
   try {
     const isTrue = true
 
-    console.log('made it to change is read')
-    console.log(conversationID)
-    console.log(recieverID)
     const response = await pool.query(
       'UPDATE messages SET is_read=$1 WHERE id = (SELECT id FROM messages WHERE conversation_id=$2 AND sender_id = $3 ORDER BY id DESC LIMIT 1)',
       [isTrue, conversationID, recieverID],
@@ -791,7 +787,6 @@ async function editAboutMe(aboutMe, userID) {
       'UPDATE users SET about_me=$1 WHERE id=$2 RETURNING *',
       [aboutMe, userID],
     )
-    console.log(rows[0])
     return rows[0]
   } catch (err) {
     console.log(
