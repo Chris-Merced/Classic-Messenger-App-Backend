@@ -373,14 +373,21 @@ async function getUserChats(userID) {
           const id = await getUserIDByUsername(chat.participants[0])
 
           const { rows } = await pool.query(
-            'SELECT is_read FROM messages WHERE conversation_id = $1 AND sender_id = $2 ORDER BY id DESC LIMIT 1',
+            'SELECT is_read, created_at FROM messages WHERE conversation_id = $1 AND sender_id = $2 ORDER BY id DESC LIMIT 1',
             [chat.conversation_id, id],
           )
 
+          const createdAtQuery = await pool.query(
+            'SELECT created_at FROM messages WHERE conversation_id = $1 ORDER BY id DESC LIMIT 1',
+            [chat.conversation_id],
+          )
+
+          const created_at = createdAtQuery.rows[0]
+          
           if (!rows[0]) {
-            return { ...chat, is_read: true }
+            return { ...chat, is_read: true, created_at: 0}
           } else {
-            return { ...chat, is_read: rows[0].is_read }
+            return { ...chat, is_read: rows[0].is_read, created_at: created_at.created_at }
           }
         }
       }),
