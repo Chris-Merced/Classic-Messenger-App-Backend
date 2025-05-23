@@ -22,7 +22,6 @@ const {
   connectToRedis,
 } = require('./redisClient')
 
-
 //ID for redis tracking
 const currentServerId = process.env.DYNO || 'local-server'
 
@@ -37,7 +36,11 @@ async function setUpSubscriber() {
           messageData.reciever.forEach(async (reciever) => {
             const userGET = await redisPublisher.hGet('activeUsers', reciever)
             const user = JSON.parse(userGET)
-            if (user && user.serverID === currentServerId && activeUsers[reciever]) {
+            if (
+              user &&
+              user.serverID === currentServerId &&
+              activeUsers[reciever]
+            ) {
               userInformation = activeUsers[reciever]
               userInformation.ws.send(JSON.stringify(messageData))
             }
@@ -153,8 +156,8 @@ wss.on('connection', (ws, req) => {
             } else {
               await redisPublisher.publish(
                 'chatMessages',
-                JSON.stringify({ ...info, reciever: [recipient.username] })
-              );
+                JSON.stringify({ ...info, reciever: [recipient.username] }),
+              )
             }
           } else {
             return
@@ -162,32 +165,46 @@ wss.on('connection', (ws, req) => {
         })
         return
       }
-
     } else {
       console.log('made it to user registration to active users')
       const cookieStr = req.headers.cookie
+      console.log('COOKIE STREAM BEFORE ANYTHING')
+      console.log(cookieStr)
       if (cookieStr) {
-        const sessionTokenStr = cookieStr.split('=')[1]
-        const decodedSession = decodeURIComponent(sessionTokenStr)
-        const sessionObj = JSON.parse(decodedSession)
-        const data = await db.getUserBySession(sessionObj.sessionID)
-        if (data) {
-          console.log('made it to data exists for: ')
-          console.log(data.username)
-          userIdentifier = data.username
+        const cookies = {}
+        cookieStr.split(';').forEach((cookie) => {
+          const [name, ...rest] = cookie.trim().split('=')
+          cookies[name] = decodeURIComponent(rest.join('='))
+        })
+        console.log('COOKIES OBJECT')
+        console.log(cookies)
 
-          await redisPublisher.hSet(
-            'activeUsers',
-            data.username,
-            JSON.stringify({
-              serverID: currentServerId,
-              lastSeen: Date.now(),
-            }),
-          )
+        const sessionTokenStr = cookieStr.split('=' && ';')[1]
+        const test = cookieStr.split('=' && ';')
+        console.log('COOKIE STRING')
+        console.log(test[0].split('=')[1])
+        if (cookies.sessionToken) {
+          const decodedSession = decodeURIComponent(cookies.sessionToken)
+          const sessionObj = JSON.parse(decodedSession)
+          const data = await db.getUserBySession(sessionObj.sessionID)
+          if (data) {
+            console.log('made it to data exists for: ')
+            console.log(data.username)
+            userIdentifier = data.username
 
-          activeUsers[data.username] = {
-            ws: ws,
-            lastActive: Date.now(),
+            await redisPublisher.hSet(
+              'activeUsers',
+              data.username,
+              JSON.stringify({
+                serverID: currentServerId,
+                lastSeen: Date.now(),
+              }),
+            )
+
+            activeUsers[data.username] = {
+              ws: ws,
+              lastActive: Date.now(),
+            }
           }
         }
       }
