@@ -13,6 +13,7 @@ const signupRouter = require('./routers/signuprouter')
 const conversationRouter = require('./routers/conversationRouter')
 const userProfileRouter = require('./routers/userProfileRouter')
 const messagesRouter = require('./routers/messagesRouter')
+const oauthRouter = require('./routers/oauthRouter')
 const rateLimit = require('express-rate-limit')
 const { createClient } = require('redis')
 const {
@@ -84,7 +85,7 @@ app.use('/signup', signupRouter)
 app.use('/userProfile', userProfileRouter)
 app.use('/messages', messagesRouter)
 app.use('/conversations', conversationRouter)
-
+app.use('/oauth', oauthRouter)
 //http server to use express routing
 const server = http.createServer(app)
 
