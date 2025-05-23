@@ -166,23 +166,14 @@ wss.on('connection', (ws, req) => {
         return
       }
     } else {
-      console.log('made it to user registration to active users')
       const cookieStr = req.headers.cookie
-      console.log('COOKIE STREAM BEFORE ANYTHING')
-      console.log(cookieStr)
       if (cookieStr) {
         const cookies = {}
         cookieStr.split(';').forEach((cookie) => {
           const [name, ...rest] = cookie.trim().split('=')
           cookies[name] = decodeURIComponent(rest.join('='))
         })
-        console.log('COOKIES OBJECT')
-        console.log(cookies)
 
-        const sessionTokenStr = cookieStr.split('=' && ';')[1]
-        const test = cookieStr.split('=' && ';')
-        console.log('COOKIE STRING')
-        console.log(test[0].split('=')[1])
         if (cookies.sessionToken) {
           const decodedSession = decodeURIComponent(cookies.sessionToken)
           const sessionObj = JSON.parse(decodedSession)
