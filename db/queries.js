@@ -112,9 +112,15 @@ async function getUserBySession(token) {
 
 async function checkEmailExists(email){
   try{
-
+    const {rows} = await pool.query('SELECT * FROM users WHERE email=$1', [email])
+    if (rows[0]){
+      return false
+    }else{
+      return rows[0]
+    }
   }catch(err){
-    throw new Error("Error checking ")
+    console.log("Error checking if email already exists: \n" +  err.message)
+    throw new Error("Error checking if email already exists: \n" +  err.message)
   }
 }
 
