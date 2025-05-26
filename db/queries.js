@@ -29,6 +29,7 @@ async function addUser(user) {
     await addParticipant(1, id)
     return
   } catch (err) {
+    console.log("Error attempting to add user: \n" +  err.message)
     throw new Error(err.message)
   }
 }
@@ -60,8 +61,8 @@ async function getUserByUsername(username) {
     const user = rows[0]
     return user
   } catch (err) {
-    console.error('Error getting user by username: ' + err)
-    throw new Error('Error getting user by username: ' + err.message)
+    console.error('Error getting user by username: \n' + err)
+    throw new Error('Error getting user by username: \n' + err.message)
   }
 }
 
@@ -78,8 +79,8 @@ async function getUsersByUsernameSearch(username) {
     })
     return users
   } catch (err) {
-    console.error('Problem getting users by username Search ' + err.message)
-    throw new Error('Problem getting users by username Search ' + err.message)
+    console.error('Problem getting users by username Search: \n' + err.message)
+    throw new Error('Problem getting users by username Search: \n' + err.message)
   }
 }
 
@@ -92,8 +93,8 @@ async function getUserByUserID(userID) {
     const { password, ...user } = userData
     return user
   } catch (err) {
-    console.error('Error getting user by user ID ' + err.message)
-    throw new Error('Error getting user by user ID ' + err.message)
+    console.error('Error getting user by user ID: \n' + err.message)
+    throw new Error('Error getting user by user ID: \n' + err.message)
   }
 }
 
@@ -105,7 +106,15 @@ async function getUserBySession(token) {
     )
     return rows[0]
   } catch (err) {
-    console.error('Error getting the user ID by session')
+    console.error('Error getting the user ID by session: \n' + err.message)
+  }
+}
+
+async function checkEmailExists(email){
+  try{
+
+  }catch(err){
+    throw new Error("Error checking ")
   }
 }
 
@@ -125,7 +134,7 @@ async function checkSession(token, userID) {
       return false
     }
   } catch (err) {
-    console.error('Error cross referencing tokens and userID: ' + err.message)
+    console.error('Error cross referencing tokens and userID: \n' + err.message)
   }
 }
 
@@ -147,8 +156,8 @@ async function getSessionBySessionID(sessionID) {
       console.log('Session ID is undefined')
     }
   } catch (err) {
-    console.error('Error getting session by Session ID ' + err.message)
-    throw new Error('Error getting session by session ID ' + err.message)
+    console.error('Error getting session by Session ID: \n' + err.message)
+    throw new Error('Error getting session by session ID: \n' + err.message)
   }
 }
 
@@ -160,8 +169,8 @@ async function storeSession(userID, sessionID) {
     )
     return
   } catch (err) {
-    console.error('Error storing user in session:' + err.message)
-    throw new Error('Error storing session ' + err.message)
+    console.error('Error storing user in session: \n' + err.message)
+    throw new Error('Error storing session: \n' + err.message)
   }
 }
 
@@ -171,8 +180,8 @@ async function deleteSession(sessionID) {
       sessionID,
     ])
   } catch (err) {
-    console.error('Error Deleting Session Data:' + err.message)
-    throw new Error('Error deleting session with Session ID' + err.message)
+    console.error('Error Deleting Session Data: \n' + err.message)
+    throw new Error('Error deleting session with Session ID: \n' + err.message)
   }
 }
 
@@ -180,8 +189,8 @@ async function cleanupSchedule() {
   try {
     await pool.query('DELETE FROM sessions WHERE expires_at<NOW();')
   } catch (err) {
-    console.error('Error in scheduled database cleanup' + err.message)
-    throw new Error('Error in scheduled database cleanup' + err.message)
+    console.error('Error in scheduled database cleanup: \n' + err.message)
+    throw new Error('Error in scheduled database cleanup: \n' + err.message)
   }
 }
 
@@ -201,8 +210,8 @@ async function addMessageToConversations(message) {
       await addMessage(data)
     }
   } catch (err) {
-    console.error('Error adding message to database ' + err.message)
-    throw new Error('Error adding message to database ' + err.message)
+    console.error('Error adding message to database: \n' + err.message)
+    throw new Error('Error adding message to database: \n' + err.message)
   }
 }
 
@@ -216,10 +225,10 @@ async function checkConversationByName(conversationName, res) {
     }
   } catch (err) {
     console.error(
-      'Error checking if user is a part of the conversation: ' + err.message,
+      'Error checking if user is a part of the conversation: \n' + err.message,
     )
     throw new Error(
-      'Error checking if user is a part of the conversation ' + err.message,
+      'Error checking if user is a part of the conversation: \n' + err.message,
     )
   }
 }
@@ -237,10 +246,10 @@ async function createConversationByName(data) {
     )
   } catch (err) {
     console.error(
-      'Error creating conversation in database with name ' + err.message,
+      'Error creating conversation in database with name: \n' + err.message,
     )
     throw new Error(
-      'Error creating conversation in database with name: ' + err.message,
+      'Error creating conversation in database with name: \n' + err.message,
     )
   }
 }
@@ -253,8 +262,8 @@ async function getConversationByName(name) {
     )
     return rows[0]
   } catch (err) {
-    console.error('Error getting conversation by name: ' + err.message)
-    throw new Error('Error getting conversation by name ' + err.message)
+    console.error('Error getting conversation by name: \n' + err.message)
+    throw new Error('Error getting conversation by name: \n' + err.message)
   }
 }
 
@@ -272,10 +281,10 @@ async function checkIfParticipant(data) {
     }
   } catch (err) {
     console.err(
-      'Error Checking if User is a participant of conversation: ' + err,
+      'Error Checking if User is a participant of conversation: \n' + err,
     )
     throw new Error(
-      'Error checking if user is a participant of conversation ' + err.message,
+      'Error checking if user is a participant of conversation: \n' + err.message,
     )
   }
 }
@@ -287,8 +296,8 @@ async function addParticipant(conversation_id, user_id) {
       [conversation_id, user_id],
     )
   } catch (err) {
-    console.error('Error adding participant to conversation ' + err.message)
-    throw new Error('Error adding participant to conversation ' + err.message)
+    console.error('Error adding participant to conversation: \n' + err.message)
+    throw new Error('Error adding participant to conversation: \n' + err.message)
   }
 }
 
@@ -319,8 +328,8 @@ async function addMessage(data) {
     )
     return response
   } catch (err) {
-    console.error('Error adding message to the database: ' + err.message)
-    throw new Error('Error adding message to the database ' + err.message)
+    console.error('Error adding message to the database: \n' + err.message)
+    throw new Error('Error adding message to the database: \n' + err.message)
   }
 }
 
@@ -330,8 +339,8 @@ async function getChatMessagesByName(name) {
     const rows = await getChatMessagesByConversationID(conversation.id)
     return rows
   } catch (err) {
-    console.error('Error retrieving messages from database ' + err.message)
-    throw new Error('Error getting chat messages by name ' + err.message)
+    console.error('Error retrieving messages from database: \n ' + err.message)
+    throw new Error('Error getting chat messages by name: \n ' + err.message)
   }
 }
 
@@ -350,10 +359,10 @@ async function getChatMessagesByConversationID(conversationID) {
     return rows
   } catch (err) {
     console.error(
-      'Error retrieving the chat messages by conversationID: ' + err.message,
+      'Error retrieving the chat messages by conversationID: \n' + err.message,
     )
     throw new Error(
-      'Error retrieving chat messages by conversationID: ' + err.message,
+      'Error retrieving chat messages by conversationID: \n' + err.message,
     )
   }
 }
@@ -409,8 +418,8 @@ async function getUserChats(userID) {
 
     return chatListComplete
   } catch (err) {
-    console.error('Error retrieving user chats: ' + err.message)
-    throw new Error('Error retrieving user chats: ' + err.message)
+    console.error('Error retrieving user chats: \n' + err.message)
+    throw new Error('Error retrieving user chats: \n' + err.message)
   }
 }
 
@@ -424,10 +433,10 @@ async function setIsRead(conversationID, recieverID) {
     )
   } catch (err) {
     console.log(
-      'There was an error in updating is_read within the database: \n ' + err,
+      'There was an error in updating is_read within the database: \n ' + err.message,
     )
     throw new Error(
-      'There was an error in updating is_read within the database',
+      'There was an error in updating is_read within the database: \n' + err.message,
     )
   }
 }
@@ -455,11 +464,11 @@ async function parseNamesByUserID(participants, userID) {
   } catch (err) {
     console.log(
       'Error in parsing usernames from websocket data -- parseNamesByUserID \n' +
-        err,
+        err.message,
     )
     throw new Error(
       'Error in parsing usernames from websocket data -- parseNamesByUserID \n' +
-        err,
+        err.message,
     )
   }
 }
@@ -513,11 +522,11 @@ async function checkDirectMessageConversationExists(userID, profileID) {
   } catch (err) {
     console.log(
       'Error in checking if a DM already exists -- checkDirectMessageConversationExists: \n' +
-        err,
+        err.message,
     )
     throw new Error(
       'Error in checking if a DM already exists -- checkDirectMessageConversationExists: \n' +
-        err,
+        err.message,
     )
   }
 }
@@ -529,7 +538,7 @@ async function addFriendRequestToDatabase(userID, profileID) {
       [userID, profileID, 'pending'],
     )
   } catch (err) {
-    return err
+    return err.message
   }
 }
 
@@ -549,7 +558,7 @@ async function getFriendRequests(userID) {
     )
     return users
   } catch (err) {
-    throw new Error('Error when getting friend requests from database \n' + err)
+    throw new Error('Error when getting friend requests from database \n' + err.message)
   }
 }
 
@@ -585,8 +594,8 @@ async function addFriend(userID, requestID) {
       )
       res.status(409).json({ message: 'Users are already Friends' })
     }
-    console.log('Error in database query for add friend \n' + err)
-    throw new Error('Error while adding to database \n' + err)
+    console.log('Error in database query for add friend \n' + err.message)
+    throw new Error('Error while adding to database \n' + err.message)
   }
 }
 
@@ -597,8 +606,8 @@ async function denyFriend(userID, requestID) {
       [userID, requestID],
     )
   } catch (err) {
-    console.log('Error in database query while denying friend request')
-    throw new Error('There was an error while denying friend request' + err)
+    console.log('Error in database query while denying friend request: \n' +  err.message)
+    throw new Error('There was an error while denying friend request: \n' + err.message)
   }
 }
 
@@ -620,7 +629,7 @@ async function removeFriend(userID, friendID) {
       larger,
     ])
   } catch (err) {
-    throw new Error('Error while removing friend from database: \n' + err)
+    throw new Error('Error while removing friend from database: \n' + err.message)
   }
 }
 
@@ -643,9 +652,9 @@ async function checkIfFriends(userID, friendID) {
     )
     return rows[0]
   } catch (err) {
-    console.log('There was an error in checking friend status in database')
+    console.log('There was an error in checking friend status in database: \n' +  err.message)
     throw new Error(
-      'There was an error in checking friend status in database \n' + err,
+      'There was an error in checking friend status in database \n' + err.message,
     )
   }
 }
@@ -662,8 +671,8 @@ async function getFriends(userID) {
 
     return friendsList
   } catch (err) {
-    console.log('Error in retrieval of user friends during query: \n' + err)
-    throw new Error('Error in retrieval of user friends during query: \n' + err)
+    console.log('Error in retrieval of user friends during query: \n' + err.message)
+    throw new Error('Error in retrieval of user friends during query: \n' + err.message)
   }
 }
 
@@ -674,8 +683,8 @@ async function blockUser(userID, blockedID) {
       blockedID,
     ])
   } catch (err) {
-    console.log('Error within blockUser function in database query')
-    throw new Error(err)
+    console.log('Error within blockUser function in database query: \n' + err.message)
+    throw new Error("Error while attempting to block user: \n" + err.message)
   }
 }
 
@@ -691,8 +700,8 @@ async function checkIfBlocked(userID, blockedID) {
       return false
     }
   } catch (err) {
-    console.log('Error in checking the database: \n' + err)
-    throw new Error('Error checking database: \n' + err)
+    console.log('Error in checking the database: \n' + err.message)
+    throw new Error('Error checking database: \n' + err.message)
   }
 }
 
@@ -703,8 +712,8 @@ async function unblockUser(userID, unblockedID) {
       unblockedID,
     ])
   } catch (err) {
-    console.log('Error in unblocking user within query: \n' + err)
-    throw new Error('Error in unblocking user: \n' + err)
+    console.log('Error in unblocking user within query: \n' + err.message)
+    throw new Error('Error in unblocking user: \n' + err.message)
   }
 }
 
@@ -718,7 +727,7 @@ async function checkIfPublic(userID) {
     return isPublic
   } catch (err) {
     throw new Error(
-      'There was a problem in checking database for profile status: \n' + err,
+      'There was a problem in checking database for profile status: \n' + err.message,
     )
   }
 }
@@ -740,7 +749,7 @@ async function changeProfileStatus(userID, status) {
     }
   } catch (err) {
     throw new Error(
-      'There was a problem changing profile status within database: \n' + err,
+      'There was a problem changing profile status within database: \n' + err.message,
     )
   }
 }
@@ -756,8 +765,8 @@ async function addProfilePictureURL(key, userID) {
       url: rows[0].profile_picture,
     }
   } catch (err) {
-    console.log('Error within Database adding profile picture')
-    throw new Error('Error adding to database profile picture' + err)
+    console.log('Error within Database adding profile picture: \n' + err.message)
+    throw new Error('Error adding to database profile picture: \n' + err.message)
   }
 }
 
@@ -775,10 +784,10 @@ async function getProfilePictureURL(userID) {
   } catch (err) {
     console.log(
       'There was an error in retrieving the profile picture url from the database: \n' +
-        err,
+        err.message,
     )
     throw new Error(
-      'There was an error in retrieving the profile picture url from the database',
+      'There was an error in retrieving the profile picture url from the database: \n' +  err.message,
     )
   }
 }
@@ -793,10 +802,10 @@ async function getProfilePictureURLByUserName(userName) {
   } catch (err) {
     console.log(
       'There was an error in retrieving the profile picture by user name: \n' +
-        err,
+        err.message,
     )
     throw new Error(
-      'There was an error in retrieving the profile picture by user name \n',
+      'There was an error in retrieving the profile picture by user name: \n' + err.message
     )
   }
 }
@@ -810,10 +819,10 @@ async function editAboutMe(aboutMe, userID) {
     return rows[0]
   } catch (err) {
     console.log(
-      'There was an error updating user about me in database: \n' + err,
+      'There was an error updating user about me in database: \n' + err.message,
     )
     throw new Error(
-      '\n There was an error updating user about me in database: \n' + err,
+      '\n There was an error updating user about me in database: \n' + err.message,
     )
   }
 }

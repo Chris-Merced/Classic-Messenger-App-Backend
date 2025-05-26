@@ -41,6 +41,8 @@ async function createSession(req, res) {
 
     
 
+
+
     //if email address exists -> create session and send back cookie with session id
     //else send back email address in object -> add new username to object -> 
     ////if username exists -> send back error try again
