@@ -3,23 +3,33 @@ const pool = require('./pool')
 
 async function addUser(user) {
   try {
-    let { rows } = await pool.query(
+    let userNameData = await pool.query(
       'SELECT * FROM users WHERE username ILIKE $1',
       [user.username.trim()],
     )
-    if (rows[0]) {
+    if (userNameData.rows[0].username.toLowerCase() === user.username.trim().toLowerCase()) {
       console.log('User Already Exists')
       throw new Error('User Already Exists')
     }
+
+    let emailData = await pool.query('SELECT * FROM users WHERE email=$1', [
+      user.email.trim(),
+    ])
+
+    if (emailData.rows[0]) {
+      console.log('Email already in use')
+      throw new Error('Email Already In Use')
+    }
+
     await pool.query(
       'INSERT INTO users (username,password, email) VALUES ($1, $2, $3)',
-      [user.username.trim(), user.password, user.email],
+      [user.username.trim(), user.password, user.email.trim()],
     )
     const id = await getUserIDByUsername(user.username.trim())
     await addParticipant(1, id)
     return
   } catch (err) {
-    throw new Error('Error adding user: ' + err.message)
+    throw new Error(err.message)
   }
 }
 
@@ -383,16 +393,19 @@ async function getUserChats(userID) {
           )
 
           const created_at = createdAtQuery.rows[0]
-          
+
           if (!rows[0]) {
-            return { ...chat, is_read: true, created_at: 0}
+            return { ...chat, is_read: true, created_at: 0 }
           } else {
-            return { ...chat, is_read: rows[0].is_read, created_at: created_at.created_at }
+            return {
+              ...chat,
+              is_read: rows[0].is_read,
+              created_at: created_at.created_at,
+            }
           }
         }
       }),
     )
-
 
     return chatListComplete
   } catch (err) {
