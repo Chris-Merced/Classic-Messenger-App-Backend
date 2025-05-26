@@ -30,6 +30,13 @@ async function createSession(req, res) {
     console.log("Made it through token retrieval")
     console.log(tokenData);
 
+    //token needs to be sent back in order to gain email address
+    //if email address exists -> create session and send back cookie with session id
+    //else send back email address in object -> add new username to object -> 
+    ////if username exists -> send back error try again
+    ////else store username and email and create session -> send back cookie with session id
+    //make sure to give option to create password later if desired by user
+    
   } catch (err) {}
 }
 
