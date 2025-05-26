@@ -2,7 +2,6 @@ const db = require('../db/queries')
 const crypto = require('crypto')
 
 async function createSession(req, res) {
-  const state = crypto.randomUUID()
   const code = req.body.code
 
   if (!code) {
@@ -21,35 +20,63 @@ async function createSession(req, res) {
       }),
     })
 
-    const tokenData = await tokenRes.json();
+    const tokenData = await tokenRes.json()
 
-    if(tokenData.err){
-        return res.status(400).json({error: tokenData.error_description});
+    if (tokenData.err) {
+      return res.status(400).json({ error: tokenData.error_description })
     }
-    console.log("Made it through token retrieval")
+    console.log('Made it through token retrieval')
 
-    //token needs to be sent back in order to gain email address
-    const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: {
-        Authorization: `Bearer ${tokenData.access_token}`
-      }
-    })
+    const userRes = await fetch(
+      'https://www.googleapis.com/oauth2/v2/userinfo',
+      {
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+        },
+      },
+    )
 
     const { email } = await userRes.json()
 
-    console.log(email)
+    const emailStatus = await db.checkEmailExists(email)
+    if (email) {
+      //if email address exists -> create session and send back cookie with session id
+      const user = emailStatus
+      console.log("USER INFO")
+      console.log(user)
+      
+      
+      const sessionID = crypto.randomUUID()
+      await db.storeSession(user.id, sessionID)
 
-    
+      const sessionToken = {
+        sessionID: sessionID,
+      }
 
+      res.cookie('sessionToken', JSON.stringify(sessionToken), {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        maxAge: 86400 * 1000,
+      })
 
+      res.status(201).json({
+        username: user.username,
+        id: user.id,
+      })
 
-    //if email address exists -> create session and send back cookie with session id
-    //else send back email address in object -> add new username to object -> 
-    ////if username exists -> send back error try again
-    ////else store username and email and create session -> send back cookie with session id
+      console.log('cookie sent')
+    } else {
+      //else send back email address in object -> add new username to object ->
+      ////if username exists -> send back error try again
+      ////else store username and email and create session -> send back cookie with session id
+    }
+
     //make sure to give option to create password later if desired by user
-
-  } catch (err) {}
+  } catch (err) {
+    console.log('Error during OAuth: \n' + err.message)
+    throw new Error('Error during OAuth: \n' + err.message)
+  }
 }
 
 module.exports = { createSession }

@@ -114,9 +114,9 @@ async function checkEmailExists(email){
   try{
     const {rows} = await pool.query('SELECT * FROM users WHERE email=$1', [email])
     if (rows[0]){
-      return false
-    }else{
       return rows[0]
+    }else{
+      return false
     }
   }catch(err){
     console.log("Error checking if email already exists: \n" +  err.message)
@@ -866,4 +866,5 @@ module.exports = {
   getProfilePictureURLByUserName,
   editAboutMe,
   setIsRead,
+  checkEmailExists
 }
