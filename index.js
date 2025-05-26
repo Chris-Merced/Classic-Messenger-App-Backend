@@ -22,6 +22,9 @@ const {
   connectToRedis,
 } = require('./redisClient')
 
+
+//REMEMBER TO GAIN AUTHENTICATION FOR MESSAGE RETRIEVAL TO FRONT END
+
 //ID for redis tracking
 const currentServerId = process.env.DYNO || 'local-server'
 
