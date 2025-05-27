@@ -39,7 +39,7 @@ async function createSession(req, res) {
     const { email } = await userRes.json()
 
     const emailStatus = await db.checkEmailExists(email)
-    if (email) {
+    if (emailStatus) {
       //if email address exists -> create session and send back cookie with session id
       const user = emailStatus
       console.log("USER INFO")
@@ -67,6 +67,8 @@ async function createSession(req, res) {
 
       console.log('cookie sent')
     } else {
+      console.log("Made it to the negative")
+
       //else send back email address in object -> add new username to object ->
       ////if username exists -> send back error try again
       ////else store username and email and create session -> send back cookie with session id
