@@ -66,18 +66,12 @@ async function oauthLogin(req, res) {
 
       console.log('cookie sent')
     } else {
-      console.log('Made it to the negative')
-      res
-        .status(200)
-        .json({
-          status: 'signup incomplete',
-          message: 'Authentication passed but user is not in the system',
-          email: `${email}`,
-        })
-
       //else send back email address in object -> add new username to object ->
-      ////if username exists -> send back error try again
-      ////else store username and email and create session -> send back cookie with session id
+      res.status(200).json({
+        status: 'signup incomplete',
+        message: 'Authentication passed but user is not in the system',
+        email: `${email}`,
+      })
     }
 
     //make sure to give option to create password later if desired by user
@@ -89,6 +83,10 @@ async function oauthLogin(req, res) {
 
 async function oauthSignup(req, res) {
   try {
+    console.log(req.body)
+    ////if username exists -> send back error try again
+    ////else store username and email and create session -> send back cookie with session id
+
     console.log('made it to oauthSignup')
   } catch (err) {
     console.log(
