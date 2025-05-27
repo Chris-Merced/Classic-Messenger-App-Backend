@@ -12,7 +12,7 @@ async function addUser(user) {
       throw new Error('User Already Exists')
     }
 
-    let emailData = await pool.query('SELECT * FROM users WHERE email=$1', [
+    let emailData = await pool.query('SELECT * FROM users WHERE LOWER(email)=LOWER($1)', [
       user.email.trim(),
     ])
 
@@ -23,7 +23,7 @@ async function addUser(user) {
 
     await pool.query(
       'INSERT INTO users (username,password, email) VALUES ($1, $2, $3)',
-      [user.username.trim(), user.password, user.email.trim()],
+      [user.username.trim(), user.password, user.email.trim().toLowerCase()],
     )
     const id = await getUserIDByUsername(user.username.trim())
     await addParticipant(1, id)
@@ -37,8 +37,8 @@ async function addUser(user) {
 async function getUserIDByUsername(username) {
   try {
     const { rows } = await pool.query(
-      'SELECT id FROM users WHERE username=$1',
-      [username],
+      'SELECT id FROM users WHERE LOWER(username)=LOWER($1)',
+      [username.toLowerCase()],
     )
     if (rows[0]) {
       return rows[0].id
@@ -112,7 +112,7 @@ async function getUserBySession(token) {
 
 async function checkEmailExists(email){
   try{
-    const {rows} = await pool.query('SELECT * FROM users WHERE email=$1', [email])
+    const {rows} = await pool.query('SELECT * FROM users WHERE LOWER(email)=LOWER($1)', [email.toLowerCase()])
     if (rows[0]){
       return rows[0]
     }else{
