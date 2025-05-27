@@ -3,7 +3,8 @@ const oauthController = require('../controllers/oauthController')
 
 const oauthRouter = Router()
 
-oauthRouter.patch('/', oauthController.createSession)
+oauthRouter.patch('/', oauthController.oauthLogin)
+oauthRouter.post('/signup', oauthController.oauthSignup)
 
 
 

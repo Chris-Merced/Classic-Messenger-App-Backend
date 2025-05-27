@@ -1,7 +1,7 @@
 const db = require('../db/queries')
 const crypto = require('crypto')
 
-async function createSession(req, res) {
+async function oauthLogin(req, res) {
   const code = req.body.code
 
   if (!code) {
@@ -68,6 +68,8 @@ async function createSession(req, res) {
       console.log('cookie sent')
     } else {
       console.log("Made it to the negative")
+      res.status(200).json({status:"signup incomplete", message:"Authentication passed but user is not in the system", email: `${email}`})
+
 
       //else send back email address in object -> add new username to object ->
       ////if username exists -> send back error try again
@@ -77,8 +79,18 @@ async function createSession(req, res) {
     //make sure to give option to create password later if desired by user
   } catch (err) {
     console.log('Error during OAuth: \n' + err.message)
-    throw new Error('Error during OAuth: \n' + err.message)
+    res.status(500).json({error: "Error during OAuth Login"})
   }
 }
 
-module.exports = { createSession }
+
+async function oauthSignup(req, res){
+  try{
+    console.log("made it to oauthSignup")
+  }catch(err){
+    console.log("There was an error attempting to signup in the OAuth process: \n" +  err)
+    res.status(500).json({error: "Error in OAuth signup prcoess"})
+  }
+}
+
+module.exports = { oauthLogin, oauthSignup}
