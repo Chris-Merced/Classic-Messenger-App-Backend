@@ -1,5 +1,7 @@
 const { request } = require('express')
 const pool = require('./pool')
+const crypto = require('crypto')
+const argon2 = require('argon2')
 
 async function addUser(user) {
   try {
@@ -7,14 +9,18 @@ async function addUser(user) {
       'SELECT * FROM users WHERE username ILIKE $1',
       [user.username.trim()],
     )
-    if (userNameData.rows[0].username.toLowerCase() === user.username.trim().toLowerCase()) {
+    if (
+      userNameData.rows[0] && userNameData.rows[0].username.toLowerCase() ===
+      user.username.trim().toLowerCase()
+    ) {
       console.log('User Already Exists')
       throw new Error('User Already Exists')
     }
 
-    let emailData = await pool.query('SELECT * FROM users WHERE LOWER(email)=LOWER($1)', [
-      user.email.trim(),
-    ])
+    let emailData = await pool.query(
+      'SELECT * FROM users WHERE LOWER(email)=LOWER($1)',
+      [user.email.trim()],
+    )
 
     if (emailData.rows[0]) {
       console.log('Email already in use')
@@ -29,8 +35,30 @@ async function addUser(user) {
     await addParticipant(1, id)
     return
   } catch (err) {
-    console.log("Error attempting to add user: \n" +  err.message)
+    console.log('Error attempting to add user: \n' + err.message)
     throw new Error(err.message)
+  }
+}
+
+async function addUserOauth(email, username) {
+  try {
+    const tempPassword = crypto.randomUUID()
+    const hashedPassword = await argon2.hash(tempPassword)
+
+    const response = await pool.query(
+      'INSERT INTO users (username,password, email) VALUES ($1, $2, $3)',
+      [username.trim(), hashedPassword, email.trim().toLowerCase()],
+    )
+    const id = await getUserIDByUsername(username.trim())
+    await addParticipant(1, id)
+    return id;
+  } catch (err) {
+    console.log(
+      'Error adding user to database via OAuth method: \n' + err.message,
+    )
+    throw new Error(
+      'Error adding user to database via OAuth method: \n' + err.message,
+    )
   }
 }
 
@@ -80,7 +108,9 @@ async function getUsersByUsernameSearch(username) {
     return users
   } catch (err) {
     console.error('Problem getting users by username Search: \n' + err.message)
-    throw new Error('Problem getting users by username Search: \n' + err.message)
+    throw new Error(
+      'Problem getting users by username Search: \n' + err.message,
+    )
   }
 }
 
@@ -110,17 +140,39 @@ async function getUserBySession(token) {
   }
 }
 
-async function checkEmailExists(email){
-  try{
-    const {rows} = await pool.query('SELECT * FROM users WHERE LOWER(email)=LOWER($1)', [email.toLowerCase()])
-    if (rows[0]){
+async function checkEmailExists(email) {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM users WHERE LOWER(email)=LOWER($1)',
+      [email.trim().toLowerCase()],
+    )
+    if (rows[0]) {
       return rows[0]
-    }else{
+    } else {
       return false
     }
-  }catch(err){
-    console.log("Error checking if email already exists: \n" +  err.message)
-    throw new Error("Error checking if email already exists: \n" +  err.message)
+  } catch (err) {
+    console.log('Error checking if email already exists: \n' + err.message)
+    throw new Error('Error checking if email already exists: \n' + err.message)
+  }
+}
+
+async function checkUsernameExists(username) {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM users WHERE username ILIKE $1',
+      [username.trim()],
+    )
+    if (rows[0]) {
+      return true
+    } else {
+      return false
+    }
+  } catch (err) {
+    console.log(
+      'Error while checking if username exists in db: \n' + err.message,
+    )
+    throw new Error('Error checking username exists: \n' + err.message)
   }
 }
 
@@ -290,7 +342,8 @@ async function checkIfParticipant(data) {
       'Error Checking if User is a participant of conversation: \n' + err,
     )
     throw new Error(
-      'Error checking if user is a participant of conversation: \n' + err.message,
+      'Error checking if user is a participant of conversation: \n' +
+        err.message,
     )
   }
 }
@@ -303,7 +356,9 @@ async function addParticipant(conversation_id, user_id) {
     )
   } catch (err) {
     console.error('Error adding participant to conversation: \n' + err.message)
-    throw new Error('Error adding participant to conversation: \n' + err.message)
+    throw new Error(
+      'Error adding participant to conversation: \n' + err.message,
+    )
   }
 }
 
@@ -439,10 +494,12 @@ async function setIsRead(conversationID, recieverID) {
     )
   } catch (err) {
     console.log(
-      'There was an error in updating is_read within the database: \n ' + err.message,
+      'There was an error in updating is_read within the database: \n ' +
+        err.message,
     )
     throw new Error(
-      'There was an error in updating is_read within the database: \n' + err.message,
+      'There was an error in updating is_read within the database: \n' +
+        err.message,
     )
   }
 }
@@ -564,7 +621,9 @@ async function getFriendRequests(userID) {
     )
     return users
   } catch (err) {
-    throw new Error('Error when getting friend requests from database \n' + err.message)
+    throw new Error(
+      'Error when getting friend requests from database \n' + err.message,
+    )
   }
 }
 
@@ -612,8 +671,12 @@ async function denyFriend(userID, requestID) {
       [userID, requestID],
     )
   } catch (err) {
-    console.log('Error in database query while denying friend request: \n' +  err.message)
-    throw new Error('There was an error while denying friend request: \n' + err.message)
+    console.log(
+      'Error in database query while denying friend request: \n' + err.message,
+    )
+    throw new Error(
+      'There was an error while denying friend request: \n' + err.message,
+    )
   }
 }
 
@@ -635,7 +698,9 @@ async function removeFriend(userID, friendID) {
       larger,
     ])
   } catch (err) {
-    throw new Error('Error while removing friend from database: \n' + err.message)
+    throw new Error(
+      'Error while removing friend from database: \n' + err.message,
+    )
   }
 }
 
@@ -658,9 +723,13 @@ async function checkIfFriends(userID, friendID) {
     )
     return rows[0]
   } catch (err) {
-    console.log('There was an error in checking friend status in database: \n' +  err.message)
+    console.log(
+      'There was an error in checking friend status in database: \n' +
+        err.message,
+    )
     throw new Error(
-      'There was an error in checking friend status in database \n' + err.message,
+      'There was an error in checking friend status in database \n' +
+        err.message,
     )
   }
 }
@@ -677,8 +746,12 @@ async function getFriends(userID) {
 
     return friendsList
   } catch (err) {
-    console.log('Error in retrieval of user friends during query: \n' + err.message)
-    throw new Error('Error in retrieval of user friends during query: \n' + err.message)
+    console.log(
+      'Error in retrieval of user friends during query: \n' + err.message,
+    )
+    throw new Error(
+      'Error in retrieval of user friends during query: \n' + err.message,
+    )
   }
 }
 
@@ -689,8 +762,10 @@ async function blockUser(userID, blockedID) {
       blockedID,
     ])
   } catch (err) {
-    console.log('Error within blockUser function in database query: \n' + err.message)
-    throw new Error("Error while attempting to block user: \n" + err.message)
+    console.log(
+      'Error within blockUser function in database query: \n' + err.message,
+    )
+    throw new Error('Error while attempting to block user: \n' + err.message)
   }
 }
 
@@ -733,7 +808,8 @@ async function checkIfPublic(userID) {
     return isPublic
   } catch (err) {
     throw new Error(
-      'There was a problem in checking database for profile status: \n' + err.message,
+      'There was a problem in checking database for profile status: \n' +
+        err.message,
     )
   }
 }
@@ -755,7 +831,8 @@ async function changeProfileStatus(userID, status) {
     }
   } catch (err) {
     throw new Error(
-      'There was a problem changing profile status within database: \n' + err.message,
+      'There was a problem changing profile status within database: \n' +
+        err.message,
     )
   }
 }
@@ -771,8 +848,12 @@ async function addProfilePictureURL(key, userID) {
       url: rows[0].profile_picture,
     }
   } catch (err) {
-    console.log('Error within Database adding profile picture: \n' + err.message)
-    throw new Error('Error adding to database profile picture: \n' + err.message)
+    console.log(
+      'Error within Database adding profile picture: \n' + err.message,
+    )
+    throw new Error(
+      'Error adding to database profile picture: \n' + err.message,
+    )
   }
 }
 
@@ -793,7 +874,8 @@ async function getProfilePictureURL(userID) {
         err.message,
     )
     throw new Error(
-      'There was an error in retrieving the profile picture url from the database: \n' +  err.message,
+      'There was an error in retrieving the profile picture url from the database: \n' +
+        err.message,
     )
   }
 }
@@ -811,7 +893,8 @@ async function getProfilePictureURLByUserName(userName) {
         err.message,
     )
     throw new Error(
-      'There was an error in retrieving the profile picture by user name: \n' + err.message
+      'There was an error in retrieving the profile picture by user name: \n' +
+        err.message,
     )
   }
 }
@@ -828,7 +911,8 @@ async function editAboutMe(aboutMe, userID) {
       'There was an error updating user about me in database: \n' + err.message,
     )
     throw new Error(
-      '\n There was an error updating user about me in database: \n' + err.message,
+      '\n There was an error updating user about me in database: \n' +
+        err.message,
     )
   }
 }
@@ -866,5 +950,7 @@ module.exports = {
   getProfilePictureURLByUserName,
   editAboutMe,
   setIsRead,
-  checkEmailExists
+  checkEmailExists,
+  checkUsernameExists,
+  addUserOauth,
 }
