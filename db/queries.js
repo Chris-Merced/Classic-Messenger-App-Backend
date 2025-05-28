@@ -40,7 +40,7 @@ async function addUser(user) {
   }
 }
 
-async function addUserOauth(email, username) {
+async function addUserOAuth(email, username) {
   try {
     const tempPassword = crypto.randomUUID()
     const hashedPassword = await argon2.hash(tempPassword)
@@ -952,5 +952,5 @@ module.exports = {
   setIsRead,
   checkEmailExists,
   checkUsernameExists,
-  addUserOauth,
+  addUserOAuth,
 }

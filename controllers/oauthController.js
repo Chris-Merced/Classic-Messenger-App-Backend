@@ -88,7 +88,7 @@ async function oauthSignup(req, res) {
       res.status(409).json({error: "Username already exists"})
     }else{
 
-      const userID = await db.addUserOauth(req.body.email, req.body.username)
+      const userID = await db.addUserOAuth(req.body.email, req.body.username)
       
       const sessionID = crypto.randomUUID()
       await db.storeSession(userID, sessionID)
