@@ -40,10 +40,7 @@ async function oauthLogin(req, res) {
 
     const emailStatus = await db.checkEmailExists(email)
     if (emailStatus) {
-      //if email address exists -> create session and send back cookie with session id
       const user = emailStatus
-      console.log('USER INFO')
-      console.log(user)
 
       const sessionID = crypto.randomUUID()
       await db.storeSession(user.id, sessionID)
@@ -66,7 +63,6 @@ async function oauthLogin(req, res) {
 
       console.log('cookie sent')
     } else {
-      //else send back email address in object -> add new username to object ->
       res.status(200).json({
         status: 'signup incomplete',
         message: 'Authentication passed but user is not in the system',
@@ -74,7 +70,6 @@ async function oauthLogin(req, res) {
       })
     }
 
-    //make sure to give option to create password later if desired by user
   } catch (err) {
     console.log('Error during OAuth: \n' + err.message)
     res.status(500).json({ error: 'Error during OAuth Login' })
