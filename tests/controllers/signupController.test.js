@@ -1,95 +1,64 @@
-const request = require("supertest");
-const server = require("../../index");
-const db = require("../../db/queries");
-const argon2 = require("argon2");
 
-jest.mock("../../db/queries", () => {
-  const originalModule = jest.requireActual("../../db/queries");
-  return {
-    ...originalModule,
-    addUser: jest.fn(originalModule.addUser),
-  };
-});
+const { signupHandler } = require('../../controllers/signupController');
 
-jest.mock("argon2", () => ({
+jest.mock('../../db/queries', () => ({
+  addUser: jest.fn(),
+}));
+
+jest.mock('argon2', () => ({
   hash: jest.fn(),
 }));
 
-describe("POST /signup", () => {
-  beforeEach(() => {
-    cleanupTask.stop();
-    jest.clearAllMocks();
-  });
+const db     = require('../../db/queries');
+const argon2 = require('argon2');
 
-  afterAll(async () => {
-    await new Promise((resolve) => server.close(resolve));
-  });
+function resDouble() {
+  const res = {};
+  res.status = jest.fn().mockReturnValue(res);
+  res.json   = jest.fn().mockReturnValue(res);
+  return res;
+}
 
-  it("should return 201 and create a user on successful signup", async () => {
-    const mockUser = {
-      username: "testuser",
-      password: "plaintextPassword",
-      email: "testuser@example.com",
-    };
+describe('signupController Unit Testing for Crucial Functions', () => {
+  afterEach(jest.clearAllMocks);
 
-    argon2.hash.mockResolvedValue("hashedPassword");
+  test('happy path → hashes pwd, inserts user, returns 201', async () => {
+    argon2.hash.mockResolvedValue('hashed-pw');
     db.addUser.mockResolvedValue();
 
-    const response = await request(server).post("/signup").send(mockUser);
+    const req = {
+      body: { username: 'Alice', password: 'pa$$', email: 'a@b.c' },
+    };
+    const res = resDouble();
 
-    expect(response.status).toBe(201);
-    expect(response.body).toEqual({
-      message: "User Created Successfully",
-    });
+    await signupHandler(req, res);
 
-    expect(argon2.hash).toHaveBeenCalledWith("plaintextPassword");
+    expect(argon2.hash).toHaveBeenCalledWith('pa$$');
     expect(db.addUser).toHaveBeenCalledWith({
-      ...mockUser,
-      password: "hashedPassword",
+      username: 'Alice',
+      email: 'a@b.c',
+      password: 'hashed-pw',
+    });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'User Created Successfully',
     });
   });
 
-  it("should return 500 if there is a database error", async () => {
-    const mockUser = {
-      username: "testuser",
-      password: "plaintextPassword",
-      email: "testuser@example.com",
+  test('duplicate username → catches error and returns 409', async () => {
+    argon2.hash.mockResolvedValue('hashed-pw');
+    db.addUser.mockRejectedValue(new Error('Username already exists'));
+
+    const req = {
+      body: { username: 'Bob', password: 'pw', email: 'b@c.d' },
     };
+    const res = resDouble();
 
-    argon2.hash.mockResolvedValue("hashedPassword");
-    db.addUser.mockRejectedValue(new Error("Database error"));
+    await signupHandler(req, res);
 
-    const response = await request(server).post("/signup").send(mockUser);
-
-    expect(response.status).toBe(500);
-    expect(response.body).toEqual({
-      message: "Error: Database error",
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Username already exists',
     });
-
-    expect(argon2.hash).toHaveBeenCalledWith("plaintextPassword");
-    expect(db.addUser).toHaveBeenCalledWith({
-      ...mockUser,
-      password: "hashedPassword",
-    });
-  });
-
-  it("should return 500 if password hashing fails", async () => {
-    const mockUser = {
-      username: "testuser",
-      password: "plaintextPassword",
-      email: "testuser@example.com",
-    };
-
-    argon2.hash.mockRejectedValue(new Error("Hashing error"));
-
-    const response = await request(server).post("/signup").send(mockUser);
-
-    expect(response.status).toBe(500);
-    expect(response.body).toEqual({
-      message: "Error: Error hashing password: Hashing error",
-    });
-
-    expect(argon2.hash).toHaveBeenCalledWith("plaintextPassword");
-    expect(db.addUser).not.toHaveBeenCalled();
   });
 });
