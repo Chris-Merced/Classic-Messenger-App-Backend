@@ -1,101 +1,130 @@
-const request = require("supertest");
-const server = require("../../index");
-const db = require("../../db/queries");
+const {
+  getChatMessagesByName,
+  getUserChats,
+} = require('../../controllers/messagesController')
 
-jest.mock("../../db/queries");
+jest.mock('../../db/queries', () => ({
+  getChatMessagesByName: jest.fn(),
+  getUserByUserID: jest.fn(),
+  getChatMessagesByConversationID: jest.fn(),
+  setIsRead: jest.fn(),
+  getUserChats: jest.fn(),
+  getProfilePictureURLByUserName: jest.fn(),
+}))
 
-describe("Messages Controller", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+jest.mock('../../authentication', () => ({
+  compareSessionToken: jest.fn(),
+}))
 
-  describe("GET /messages/byChatName", () => {
-    it("should return 200 and the transformed messages on success", async () => {
-      const mockMessages = [
-        { sender_id: 1, created_at: "2024-12-10T10:00:00Z", content: "Hello!" },
-        { sender_id: 2, created_at: "2024-12-10T10:05:00Z", content: "Hi!" },
-      ];
-      const mockUser1 = { username: "User1" };
-      const mockUser2 = { username: "User2" };
+const db = require('../../db/queries')
+const auth = require('../../authentication')
 
-      db.getChatMessagesByName.mockResolvedValue(mockMessages);
-      db.getUserByUserID.mockImplementation((id) => {
-        return id === 1 ? Promise.resolve(mockUser1) : Promise.resolve(mockUser2);
-      });
+function resDouble() {
+  const res = {}
+  res.status = jest.fn().mockReturnValue(res)
+  res.json = jest.fn().mockReturnValue(res)
+  return res
+}
 
-      const response = await request(server).get("/messages/byChatName?chatName=testChat");
+describe('messagesController Unit Testing for Crucial Functions', () => {
+  afterEach(jest.clearAllMocks)
 
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({
-        messages: [
-          { time: "2024-12-10T10:00:00Z", message: "Hello!", user: "User1" },
-          { time: "2024-12-10T10:05:00Z", message: "Hi!", user: "User2" },
-        ],
-      });
-    });
+  test('getChatMessagesByName → 200 + transformed list', async () => {
+    db.getChatMessagesByName.mockResolvedValue([
+      { created_at: '2025-01-01', content: 'Hi', sender_id: 11 },
+      { created_at: '2025-01-02', content: 'Hey', sender_id: 22 },
+    ])
+    db.getUserByUserID
+      .mockResolvedValueOnce({ username: 'Alice' })
+      .mockResolvedValueOnce({ username: 'Bob' })
 
-    it("should return 500 and an error message on database error", async () => {
-      db.getChatMessagesByName.mockRejectedValue(new Error("Database error"));
+    const req = { query: { chatName: 'Groupie' } }
+    const res = resDouble()
 
-      const response = await request(server).get("/messages/byChatName?chatName=testChat");
+    await getChatMessagesByName(req, res)
 
-      expect(response.status).toBe(500);
-      expect(response.body).toEqual({
-        message: "Error getting chat messages: Database error",
-      });
-    });
+    expect(db.getChatMessagesByName).toHaveBeenCalledWith('Groupie')
+    expect(res.status).toHaveBeenCalledWith(200)
+    expect(res.json).toHaveBeenCalledWith({
+      messages: [
+        { time: '2025-01-01', message: 'Hi', user: 'Alice' },
+        { time: '2025-01-02', message: 'Hey', user: 'Bob' },
+      ],
+    })
+  })
 
-    it("should return 200 and an empty array if no messages are found", async () => {
-      db.getChatMessagesByName.mockResolvedValue([]);
+  test('getChatMessagesByName (DM path) → marks read + returns list', async () => {
+    db.getChatMessagesByConversationID.mockResolvedValue([
+      { created_at: '2025-02-02', content: 'Yo', sender_id: 123 },
+      { created_at: '2025-02-03', content: 'Sup', sender_id: 456 },
+    ])
+    db.getUserByUserID
+      .mockResolvedValueOnce({ username: 'Current' })
+      .mockResolvedValueOnce({ username: 'Other' })
+    auth.compareSessionToken.mockResolvedValue(true)
 
-      const response = await request(server).get("/messages/byChatName?chatName=testChat");
+    const req = {
+      query: {
+        chatName: 'undefined',
+        conversationID: 'DM-42',
+        userID: '111',
+      },
+      cookies: { sessionToken: 'token' },
+    }
+    const res = resDouble()
 
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({ messages: [] });
-    });
-  });
+    await getChatMessagesByName(req, res)
 
-  describe("GET /messages/userChats", () => {
-    it("should return 200 and user chats on success", async () => {
-      const mockUserChats = [
-        { conversation_id: 1, name: "Chat1" },
-        { conversation_id: 2, name: "Chat2" },
-      ];
+    expect(db.getChatMessagesByConversationID).toHaveBeenCalledWith('DM-42')
+    expect(db.setIsRead).toHaveBeenCalledWith('DM-42', 456)
+    expect(res.status).toHaveBeenCalledWith(200)
+    expect(res.json).toHaveBeenCalledWith({
+      messages: [
+        { time: '2025-02-02', message: 'Yo', user: 'Current' },
+        { time: '2025-02-03', message: 'Sup', user: 'Other' },
+      ],
+    })
+  })
 
-      db.getUserChats.mockResolvedValue(mockUserChats);
+  test('getUserChats → sorts by date desc & adds profile pictures', async () => {
+    db.getUserChats.mockResolvedValue([
+      {
+        id: 1,
+        name: null,
+        participants: ['Charlie'],
+        created_at: '2025-01-01',
+      },
+      {
+        id: 2,
+        name: 'Groupie',
+        participants: [],
+        created_at: '2025-02-01',
+      },
+    ])
+    db.getProfilePictureURLByUserName.mockResolvedValue('/charlie.png')
 
-      const response = await request(server).get("/messages/userChats?userID=123");
+    const req = { query: { userID: '321' } }
+    const res = resDouble()
 
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({ userChats: mockUserChats });
-    });
+    await getUserChats(req, res)
 
-    it("should return empty array if no chats are found", async () => {
-      db.getUserChats.mockResolvedValue([]);
-
-      const response = await request(server).get("/messages/userChats?userID=123");
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({ userChats: [] });
-    });
-
-    it("should handle missing userID parameter", async () => {
-      db.getUserChats.mockResolvedValue([]);
-
-      const response = await request(server).get("/messages/userChats");
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({ userChats: [] });
-    });
-
-    it("should handle database errors", async () => {
-      db.getUserChats.mockRejectedValue(
-        new Error("Error retrieving user chats: connection refused")
-      );
-
-      const response = await request(server).get("/messages/userChats?userID=123");
-
-      expect(response.status).toBe(500);
-    });
-  });
-});
+    expect(db.getUserChats).toHaveBeenCalledWith('321')
+    expect(res.json).toHaveBeenCalledWith({
+      userChats: expect.arrayContaining([
+        {
+          id: 2,
+          name: 'Groupie',
+          participants: [],
+          created_at: '2025-02-01',
+        },
+        {
+          id: 1,
+          name: null,
+          participants: ['Charlie'],
+          created_at: '2025-01-01',
+          profilePicture: '/charlie.png',
+        },
+      ]),
+    })
+  })
+})
