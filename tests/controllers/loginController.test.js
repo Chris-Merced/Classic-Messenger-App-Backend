@@ -21,7 +21,7 @@ afterEach(() => {
   jest.clearAllMocks()
 })
 
-describe('loginHandler - minimal unit tests', () => {
+describe('loginHandler Unit Testing for Crucial Functions ', () => {
   test('valid credentials → sets cookie, stores session, returns 201', async () => {
     db.getUserByUsername.mockResolvedValue({
       id: 42,

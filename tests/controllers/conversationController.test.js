@@ -32,7 +32,7 @@ afterEach(() => {
   jest.clearAllMocks()
 })
 
-describe('conversationController (unit)', () => {
+describe('conversationController Unit Testing for Crucial Functions', () => {
   test('returns 200 + id when profile is public', async () => {
     db.checkIfPublic.mockResolvedValue(true)
     db.checkDirectMessageConversationExists.mockResolvedValue(77)

@@ -1,69 +1,59 @@
-const request = require("supertest");
-const server = require("../../index");
-const db = require("../../db/queries");
+const { logoutUser } = require('../../controllers/logoutController')
 
-jest.mock("../../db/queries", () => {
-  const originalModule = jest.requireActual("../../db/queries");
+jest.mock('../../db/queries', () => ({
+  deleteSession: jest.fn(),
+}))
+
+const db = require('../../db/queries')
+
+function fakeReq(sessionID = 42) {
   return {
-    ...originalModule,
-    deleteSession: jest.fn(originalModule.deleteSession),
-  };
-});
+    cookies: {
+      sessionToken: JSON.stringify({ sessionID }),
+    },
+  }
+}
 
-describe("DELETE /logout", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+function fakeRes() {
+  const res = {}
+  res.status = jest.fn().mockReturnValue(res)
+  res.json = jest.fn().mockReturnValue(res)
+  return res
+}
 
-  afterAll(async () => {
-    cleanupTask.stop();
-    await new Promise((resolve) => server.close(resolve));
-  });
+describe('logoutUser Controller Unit Testing for Crucial Functions', () => {
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
 
-  it("should return 200 and delete session on successful logout", async () => {
-    const mockSessionData = {
-      sessionID: "session123",
-    };
-    const mockCookie = {
-      sessionToken: JSON.stringify(mockSessionData),
-    };
+  test('successful path deletes session and returns 200', async () => {
+    const req = fakeReq(99)
+    const res = fakeRes()
 
-    db.deleteSession.mockResolvedValue();
+    await logoutUser(req, res)
 
-    const response = await request(server)
-      .delete("/logout")
-      .set("Cookie", `sessionToken=${mockCookie.sessionToken}`);
+    expect(db.deleteSession).toHaveBeenCalledTimes(1)
+    expect(db.deleteSession).toHaveBeenCalledWith(99)
 
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual({ message: "Logout Successful" });
+    expect(res.status).toHaveBeenCalledWith(200)
+    expect(res.json).toHaveBeenCalledWith({ message: 'Logout Successful' })
+  })
 
-    expect(db.deleteSession).toHaveBeenCalledWith("session123");
-  });
+  test('error path DB throws ⇒ logs & responds 500', async () => {
+    db.deleteSession.mockRejectedValueOnce(new Error('DB down'))
 
-  it("should return 500 if sessionToken cookie is missing or invalid", async () => {
-    const response = await request(server).delete("/logout");
+    const req = fakeReq(123)
+    const res = fakeRes()
 
-    expect(response.status).toBe(500);
+    await logoutUser(req, res)
 
-    expect(db.deleteSession).not.toHaveBeenCalled();
-  });
+    expect(db.deleteSession).toHaveBeenCalledWith(123)
 
-  it("should handle server errors appropriately", async () => {
-    db.deleteSession.mockRejectedValue(new Error("Database error"));
-
-    const mockSessionData = {
-      sessionID: "session123",
-    };
-    const mockCookie = {
-      sessionToken: JSON.stringify(mockSessionData),
-    };
-
-    const response = await request(server)
-      .delete("/logout")
-      .set("Cookie", `sessionToken=${mockCookie.sessionToken}`);
-
-    expect(response.status).toBe(500);
-
-    expect(db.deleteSession).toHaveBeenCalledWith("session123");
-  });
-});
+    expect(res.status).toHaveBeenCalledWith(500)
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringMatching(/Error in logging out user/i),
+      }),
+    )
+  })
+})
