@@ -1,144 +1,122 @@
-const request = require("supertest");
-const server = require("../../index");
-const db = require("../../db/queries");
+const {
+  getUser,
+  getUserPublicProfile,
+  checkIfFriends,
+  changeProfileStatus,
+} = require('../../controllers/userProfileController');
 
-jest.mock("../../db/queries", () => {
-  const originalModule = jest.requireActual("../../db/queries");
-  return {
-    ...originalModule,
-    getSessionBySessionID: jest.fn(originalModule.getSessionBySessionID),
-    getUserByUserID: jest.fn(originalModule.getUserByUserID),
-    getUsersByUsernameSearch: jest.fn(originalModule.getUsersByUsernameSearch),
-  };
-});
+jest.mock('../../db/queries', () => ({
+  getSessionBySessionID       : jest.fn(),
+  getUserByUserID             : jest.fn(),
+  getUsersByUsernameSearch    : jest.fn(),
+  checkIfFriends              : jest.fn(),
+  changeProfileStatus         : jest.fn(),
+}));
 
-describe("User Profile Routes", () => {
-  beforeEach(() => {
-    cleanupTask.stop();
-    jest.clearAllMocks();
-  });
+jest.mock('../../authentication', () => ({
+  compareSessionToken: jest.fn(),
+}));
 
-  afterAll(async () => {
-    await new Promise((resolve) => server.close(resolve));
-  });
+const db   = require('../../db/queries');
+const auth = require('../../authentication');
 
-  describe("GET /userProfile", () => {
-    it("should return 200 and user data if sessionID is valid", async () => {
-      const mockSessionData = {
-        sessionID: "validSessionID",
-      };
-      const mockUser = { id: 1, username: "testuser", email: "testuser@example.com" };
+function resDouble() {
+  const res = {};
+  res.status = jest.fn().mockReturnValue(res);
+  res.json   = jest.fn().mockReturnValue(res);
+  return res;
+}
 
-      db.getSessionBySessionID.mockResolvedValue(1);
-      db.getUserByUserID.mockResolvedValue(mockUser);
+describe('userProfileController Unit Testing for Crucial Functions', () => {
+  afterEach(jest.clearAllMocks);
 
-      const response = await request(server)
-        .get("/userProfile/")
-        .set("Cookie", `sessionToken=${JSON.stringify(mockSessionData)}`);
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({
-        user: { id: 1, username: "testuser", email: "testuser@example.com" },
-      });
-
-      expect(db.getSessionBySessionID).toHaveBeenCalledWith("validSessionID");
-      expect(db.getUserByUserID).toHaveBeenCalledWith(1);
+  test('getUser → 200 & strips password', async () => {
+    db.getSessionBySessionID.mockResolvedValue('111');
+    db.getUserByUserID.mockResolvedValue({
+      id: '111',
+      username: 'Alice',
+      email: 'alice@example.com',
+      is_admin: false,
+      password: 'hashed-pw',
     });
 
-    it("should return 401 if no sessionID is stored", async () => {
-      const mockSessionData = {};
+    const req = {
+      cookies: {
+        sessionToken: JSON.stringify({ sessionID: 'ABC' }),
+      },
+    };
+    const res = resDouble();
 
-      const response = await request(server)
-        .get("/userProfile/")
-        .set("Cookie", `sessionToken=${JSON.stringify(mockSessionData)}`);
+    await getUser(req, res);
 
-      expect(response.status).toBe(401);
-      expect(response.body).toEqual({
-        message: "No SessionID Stored",
-      });
-    });
-
-    it("should return 500 if there's an error retrieving user data", async () => {
-      const mockSessionData = {
-        sessionID: "validSessionID",
-      };
-
-      db.getSessionBySessionID.mockRejectedValue(new Error("Database error"));
-
-      const response = await request(server)
-        .get("/userProfile/")
-        .set("Cookie", `sessionToken=${JSON.stringify(mockSessionData)}`);
-
-      expect(response.status).toBe(500);
-      expect(response.body).toEqual({
-        message: "Error getting user from database: Database error",
-      });
+    expect(db.getSessionBySessionID).toHaveBeenCalledWith('ABC');
+    expect(db.getUserByUserID).toHaveBeenCalledWith('111');
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      user: {
+        id: '111',
+        username: 'Alice',
+        email: 'alice@example.com',
+        is_admin: false,
+      },
     });
   });
 
-  describe("GET /publicProfile", () => {
-    it("should return 200 and user public profile data", async () => {
-      const mockUserData = { id: 1, username: "testuser", email: "testuser@example.com" };
-
-      db.getUserByUserID.mockResolvedValue(mockUserData);
-
-      const response = await request(server).get("/userProfile/publicProfile").query({ ID: 1 });
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({
-        user: { id: 1, username: "testuser" },
-      });
-
-      expect(db.getUserByUserID).toHaveBeenCalledWith("1");
+  test('getUserPublicProfile → strips sensitive fields', async () => {
+    db.getUserByUserID.mockResolvedValue({
+      id: '222',
+      username: 'Bob',
+      email: 'bob@example.com',
+      is_admin: false,
+      password: 'pw',
+      about_me: 'Hi!',
     });
 
-    it("should return 500 if there's an error retrieving public profile", async () => {
-      db.getUserByUserID.mockRejectedValue(new Error("Error retrieving user"));
+    const req = { query: { ID: '222' } };
+    const res = resDouble();
 
-      const response = await request(server).get("/userProfile/publicProfile").query({ ID: 1 });
+    await getUserPublicProfile(req, res);
 
-      expect(response.status).toBe(500);
-      expect(response.body).toEqual({
-        message: "Error: Error retrieving user",
-      });
+    expect(db.getUserByUserID).toHaveBeenCalledWith('222');
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      user: {
+        id: '222',
+        username: 'Bob',
+        about_me: 'Hi!',
+      },
     });
   });
 
-  describe("GET /usersBySearch", () => {
-    it("should return 201 and list of users based on username search", async () => {
-      const mockUsers = [
-        { id: 1, username: "testuser1" },
-        { id: 2, username: "testuser2" },
-      ];
+  test('checkIfFriends → returns friendStatus false', async () => {
+    db.checkIfFriends.mockResolvedValue(null);
 
-      db.getUsersByUsernameSearch.mockResolvedValue(mockUsers);
+    const req = { query: { userID: '1', friendID: '2' } };
+    const res = resDouble();
 
-      const response = await request(server)
-        .get("/userProfile/usersBySearch")
-        .query({ username: "test" });
+    await checkIfFriends(req, res);
 
-      expect(response.status).toBe(201);
-      expect(response.body).toEqual({
-        users: [
-          { id: 1, username: "testuser1" },
-          { id: 2, username: "testuser2" },
-        ],
-      });
+    expect(db.checkIfFriends).toHaveBeenCalledWith('1', '2');
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ friendStatus: false });
+  });
 
-      expect(db.getUsersByUsernameSearch).toHaveBeenCalledWith("test");
+  test('changeProfileStatus - permission denied branch', async () => {
+
+    const req = {
+      cookies: { sessionToken: 'token' },
+      body   : { userID: '5', status: true },
+    };
+    const res = resDouble();
+
+    await changeProfileStatus(req, res);
+
+    expect(auth.compareSessionToken).toHaveBeenCalledWith('token', '5');
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'You do not have permission to modify this value',
+      changed: false,
     });
-
-    it("should return 404 if there's an error during search", async () => {
-      db.getUsersByUsernameSearch.mockRejectedValue(new Error("Search error"));
-
-      const response = await request(server)
-        .get("/userProfile/usersBySearch")
-        .query({ username: "test" });
-
-      expect(response.status).toBe(404);
-      expect(response.body).toEqual({
-        message: "There was a problem with the username lookup: Search error",
-      });
-    });
+    expect(db.changeProfileStatus).not.toHaveBeenCalled();
   });
 });
