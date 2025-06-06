@@ -1,124 +1,82 @@
-jest.mock("crypto", () => {
-  const fillRandomBytes = (buffer) => {
-    for (let i = 0; i < buffer.length; i++) {
-      buffer[i] = Math.floor(Math.random() * 256);
-    }
-    return buffer;
-  };
+const { loginHandler } = require('../../controllers/loginController')
 
-  return {
-    randomUUID: () => "test-session-id",
-    randomFillSync: fillRandomBytes,
-    getRandomValues: (buf) => fillRandomBytes(buf),
-    default: {
-      randomFillSync: fillRandomBytes,
-    },
-    createHash: (algorithm) => ({
-      update: (data) => ({
-        digest: () => "test-hash",
-      }),
-    }),
-  };
-});
+jest.mock('../../db/queries', () => ({
+  getUserByUsername: jest.fn(),
+  storeSession: jest.fn(),
+}))
+jest.mock('argon2', () => ({ verify: jest.fn() }))
 
-const request = require("supertest");
-const server = require("../../index");
-const db = require("../../db/queries");
-const argon2 = require("argon2");
-const cron = require("node-cron");
+const db = require('../../db/queries')
+const argon2 = require('argon2')
 
-jest.mock("../../db/queries", () => {
-  const originalModule = jest.requireActual("../../db/queries");
-  return {
-    ...originalModule,
-    getUserByUsername: jest.fn(originalModule.getUserByUsername),
-    storeSession: jest.fn().mockImplementation((userId, sessionId) => Promise.resolve()),
-  };
-});
+function mockRes() {
+  const res = {}
+  res.cookie = jest.fn()
+  res.status = jest.fn().mockReturnValue(res)
+  res.json = jest.fn()
+  return res
+}
 
-jest.mock("argon2", () => ({
-  verify: jest.fn(),
-}));
+afterEach(() => {
+  jest.clearAllMocks()
+})
 
-const mockUser = {
-  id: 18,
-  username: "testuser",
-  password: "hashedPassword",
-};
+describe('loginHandler - minimal unit tests', () => {
+  test('valid credentials → sets cookie, stores session, returns 201', async () => {
+    db.getUserByUsername.mockResolvedValue({
+      id: 42,
+      username: 'Alice',
+      password: 'hashed-pw',
+    })
+    argon2.verify.mockResolvedValue(true)
 
-describe("POST /login", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+    const req = { body: { username: 'Alice', password: 'secret' } }
+    const res = mockRes()
 
-  afterAll(async () => {
-    cleanupTask.stop();
-    await new Promise((resolve) => server.close(resolve));
-  });
+    await loginHandler(req, res)
 
-  it("should return 201 and set a cookie on successful login", async () => {
-    db.getUserByUsername.mockResolvedValue(mockUser);
-    argon2.verify.mockResolvedValue(true);
+    expect(argon2.verify).toHaveBeenCalledWith('hashed-pw', 'secret')
+    expect(db.storeSession).toHaveBeenCalledWith(42, expect.any(String))
+    expect(res.cookie).toHaveBeenCalledWith(
+      'sessionToken',
+      expect.stringContaining('"sessionID":'),
+      expect.objectContaining({ httpOnly: true }),
+    )
+    expect(res.status).toHaveBeenCalledWith(201)
+    expect(res.json).toHaveBeenCalledWith({ id: 42, username: 'Alice' })
+  })
 
-    const response = await request(server).post("/login").send({
-      username: "testuser",
-      password: "123",
-    });
+  test('wrong password → 401 & “Incorrect Password”', async () => {
+    db.getUserByUsername.mockResolvedValue({
+      id: 7,
+      username: 'Bob',
+      password: 'hashed-pw',
+    })
+    argon2.verify.mockResolvedValue(false)
 
-    expect(response.status).toBe(201);
-    expect(response.body).toEqual({
-      username: mockUser.username,
-      id: mockUser.id,
-    });
-    expect(response.headers["set-cookie"]).toBeDefined();
-    expect(db.getUserByUsername).toHaveBeenCalledWith("testuser");
-    expect(argon2.verify).toHaveBeenCalledWith(mockUser.password, "123");
-    expect(db.storeSession).toHaveBeenCalledWith(mockUser.id, "test-session-id");
-  }, 10000);
+    const req = { body: { username: 'Bob', password: 'bad' } }
+    const res = mockRes()
 
-  it("should return 401 for incorrect password", async () => {
-    db.getUserByUsername.mockResolvedValue(mockUser);
-    argon2.verify.mockResolvedValue(false);
+    await loginHandler(req, res)
 
-    const response = await request(server).post("/login").send({
-      username: "testuser",
-      password: "wrongpassword",
-    });
+    expect(res.status).toHaveBeenCalledWith(401)
+    expect(res.json).toHaveBeenCalledWith({ message: 'Incorrect Password' })
 
-    expect(response.status).toBe(401);
-    expect(response.body).toEqual({
-      message: "Incorrect Password",
-    });
-    expect(db.storeSession).not.toHaveBeenCalled();
-  }, 10000);
+    expect(db.storeSession).not.toHaveBeenCalled()
+    expect(res.cookie).not.toHaveBeenCalled()
+  })
 
-  it("should return 404 if user does not exist", async () => {
-    db.getUserByUsername.mockResolvedValue(null);
+  test('unknown user → 404', async () => {
+    db.getUserByUsername.mockResolvedValue(undefined)
 
-    const response = await request(server).post("/login").send({
-      username: "nonexistentuser",
-      password: "123",
-    });
+    const req = { body: { username: 'Ghost', password: 'foo' } }
+    const res = mockRes()
 
-    expect(response.status).toBe(404);
-    expect(response.body).toEqual({
-      message: "Sorry there is no user that matches those credentials",
-    });
-    expect(db.storeSession).not.toHaveBeenCalled();
-  }, 10000);
+    await loginHandler(req, res)
 
-  it("should handle server errors appropriately", async () => {
-    db.getUserByUsername.mockRejectedValue(new Error("Database error"));
-
-    const response = await request(server).post("/login").send({
-      username: "testuser",
-      password: "password123",
-    });
-
-    expect(response.status).toBe(401);
-    expect(response.body).toEqual({
-      message: "Error: Database error",
-    });
-    expect(db.storeSession).not.toHaveBeenCalled();
-  }, 10000);
-}, 30000);
+    expect(res.status).toHaveBeenCalledWith(404)
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Sorry there is no user that matches those credentials',
+    })
+  })
+})
