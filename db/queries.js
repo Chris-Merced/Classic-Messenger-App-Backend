@@ -764,7 +764,25 @@ async function checkIfFriends(userID, friendID) {
 async function getFriends(userID) {
   try {
     const { rows } = await pool.query(
-      'SELECT friend_id AS id FROM friends WHERE user_id=$1 UNION SELECT user_id AS id FROM friends WHERE friend_id=$1',
+      `(
+        SELECT 
+          friend_id AS id 
+        FROM 
+          friends 
+        WHERE 
+          user_id=$1 
+      )
+
+      UNION 
+      
+      ( 
+        SELECT 
+          user_id AS id 
+        FROM 
+          friends 
+        WHERE 
+          friend_id=$1
+      )`,
       [userID],
     )
     const friendsList = rows.map((row) => {
