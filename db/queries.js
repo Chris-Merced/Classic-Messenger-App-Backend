@@ -442,7 +442,18 @@ async function getChatMessagesByConversationID(conversationID, page, limit) {
 async function getUserChats(userID) {
   try {
     const { rows } = await pool.query(
-      'SELECT conversation_participants.conversation_id, conversations.is_group, conversations.name FROM conversation_participants JOIN conversations ON conversations.id = conversation_participants.conversation_id WHERE user_id = $1',
+      `
+        SELECT 
+          conversation_participants.conversation_id, 
+          conversations.is_group, 
+          conversations.name 
+        FROM 
+          conversation_participants 
+        JOIN 
+          conversations ON conversations.id = conversation_participants.conversation_id 
+        WHERE 
+          user_id = $1
+        `,
       [userID],
     )
 
