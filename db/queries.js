@@ -424,7 +424,25 @@ async function getChatMessagesByConversationID(conversationID, page, limit) {
     console.log(limit)
 
     const { rows } = await pool.query(
-      'SELECT * FROM (SELECT * FROM messages WHERE conversation_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3) AS page ORDER BY created_at ASC',
+      `
+      SELECT * 
+      FROM 
+        (
+          SELECT * 
+          FROM 
+            messages 
+          WHERE 
+            conversation_id = $1
+          ORDER BY 
+            created_at 
+          DESC LIMIT $2 OFFSET $3
+        ) 
+      AS 
+        page 
+      ORDER BY 
+        created_at 
+      ASC
+      `,
       [conversationID, limit, offset],
     )
     console.log(rows)
