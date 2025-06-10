@@ -10,8 +10,9 @@ async function addUser(user) {
       [user.username.trim()],
     )
     if (
-      userNameData.rows[0] && userNameData.rows[0].username.toLowerCase() ===
-      user.username.trim().toLowerCase()
+      userNameData.rows[0] &&
+      userNameData.rows[0].username.toLowerCase() ===
+        user.username.trim().toLowerCase()
     ) {
       console.log('User Already Exists')
       throw new Error('User Already Exists')
@@ -51,7 +52,7 @@ async function addUserOAuth(email, username) {
     )
     const id = await getUserIDByUsername(username.trim())
     await addParticipant(1, id)
-    return id;
+    return id
   } catch (err) {
     console.log(
       'Error adding user to database via OAuth method: \n' + err.message,

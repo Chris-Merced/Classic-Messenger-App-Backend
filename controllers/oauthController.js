@@ -69,7 +69,6 @@ async function oauthLogin(req, res) {
         email: `${email}`,
       })
     }
-
   } catch (err) {
     console.log('Error during OAuth: \n' + err.message)
     res.status(500).json({ error: 'Error during OAuth Login' })
@@ -79,12 +78,11 @@ async function oauthLogin(req, res) {
 async function oauthSignup(req, res) {
   try {
     const usernameExists = await db.checkUsernameExists(req.body.username)
-    if(usernameExists){
-      res.status(409).json({error: "Username already exists"})
-    }else{
-
+    if (usernameExists) {
+      res.status(409).json({ error: 'Username already exists' })
+    } else {
       const userID = await db.addUserOAuth(req.body.email, req.body.username)
-      
+
       const sessionID = crypto.randomUUID()
       await db.storeSession(userID, sessionID)
 
@@ -98,13 +96,12 @@ async function oauthSignup(req, res) {
         sameSite: 'none',
         maxAge: 86400 * 1000,
       })
-      
+
       res.status(201).json({
         username: req.body.username,
         id: userID,
-        message: "User Successfully Added"
+        message: 'User Successfully Added',
       })
-
     }
 
     console.log('made it to oauthSignup')

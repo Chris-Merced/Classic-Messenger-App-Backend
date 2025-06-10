@@ -6,8 +6,4 @@ const oauthRouter = Router()
 oauthRouter.patch('/', oauthController.oauthLogin)
 oauthRouter.post('/signup', oauthController.oauthSignup)
 
-
-
-
-
 module.exports = oauthRouter
