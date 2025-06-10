@@ -667,7 +667,13 @@ async function addFriend(userID, requestID) {
     )
 
     await pool.query(
-      'DELETE FROM friend_requests WHERE (user_id = $1 AND request_id = $2) OR (user_id = $2 AND request_id=$1)',
+      `
+      DELETE FROM 
+        friend_requests 
+      WHERE 
+        (user_id = $1 AND request_id = $2)
+      OR 
+        (user_id = $2 AND request_id=$1)`,
       [userID, requestID],
     )
   } catch (err) {
