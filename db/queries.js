@@ -432,11 +432,9 @@ async function getChatMessagesByConversationID(conversationID, page, limit) {
       )
       return
     }
-    console.log(page)
+    
     const offset = page * 20
-    console.log(offset)
-    console.log(limit)
-
+    
     const { rows } = await pool.query(
       `
       SELECT * 
