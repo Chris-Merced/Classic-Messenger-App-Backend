@@ -132,7 +132,16 @@ async function getUserByUserID(userID) {
 async function getUserBySession(token) {
   try {
     const { rows } = await pool.query(
-      'SELECT users.username FROM users JOIN sessions ON users.id=sessions.user_id WHERE session_id = $1',
+      `
+      SELECT 
+        users.username 
+      FROM 
+        users 
+      JOIN 
+        sessions ON users.id=sessions.user_id 
+      WHERE 
+        session_id = $1
+      `,
       [token],
     )
     return rows[0]
