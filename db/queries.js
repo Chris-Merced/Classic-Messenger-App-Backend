@@ -223,7 +223,12 @@ async function getSessionBySessionID(sessionID) {
 async function storeSession(userID, sessionID) {
   try {
     await pool.query(
-      "INSERT INTO sessions (session_id, user_id, created_at, expires_at) VALUES ($1, $2, NOW(), NOW() + INTERVAL '1 day')",
+      `
+      INSERT INTO 
+        sessions (session_id, user_id, created_at, expires_at) 
+      VALUES 
+        ($1, $2, NOW(), NOW() + INTERVAL '1 day')
+      `,
       [sessionID, userID],
     )
     return
@@ -441,7 +446,7 @@ async function getChatMessagesByConversationID(conversationID, page, limit) {
         page 
       ORDER BY 
         created_at 
-      ASC
+        ASC
       `,
       [conversationID, limit, offset],
     )
