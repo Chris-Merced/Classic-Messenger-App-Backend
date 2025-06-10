@@ -8,7 +8,7 @@ async function getChatMessagesByName(req, res) {
       req.query.chatName !== 'undefined' &&
       req.query.chatName !== 'null'
     ) {
-      const messages = await db.getChatMessagesByName(req.query.chatName)
+      const messages = await db.getChatMessagesByName(req.query.chatName, req.query.page, req.query.limit)
 
       const newMessages = await Promise.all(
         messages.map(async (message) => {
@@ -32,7 +32,7 @@ async function getChatMessagesByName(req, res) {
       let recieverID = null
 
       const messages = await db.getChatMessagesByConversationID(
-        req.query.conversationID,
+        req.query.conversationID, req.query.page, req.query.limit
       )
       if (isValid) {
         const newMessages = await Promise.all(

@@ -395,10 +395,10 @@ async function addMessage(data) {
   }
 }
 
-async function getChatMessagesByName(name) {
+async function getChatMessagesByName(name, page, limit) {
   try {
     const conversation = await getConversationByName(name)
-    const rows = await getChatMessagesByConversationID(conversation.id)
+    const rows = await getChatMessagesByConversationID(conversation.id, page, limit)
     return rows
   } catch (err) {
     console.error('Error retrieving messages from database: \n ' + err.message)
@@ -406,7 +406,7 @@ async function getChatMessagesByName(name) {
   }
 }
 
-async function getChatMessagesByConversationID(conversationID) {
+async function getChatMessagesByConversationID(conversationID, page, limit) {
   try {
     if (!conversationID || conversationID === 'undefined') {
       console.log(
@@ -414,10 +414,16 @@ async function getChatMessagesByConversationID(conversationID) {
       )
       return
     }
+    console.log(page)
+    const offset = page*20
+    console.log(offset)
+    console.log(limit)
+
     const { rows } = await pool.query(
-      'SELECT * FROM messages WHERE conversation_id = $1 ORDER BY created_at',
-      [conversationID],
+      'SELECT * FROM (SELECT * FROM messages WHERE conversation_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3) AS page ORDER BY created_at ASC',
+      [conversationID, limit, offset],
     )
+    console.log(rows)
     return rows
   } catch (err) {
     console.error(
