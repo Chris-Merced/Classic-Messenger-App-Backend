@@ -398,7 +398,11 @@ async function addMessage(data) {
 async function getChatMessagesByName(name, page, limit) {
   try {
     const conversation = await getConversationByName(name)
-    const rows = await getChatMessagesByConversationID(conversation.id, page, limit)
+    const rows = await getChatMessagesByConversationID(
+      conversation.id,
+      page,
+      limit,
+    )
     return rows
   } catch (err) {
     console.error('Error retrieving messages from database: \n ' + err.message)
@@ -415,7 +419,7 @@ async function getChatMessagesByConversationID(conversationID, page, limit) {
       return
     }
     console.log(page)
-    const offset = page*20
+    const offset = page * 20
     console.log(offset)
     console.log(limit)
 
@@ -496,7 +500,17 @@ async function setIsRead(conversationID, recieverID) {
     const isTrue = true
 
     const response = await pool.query(
-      'UPDATE messages SET is_read=$1 WHERE id = (SELECT id FROM messages WHERE conversation_id=$2 AND sender_id = $3 ORDER BY id DESC LIMIT 1)',
+      `
+      UPDATE 
+        messages 
+      SET 
+        is_read=$1 
+      WHERE id = ( 
+            SELECT id 
+            FROM messages 
+            WHERE conversation_id=$2 AND sender_id = $3 
+            ORDER BY id 
+            DESC LIMIT 1)`,
       [isTrue, conversationID, recieverID],
     )
   } catch (err) {
