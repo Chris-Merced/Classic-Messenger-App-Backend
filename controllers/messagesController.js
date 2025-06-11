@@ -70,8 +70,12 @@ async function getChatMessagesByName(req, res) {
 
 async function getUserChats(req, res) {
   try {
-    const userChatsWithoutProfilePictures = await db.getUserChats(
-      req.query.userID,
+
+    const page = req.query.page;
+    const limit = req.query.limit;
+    const userID = req.query.userID
+
+    const userChatsWithoutProfilePictures = await db.getUserChats(userID, page, limit
     )
     const userChats = await Promise.all(
       userChatsWithoutProfilePictures.map(async (chat) => {

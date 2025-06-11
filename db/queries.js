@@ -457,7 +457,6 @@ async function getChatMessagesByConversationID(conversationID, page, limit) {
       `,
       [conversationID, limit, offset],
     )
-    console.log(rows)
     return rows
   } catch (err) {
     console.error(
@@ -469,8 +468,12 @@ async function getChatMessagesByConversationID(conversationID, page, limit) {
   }
 }
 
-async function getUserChats(userID) {
+async function getUserChats(userID, page, limit) {
   try {
+
+    
+    const offset = page*16
+
     const { rows } = await pool.query(
       `
         SELECT 
@@ -483,8 +486,10 @@ async function getUserChats(userID) {
           conversations ON conversations.id = conversation_participants.conversation_id 
         WHERE 
           user_id = $1
+        LIMIT $2
+        OFFSET $3
         `,
-      [userID],
+      [userID, limit, offset],
     )
 
     const chatList = await Promise.all(
