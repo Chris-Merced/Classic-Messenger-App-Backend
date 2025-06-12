@@ -95,17 +95,23 @@ async function getUserByUsername(username) {
   }
 }
 
-async function getUsersByUsernameSearch(username) {
+async function getUsersByUsernameSearch(username, page, limit) {
   try {
+    const offset = page*limit
+
+    console.log(offset)
+    console.log(page)
+    console.log(limit)
     const { rows } = await pool.query(
-      'SELECT * FROM USERS WHERE username ILIKE $1',
-      [`%${username}%`],
+      'SELECT * FROM USERS WHERE username ILIKE $1 LIMIT $2 OFFSET $3',
+      [`%${username}%`, limit, offset],
     )
     const users = rows.map((row) => {
       const { id, username } = row
       const newRow = { id, username }
       return newRow
     })
+    console.log(users)
     return users
   } catch (err) {
     console.error('Problem getting users by username Search: \n' + err.message)
@@ -433,7 +439,7 @@ async function getChatMessagesByConversationID(conversationID, page, limit) {
       return
     }
     
-    const offset = page * 20
+    const offset = page * limit
     
     const { rows } = await pool.query(
       `
@@ -472,7 +478,7 @@ async function getUserChats(userID, page, limit) {
   try {
 
     
-    const offset = page*16
+    const offset = page*limit
 
     const { rows } = await pool.query(
       `
