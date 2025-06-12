@@ -97,11 +97,8 @@ async function getUserByUsername(username) {
 
 async function getUsersByUsernameSearch(username, page, limit) {
   try {
-    const offset = page*limit
+    const offset = page * limit
 
-    console.log(offset)
-    console.log(page)
-    console.log(limit)
     const { rows } = await pool.query(
       'SELECT * FROM USERS WHERE username ILIKE $1 LIMIT $2 OFFSET $3',
       [`%${username}%`, limit, offset],
@@ -111,7 +108,6 @@ async function getUsersByUsernameSearch(username, page, limit) {
       const newRow = { id, username }
       return newRow
     })
-    console.log(users)
     return users
   } catch (err) {
     console.error('Problem getting users by username Search: \n' + err.message)
@@ -438,9 +434,9 @@ async function getChatMessagesByConversationID(conversationID, page, limit) {
       )
       return
     }
-    
+
     const offset = page * limit
-    
+
     const { rows } = await pool.query(
       `
       SELECT * 
@@ -476,9 +472,7 @@ async function getChatMessagesByConversationID(conversationID, page, limit) {
 
 async function getUserChats(userID, page, limit) {
   try {
-
-    
-    const offset = page*limit
+    const offset = page * limit
 
     const { rows } = await pool.query(
       `

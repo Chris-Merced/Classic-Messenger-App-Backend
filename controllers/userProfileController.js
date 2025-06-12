@@ -45,11 +45,14 @@ async function getUserPublicProfile(req, res) {
 
 async function getUsersBySearch(req, res) {
   try {
-
     const page = req.query.page
     const limit = req.query.limit
 
-    const users = await db.getUsersByUsernameSearch(req.query.username, page, limit)
+    const users = await db.getUsersByUsernameSearch(
+      req.query.username,
+      page,
+      limit,
+    )
     res.status(201).json({ users: users })
   } catch (err) {
     console.error('Error getting users during search' + err.message)
