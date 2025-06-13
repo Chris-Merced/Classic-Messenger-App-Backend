@@ -376,9 +376,9 @@ async function getMutualFriends(req, res){
     const profileID = req.query.profileID
     console.log(userID)
     console.log(profileID)
-    //const res =  await db.getMutualFriends(userID, profileID)
+    const data =  await db.getMutualFriends(userID, profileID)
 
-    //res.status(200).json(res)
+    res.status(200).json(data)
   }catch(err){
     console.log("There was an error in retrieving mutual friends: \n" + err)
     res.status(500).json("Could not retrieve mutual friends")

@@ -1031,6 +1031,47 @@ async function editAboutMe(aboutMe, userID) {
   }
 }
 
+async function getMutualFriends(userID, profileID) {
+  try {
+    const { rows } = await pool.query(`
+      WITH user1_friends AS (
+        SELECT friend_id AS friend
+        FROM friends
+        WHERE user_id = $1
+        UNION
+        SELECT user_id AS friend
+        FROM friends
+        WHERE friend_id = $1
+      ),
+      user2_friends AS (
+        SELECT friend_id AS friend
+        FROM friends
+        WHERE user_id = $2
+        UNION
+        SELECT user_id AS friend
+        FROM friends
+        WHERE friend_id = $2
+      )
+      SELECT u.id, u.username, u.profile_picture
+      FROM users u
+      JOIN (
+        SELECT friend FROM user1_friends
+        INTERSECT
+        SELECT friend FROM user2_friends
+      ) mutual ON mutual.friend = u.id
+      `, [userID, profileID])
+      
+      return rows
+  } catch (err) {
+    console.log(
+      'There was an error in retrieving mutual friends: \n' + err.message,
+    )
+    throw new Error(
+      'There was an error in retrieving mutual friends: \n' + err.message,
+    )
+  }
+}
+
 module.exports = {
   addUser,
   getUserByUsername,
@@ -1067,4 +1108,5 @@ module.exports = {
   checkEmailExists,
   checkUsernameExists,
   addUserOAuth,
+  getMutualFriends,
 }
