@@ -35,5 +35,6 @@ userProfileRouter.post(
   userProfileController.changeProfilePicture,
 )
 userProfileRouter.patch('/aboutMe', userProfileController.editAboutMe)
+userProfileRouter.get('/mutualFriends', userProfileController.getMutualFriends)
 
 module.exports = userProfileRouter

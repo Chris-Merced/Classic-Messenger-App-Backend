@@ -370,6 +370,21 @@ async function editAboutMe(req, res) {
   }
 }
 
+async function getMutualFriends(req, res){
+  try{
+    const userID = req.query.userID
+    const profileID = req.query.profileID
+    console.log(userID)
+    console.log(profileID)
+    //const res =  await db.getMutualFriends(userID, profileID)
+
+    //res.status(200).json(res)
+  }catch(err){
+    console.log("There was an error in retrieving mutual friends: \n" + err)
+    res.status(500).json("Could not retrieve mutual friends")
+  }
+}
+
 module.exports = {
   getUser,
   getUserPublicProfile,
@@ -389,4 +404,5 @@ module.exports = {
   changeProfileStatus,
   changeProfilePicture,
   editAboutMe,
+  getMutualFriends,
 }
