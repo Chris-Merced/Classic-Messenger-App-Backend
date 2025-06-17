@@ -534,22 +534,6 @@ async function getUserChats(userID, page, limit) {
             [chat.conversation_id, id],
           )
 
-          const createdAtQuery = await pool.query(
-            `
-            SELECT 
-              created_at 
-            FROM 
-              messages 
-            WHERE 
-              conversation_id = $1 
-            ORDER BY 
-              id 
-            DESC LIMIT 1
-            `,
-            [chat.conversation_id],
-          )
-
-          const created_at = createdAtQuery.rows[0]
 
           if (!rows[0]) {
             return { ...chat, is_read: true, created_at: 0 }
@@ -557,13 +541,12 @@ async function getUserChats(userID, page, limit) {
             return {
               ...chat,
               is_read: rows[0].is_read,
-              created_at: created_at.created_at,
             }
           }
         }
       }),
     )
-
+    console.log(chatListComplete)
     return chatListComplete
   } catch (err) {
     console.error('Error retrieving user chats: \n' + err.message)
