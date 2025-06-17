@@ -571,15 +571,6 @@ async function getUserChats(userID, page, limit) {
   }
 }
 
-async function getUserChatsRedux(userID, page, limit) {
-  try {
-  } catch (err) {
-    console.log(
-      'There was an error in retrieving the user chats: \n' + err.message,
-    )
-    throw new Error('Error retrieving user chats: \n' + err.message)
-  }
-}
 
 async function setIsRead(conversationID, recieverID) {
   try {
