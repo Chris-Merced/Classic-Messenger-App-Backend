@@ -509,7 +509,7 @@ async function getUserChats(userID, page, limit) {
       }),
     )
 
-    const chatListComplete = await Promise.all(
+    const chatListIsRead = await Promise.all(
       chatList.map(async (chat) => {
         if (chat.name || chat.participants.length > 1) {
           return { ...chat, is_read: true }
@@ -534,7 +534,6 @@ async function getUserChats(userID, page, limit) {
             [chat.conversation_id, id],
           )
 
-
           if (!rows[0]) {
             return { ...chat, is_read: true, created_at: 0 }
           } else {
@@ -546,14 +545,26 @@ async function getUserChats(userID, page, limit) {
         }
       }),
     )
-    console.log(chatListComplete)
-    return chatListComplete
+    console.log(page)
+    console.log(chatListIsRead)
+    if (page == 0) {
+      console.log("amde it")
+      for (let i = 0; i < chatListIsRead.length; i++) {
+        if (chatListIsRead[i].name) {
+          console.log("conditional suceeced")
+          const chat = chatListIsRead[i]
+          chatListIsRead.splice(i, 1)
+          chatListIsRead.splice(0, 0, chat)
+        }
+      }
+    }
+    console.log(chatListIsRead)
+    return chatListIsRead
   } catch (err) {
     console.error('Error retrieving user chats: \n' + err.message)
     throw new Error('Error retrieving user chats: \n' + err.message)
   }
 }
-
 
 async function setIsRead(conversationID, recieverID) {
   try {
