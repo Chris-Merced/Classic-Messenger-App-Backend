@@ -519,7 +519,7 @@ async function getUserChats(userID, page, limit) {
           const { rows } = await pool.query(
             `
             SELECT 
-              is_read, created_at 
+              is_read 
             FROM 
               messages 
             WHERE 
