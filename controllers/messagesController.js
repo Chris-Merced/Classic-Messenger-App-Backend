@@ -89,7 +89,6 @@ async function getUserChats(req, res) {
       }),
     )
 
-    userChats.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     res.status(200).json({ userChats: userChats })
   } catch (err) {
     console.error('Error getting user chats: ' + err.message)

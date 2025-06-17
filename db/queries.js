@@ -474,20 +474,27 @@ async function getUserChats(userID, page, limit) {
   try {
     const offset = page * limit
 
+    console.log(limit)
+
     const { rows } = await pool.query(
       `
         SELECT 
-          conversation_participants.conversation_id, 
-          conversations.is_group, 
-          conversations.name 
-        FROM 
-          conversation_participants 
-        JOIN 
-          conversations ON conversations.id = conversation_participants.conversation_id 
-        WHERE 
-          user_id = $1
+          cp.conversation_id, 
+          c.is_group, 
+          c.name,
+          m.latest_created_at
+        FROM conversation_participants cp
+        JOIN conversations c 
+        ON c.id = cp.conversation_id
+        JOIN (
+          SELECT conversation_id, MAX(created_at) AS latest_created_at
+          FROM messages
+          GROUP BY conversation_id
+        ) m ON m.conversation_id = cp.conversation_id
+        WHERE cp.user_id = $1
+        ORDER BY m.latest_created_at DESC
         LIMIT $2
-        OFFSET $3
+        OFFSET $3;
         `,
       [userID, limit, offset],
     )
@@ -560,6 +567,16 @@ async function getUserChats(userID, page, limit) {
     return chatListComplete
   } catch (err) {
     console.error('Error retrieving user chats: \n' + err.message)
+    throw new Error('Error retrieving user chats: \n' + err.message)
+  }
+}
+
+async function getUserChatsRedux(userID, page, limit) {
+  try {
+  } catch (err) {
+    console.log(
+      'There was an error in retrieving the user chats: \n' + err.message,
+    )
     throw new Error('Error retrieving user chats: \n' + err.message)
   }
 }
@@ -1033,7 +1050,8 @@ async function editAboutMe(aboutMe, userID) {
 
 async function getMutualFriends(userID, profileID) {
   try {
-    const { rows } = await pool.query(`
+    const { rows } = await pool.query(
+      `
       WITH user1_friends AS (
         SELECT friend_id AS friend
         FROM friends
@@ -1059,9 +1077,11 @@ async function getMutualFriends(userID, profileID) {
         INTERSECT
         SELECT friend FROM user2_friends
       ) mutual ON mutual.friend = u.id
-      `, [userID, profileID])
-      
-      return rows
+      `,
+      [userID, profileID],
+    )
+
+    return rows
   } catch (err) {
     console.log(
       'There was an error in retrieving mutual friends: \n' + err.message,
