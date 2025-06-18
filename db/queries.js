@@ -474,7 +474,6 @@ async function getUserChats(userID, page, limit) {
   try {
     const offset = page * limit
 
-    console.log(limit)
 
     const { rows } = await pool.query(
       `
@@ -775,7 +774,6 @@ async function denyFriend(userID, requestID) {
 
 async function removeFriend(userID, friendID) {
   try {
-    console.log(userID, friendID)
     let smaller = null
     let larger = null
     if (userID < friendID) {

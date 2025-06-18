@@ -399,8 +399,6 @@ async function getMutualFriends(req, res) {
   try {
     const userID = req.query.userID
     const profileID = req.query.profileID
-    console.log(userID)
-    console.log(profileID)
     const data = await db.getMutualFriends(userID, profileID)
 
     res.status(200).json(data)
