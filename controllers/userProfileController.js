@@ -103,7 +103,7 @@ async function getFriendRequests(req, res) {
 }
 
 async function checkFriendRequestSent(req, res){
-  req
+  return
 }
 
 async function addFriend(req, res) {
