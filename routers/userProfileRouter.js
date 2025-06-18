@@ -12,6 +12,7 @@ userProfileRouter.get(
 userProfileRouter.get('/usersBySearch', userProfileController.getUsersBySearch)
 userProfileRouter.post('/friendRequest', userProfileController.addFriendRequest)
 userProfileRouter.get('/friendRequest', userProfileController.getFriendRequests)
+userProfileRouter.get('/friendRequestSent', userProfileController.checkFriendRequestSent)
 userProfileRouter.post('/addFriend', userProfileController.addFriend)
 userProfileRouter.delete('/denyFriend', userProfileController.denyFriend)
 userProfileRouter.get('/checkIfFriends', userProfileController.checkIfFriends)

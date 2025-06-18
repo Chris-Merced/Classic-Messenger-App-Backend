@@ -96,14 +96,35 @@ async function getFriendRequests(req, res) {
     }
   } catch (err) {
     console.log('Error while attempting to get Friend Requests: \n' + err)
-    res.status(404).json({
+    res.status(500).json({
       message: 'Error while attempting to get Friend Requests \n' + err,
     })
   }
 }
 
-async function checkFriendRequestSent(req, res){
-  return
+async function checkFriendRequestSent(req, res) {
+  try {
+    const sessionToken = req.cookies.sessionToken
+
+    const authenticated = await authentication.compareSessionToken(
+      sessionToken,
+      req.query.userID,
+    )
+    if (authenticated) {
+      const userID = req.query.userID
+      console.log("made it")
+      res.status(200).json({message: "You diod it"})
+    } else {
+      res.status(403).json('You Do Not Have Permission To View This Data')
+    }
+  } catch (err) {
+    console.log('Error checking if friend request has been sent: \n' + err)
+    res
+      .status(500)
+      .json({
+        message: 'Error checking if friend request has been sent: \n' + err,
+      })
+  }
 }
 
 async function addFriend(req, res) {
@@ -374,18 +395,18 @@ async function editAboutMe(req, res) {
   }
 }
 
-async function getMutualFriends(req, res){
-  try{
+async function getMutualFriends(req, res) {
+  try {
     const userID = req.query.userID
     const profileID = req.query.profileID
     console.log(userID)
     console.log(profileID)
-    const data =  await db.getMutualFriends(userID, profileID)
+    const data = await db.getMutualFriends(userID, profileID)
 
     res.status(200).json(data)
-  }catch(err){
-    console.log("There was an error in retrieving mutual friends: \n" + err)
-    res.status(500).json("Could not retrieve mutual friends")
+  } catch (err) {
+    console.log('There was an error in retrieving mutual friends: \n' + err)
+    res.status(500).json('Could not retrieve mutual friends')
   }
 }
 
@@ -409,4 +430,5 @@ module.exports = {
   changeProfilePicture,
   editAboutMe,
   getMutualFriends,
+  checkFriendRequestSent,
 }
