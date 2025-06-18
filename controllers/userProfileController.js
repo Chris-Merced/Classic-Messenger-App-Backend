@@ -65,10 +65,10 @@ async function getUsersBySearch(req, res) {
 async function addFriendRequest(req, res) {
   try {
     const sessionToken = req.cookies.sessionToken
-
+    console.log(sessionToken)
     const authenticated = await authentication.compareSessionToken(
       sessionToken,
-      req.query.userID,
+      req.body.userID,
     )
     if (authenticated) {
       const userID = req.body.userID
@@ -115,7 +115,6 @@ async function getFriendRequests(req, res) {
 async function checkFriendRequestSent(req, res) {
   try {
     const sessionToken = req.cookies.sessionToken
-
     const authenticated = await authentication.compareSessionToken(
       sessionToken,
       req.query.userID,
@@ -124,8 +123,8 @@ async function checkFriendRequestSent(req, res) {
       const userID = req.query.userID
       const profileID = req.query.profileID
       const requestSent = await db.checkFriendRequestSent(userID, profileID)
-      console.log('made it')
-      res.status(200).json({ message: 'You diod it' })
+      
+      res.status(200).json(requestSent)
     } else {
       res.status(403).json('You Do Not Have Permission To View This Data')
     }

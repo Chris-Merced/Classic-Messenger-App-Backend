@@ -694,7 +694,7 @@ async function addFriendRequestToDatabase(userID, profileID) {
 async function getFriendRequests(userID) {
   try {
     const { rows } = await pool.query(
-      'SELECT * FROM friend_requests WHERE request_id = $1',
+      'SELECT * FROM friend_requests WHERE request_id=$1',
       [userID],
     )
     const users = await Promise.all(
@@ -715,7 +715,12 @@ async function getFriendRequests(userID) {
 
 async function checkFriendRequestSent(userID, profileID){
 try{
-  const {rows} = await pool.query("SELECT * FROM friend_requests WHERE user_id=$1 AND request_id=$2")
+  const {rows} = await pool.query("SELECT * FROM friend_requests WHERE user_id=$1 AND request_id=$2", [userID, profileID])
+  if(rows[0]){
+    return true
+  }else{
+    return false
+  }
 }catch(err){
   console.log("Error in database checking friend request: \n" +  err.message)
   throw new Error("Error in database checking friend request: \n" + err.message)
