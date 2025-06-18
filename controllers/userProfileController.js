@@ -102,6 +102,10 @@ async function getFriendRequests(req, res) {
   }
 }
 
+async function checkFriendRequestSent(req, res){
+  req
+}
+
 async function addFriend(req, res) {
   try {
     const userID = req.body.userID

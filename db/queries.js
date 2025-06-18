@@ -545,20 +545,15 @@ async function getUserChats(userID, page, limit) {
         }
       }),
     )
-    console.log(page)
-    console.log(chatListIsRead)
     if (page == 0) {
-      console.log("amde it")
       for (let i = 0; i < chatListIsRead.length; i++) {
         if (chatListIsRead[i].name) {
-          console.log("conditional suceeced")
           const chat = chatListIsRead[i]
           chatListIsRead.splice(i, 1)
           chatListIsRead.splice(0, 0, chat)
         }
       }
     }
-    console.log(chatListIsRead)
     return chatListIsRead
   } catch (err) {
     console.error('Error retrieving user chats: \n' + err.message)
