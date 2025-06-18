@@ -64,11 +64,21 @@ async function getUsersBySearch(req, res) {
 
 async function addFriendRequest(req, res) {
   try {
-    const userID = req.body.userID
-    const profileID = req.body.profileID
+    const sessionToken = req.cookies.sessionToken
 
-    const response = await db.addFriendRequestToDatabase(userID, profileID)
-    res.status(200).json({ message: response })
+    const authenticated = await authentication.compareSessionToken(
+      sessionToken,
+      req.query.userID,
+    )
+    if (authenticated) {
+      const userID = req.body.userID
+      const profileID = req.body.profileID
+
+      const response = await db.addFriendRequestToDatabase(userID, profileID)
+      res.status(200).json({ message: response })
+    } else {
+      res.status(403).json('You Do Not Have Permission To View This Data')
+    }
   } catch (err) {
     console.log(
       'There was an error adding Friend Request to Database: \n' + err,
@@ -112,18 +122,18 @@ async function checkFriendRequestSent(req, res) {
     )
     if (authenticated) {
       const userID = req.query.userID
-      console.log("made it")
-      res.status(200).json({message: "You diod it"})
+      const profileID = req.query.profileID
+      const requestSent = await db.checkFriendRequestSent(userID, profileID)
+      console.log('made it')
+      res.status(200).json({ message: 'You diod it' })
     } else {
       res.status(403).json('You Do Not Have Permission To View This Data')
     }
   } catch (err) {
     console.log('Error checking if friend request has been sent: \n' + err)
-    res
-      .status(500)
-      .json({
-        message: 'Error checking if friend request has been sent: \n' + err,
-      })
+    res.status(500).json({
+      message: 'Error checking if friend request has been sent: \n' + err,
+    })
   }
 }
 

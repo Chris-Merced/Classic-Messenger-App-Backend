@@ -713,6 +713,15 @@ async function getFriendRequests(userID) {
   }
 }
 
+async function checkFriendRequestSent(userID, profileID){
+try{
+  const {rows} = await pool.query("SELECT * FROM friend_requests WHERE user_id=$1 AND request_id=$2")
+}catch(err){
+  console.log("Error in database checking friend request: \n" +  err.message)
+  throw new Error("Error in database checking friend request: \n" + err.message)
+}
+}
+
 async function addFriend(userID, requestID) {
   let smaller = null
   let larger = null
@@ -1070,6 +1079,7 @@ async function getMutualFriends(userID, profileID) {
   }
 }
 
+
 module.exports = {
   addUser,
   getUserByUsername,
@@ -1088,6 +1098,7 @@ module.exports = {
   checkDirectMessageConversationExists,
   addFriendRequestToDatabase,
   getFriendRequests,
+  checkFriendRequestSent,
   addFriend,
   denyFriend,
   checkIfFriends,
