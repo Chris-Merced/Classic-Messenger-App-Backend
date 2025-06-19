@@ -18,9 +18,12 @@ async function getUser(req, res) {
       if (!user) {
         return res.status(404).json({ message: 'User not found' })
       }
-
+      const friendRequests = await db.getFriendRequests(userID)
       const { password, ...userWithoutPassword } = user
-      res.status(200).json({ user: userWithoutPassword })
+      const userObject =  {...userWithoutPassword, friendRequests}
+      console.log(userObject)
+
+      res.status(200).json({ user: userObject })
     } else {
       return res.status(401).json({ message: 'No SessionID Stored' })
     }
