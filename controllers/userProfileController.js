@@ -21,7 +21,6 @@ async function getUser(req, res) {
       const friendRequests = await db.getFriendRequests(userID)
       const { password, ...userWithoutPassword } = user
       const userObject =  {...userWithoutPassword, friendRequests}
-      console.log(userObject)
 
       res.status(200).json({ user: userObject })
     } else {

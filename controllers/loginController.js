@@ -26,6 +26,7 @@ async function loginHandler(req, res) {
         res.status(201).json({
           username: user.username,
           id: user.id,
+          verified: true,
         })
 
         console.log('cookie sent')
