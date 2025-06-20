@@ -700,7 +700,7 @@ async function getFriendRequests(userID) {
     const users = await Promise.all(
       rows.map(async (friendRequest) => {
         const user = await getUserByUserID(friendRequest.user_id)
-        const { password, email, is_admin, created_at, ...strippedUser } = user
+        const { password, email, is_admin, created_at, about_me, is_public, profile_picture, ...strippedUser } = user
 
         return strippedUser
       }),
