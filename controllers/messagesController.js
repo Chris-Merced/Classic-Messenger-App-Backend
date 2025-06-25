@@ -52,7 +52,8 @@ async function getChatMessagesByName(req, res) {
         if (recieverID) {
           await db.setIsRead(req.query.conversationID, recieverID)
         }
-        res.status(200).json({ messages: newMessages })
+        console.log(recieverID)
+        res.status(200).json({ recieverID: recieverID, messages: newMessages })
       } else {
         throw new Error('No chat name or conversation ID detected')
       }
