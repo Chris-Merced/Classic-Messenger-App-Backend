@@ -29,7 +29,6 @@ async function getChatMessagesByName(req, res) {
         req.query.userID,
       )
       let checkID = req.query.userID
-      let recieverID = null
 
       const messages = await db.getChatMessagesByConversationID(
         req.query.conversationID, req.query.page, req.query.limit
@@ -38,9 +37,6 @@ async function getChatMessagesByName(req, res) {
         const newMessages = await Promise.all(
           messages.map(async (message) => {
             const userObject = await db.getUserByUserID(message.sender_id)
-            if (message.sender_id != req.query.userID) {
-              recieverID = message.sender_id
-            }
             return {
               time: message.created_at,
               message: message.content,
@@ -48,12 +44,10 @@ async function getChatMessagesByName(req, res) {
             }
           }),
         )
-
-        if (recieverID) {
-          await db.setIsRead(req.query.conversationID, recieverID)
-        }
-        console.log(recieverID)
-        res.status(200).json({ recieverID: recieverID, messages: newMessages })
+        
+       const recieverIDReal = await db.getUserIDByConversationID(req.query.conversationID, req.query.userID)
+      
+        res.status(200).json({ recieverID: recieverIDReal, messages: newMessages })
       } else {
         throw new Error('No chat name or conversation ID detected')
       }

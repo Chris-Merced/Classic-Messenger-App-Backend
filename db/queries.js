@@ -470,10 +470,29 @@ async function getChatMessagesByConversationID(conversationID, page, limit) {
   }
 }
 
+async function getUserIDByConversationID(conversationID, userID) {
+  try {
+    const {rows} = await pool.query(
+      'SELECT user_id FROM conversation_participants WHERE conversation_id=$1 AND user_id!=$2',
+      [conversationID, userID],
+    )
+
+    if(rows[0]){
+      return rows[0].user_id 
+    }else{
+      return false;
+    }
+  } catch (err) {
+    console.log('Error getting user id by conversation id: \n' + err.message)
+    throw new Error(
+      'Error getting user id by conversation id: \n' + err.message,
+    )
+  }
+}
+
 async function getUserChats(userID, page, limit) {
   try {
     const offset = page * limit
-
 
     const { rows } = await pool.query(
       `
@@ -700,7 +719,16 @@ async function getFriendRequests(userID) {
     const users = await Promise.all(
       rows.map(async (friendRequest) => {
         const user = await getUserByUserID(friendRequest.user_id)
-        const { password, email, is_admin, created_at, about_me, is_public, profile_picture, ...strippedUser } = user
+        const {
+          password,
+          email,
+          is_admin,
+          created_at,
+          about_me,
+          is_public,
+          profile_picture,
+          ...strippedUser
+        } = user
 
         return strippedUser
       }),
@@ -713,18 +741,23 @@ async function getFriendRequests(userID) {
   }
 }
 
-async function checkFriendRequestSent(userID, profileID){
-try{
-  const {rows} = await pool.query("SELECT * FROM friend_requests WHERE user_id=$1 AND request_id=$2", [userID, profileID])
-  if(rows[0]){
-    return true
-  }else{
-    return false
+async function checkFriendRequestSent(userID, profileID) {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM friend_requests WHERE user_id=$1 AND request_id=$2',
+      [userID, profileID],
+    )
+    if (rows[0]) {
+      return true
+    } else {
+      return false
+    }
+  } catch (err) {
+    console.log('Error in database checking friend request: \n' + err.message)
+    throw new Error(
+      'Error in database checking friend request: \n' + err.message,
+    )
   }
-}catch(err){
-  console.log("Error in database checking friend request: \n" +  err.message)
-  throw new Error("Error in database checking friend request: \n" + err.message)
-}
 }
 
 async function addFriend(userID, requestID) {
@@ -1084,7 +1117,6 @@ async function getMutualFriends(userID, profileID) {
   }
 }
 
-
 module.exports = {
   addUser,
   getUserByUsername,
@@ -1123,4 +1155,5 @@ module.exports = {
   checkUsernameExists,
   addUserOAuth,
   getMutualFriends,
+  getUserIDByConversationID,
 }
