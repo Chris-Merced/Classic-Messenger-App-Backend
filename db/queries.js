@@ -603,8 +603,7 @@ async function setIsRead(conversationID, recieverID) {
         err.message,
     )
     throw new Error(
-      'There was an error in updating is_read within the database: \n' +
-        err.message,
+        err.message
     )
   }
 }

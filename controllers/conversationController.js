@@ -103,10 +103,10 @@ async function changeIsRead(req, res) {
     res.status(200).json('isRead Status Changed Successfully')
   } catch (err) {
     console.log(
-      'There was an error while attempting to change isRead status for conversaiton \n' +
-        err,
+      'There was an error while attempting to change isRead status for conversation \n' +
+        err.message,
     )
-    res.status(500).JSON('Could not change isRead status for conversation')
+    res.status(500).json('Could not change isRead status for conversation')
   }
 }
 
