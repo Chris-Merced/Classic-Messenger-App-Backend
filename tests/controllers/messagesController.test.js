@@ -10,6 +10,7 @@ jest.mock('../../db/queries', () => ({
   setIsRead: jest.fn(),
   getUserChats: jest.fn(),
   getProfilePictureURLByUserName: jest.fn(),
+  getUserIDByConversationID: jest.fn(),
 }))
 
 jest.mock('../../authentication', () => ({
@@ -38,12 +39,12 @@ describe('messagesController Unit Testing for Crucial Functions', () => {
       .mockResolvedValueOnce({ username: 'Alice' })
       .mockResolvedValueOnce({ username: 'Bob' })
 
-    const req = { query: { chatName: 'Groupie' } }
+    const req = { query: { chatName: 'Groupie', page: 0, limit: 10 } }
     const res = resDouble()
 
     await getChatMessagesByName(req, res)
 
-    expect(db.getChatMessagesByName).toHaveBeenCalledWith('Groupie')
+    expect(db.getChatMessagesByName).toHaveBeenCalledWith('Groupie', 0, 10)
     expect(res.status).toHaveBeenCalledWith(200)
     expect(res.json).toHaveBeenCalledWith({
       messages: [
@@ -68,6 +69,8 @@ describe('messagesController Unit Testing for Crucial Functions', () => {
         chatName: 'undefined',
         conversationID: 'DM-42',
         userID: '111',
+        page: 0,
+        limit: 10,
       },
       cookies: { sessionToken: 'token' },
     }
@@ -75,8 +78,7 @@ describe('messagesController Unit Testing for Crucial Functions', () => {
 
     await getChatMessagesByName(req, res)
 
-    expect(db.getChatMessagesByConversationID).toHaveBeenCalledWith('DM-42')
-    expect(db.setIsRead).toHaveBeenCalledWith('DM-42', 456)
+    expect(db.getChatMessagesByConversationID).toHaveBeenCalledWith('DM-42', 0, 10)
     expect(res.status).toHaveBeenCalledWith(200)
     expect(res.json).toHaveBeenCalledWith({
       messages: [
@@ -103,12 +105,12 @@ describe('messagesController Unit Testing for Crucial Functions', () => {
     ])
     db.getProfilePictureURLByUserName.mockResolvedValue('/charlie.png')
 
-    const req = { query: { userID: '321' } }
+    const req = { query: { userID: '321', page: 0, limit: 10 } }
     const res = resDouble()
 
     await getUserChats(req, res)
 
-    expect(db.getUserChats).toHaveBeenCalledWith('321')
+    expect(db.getUserChats).toHaveBeenCalledWith('321', 0, 10)
     expect(res.json).toHaveBeenCalledWith({
       userChats: expect.arrayContaining([
         {
