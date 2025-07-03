@@ -6,11 +6,12 @@ const {
 } = require('../../controllers/userProfileController');
 
 jest.mock('../../db/queries', () => ({
-  getSessionBySessionID       : jest.fn(),
-  getUserByUserID             : jest.fn(),
-  getUsersByUsernameSearch    : jest.fn(),
-  checkIfFriends              : jest.fn(),
-  changeProfileStatus         : jest.fn(),
+  getSessionBySessionID: jest.fn(),
+  getUserByUserID: jest.fn(),
+  getUsersByUsernameSearch: jest.fn(),
+  checkIfFriends: jest.fn(),
+  changeProfileStatus: jest.fn(),
+  getFriendRequests: jest.fn(),  
 }));
 
 jest.mock('../../authentication', () => ({
