@@ -43,7 +43,7 @@ describe('loginHandler Unit Testing for Crucial Functions ', () => {
       expect.objectContaining({ httpOnly: true }),
     )
     expect(res.status).toHaveBeenCalledWith(201)
-    expect(res.json).toHaveBeenCalledWith({ id: 42, username: 'Alice' })
+    expect(res.json).toHaveBeenCalledWith({ id: 42, username: 'Alice', verified: true })
   })
 
   test('wrong password → 401 & “Incorrect Password”', async () => {
