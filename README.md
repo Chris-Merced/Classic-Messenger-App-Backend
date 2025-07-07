@@ -103,3 +103,7 @@ The server will run on `http://localhost:3000` by default.
 ## Author
 
 Chris Merced
+
+## License
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
