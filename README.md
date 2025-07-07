@@ -83,19 +83,17 @@ The server will run on `http://localhost:3000` by default.
 
 ## API Overview
 
-* `POST /api/signup` – Register a new user
-* `POST /api/login` – Log in with credentials
-* `POST /api/logout` – End the current session
-* `GET /api/users/:id` – Retrieve user profile
-* `GET /api/users` – Search for users
-* `POST /api/conversations` – Create new conversations
-* `GET /api/conversations/:userId` – Retrieve conversations for a user
-* `POST /api/messages` – Send a message
-* `GET /api/messages/:conversationId` – Fetch messages for a conversation
-* `POST /api/friend-requests` – Send a friend request
-* `POST /api/friend-requests/respond` – Accept or reject a request
-* `POST /api/block` – Block another user
-
+* `POST /signup` – Register a new user
+* `POST /login` – Log in with credentials
+* `POST /logout` – End the current session
+* `GET /userProfile/` – Search for users or get user public profile
+* `GET /conversations/` - Check status of user relationships to determine conversation authorization
+* `POST /conversations/` – Create new conversations or add message to conversation
+* `PATCH /conversations/` - Update conversation read status or online status
+* `GET /messages/:conversationId` – Fetch messages for a conversation
+* `POST /oauth/` - New account creation through OAuth process
+* `PATCH /oauth` - Handle user sign in through OAuth Process
+  
 ## Future Improvements
 
 * Rate limiting and account lockout after repeated failed logins
