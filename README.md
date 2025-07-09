@@ -98,11 +98,13 @@ The server will run on `http://localhost:3000` by default.
 
 The backend includes a robust test suite written using **Jest**. Test files are organized by domain in the `/tests` directory and cover key areas such as:
 
-- Authentication (`auth.test.js`)
-- Messaging (`messages.test.js`)
-- Conversations (`conversations.test.js`)
-- User management (`users.test.js`)
-- Utility functions (`utils.test.js`)
+- `conversationController.test.js` - Unit testing to ensure that data relating to individual conversation is stored and depicted accurately (online status, relationship status, read status, users, message storage) 
+- `loginController.test.js` - Unit testing to ensure that the process of logging in a user and retrieving data is accurate, safe and secure
+- `logoutController.test.js` - Unit testing to ensure that the process of logging out a user and clearing sessions is safe and secure
+- `messagesController.test.js` - Unit testing to ensure the retrieval of both singular chat messages and user chat list is functional and accurate
+- `oauthController.test.js` - Unit testing to ensure the alternative form of user validation is functional
+- `signupController.test.js` - Unit testing to ensure the process of validating and storing new user data is accurate and functional
+- `userProfileController.test.js` - Unit testing to ensure all aspects of user profile retrieval (mutual friends, blocked status, friend status, about me, etc..) operate in an expected and accurate manner
 
 ### Running Tests
 
