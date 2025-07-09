@@ -93,6 +93,24 @@ The server will run on `http://localhost:3000` by default.
 * `GET /messages/:conversationId` – Fetch messages for a conversation
 * `POST /oauth/` - New account creation through OAuth process
 * `PATCH /oauth` - Handle user sign in through OAuth Process
+
+  ## Testing
+
+The backend includes a robust test suite written using **Jest**. Test files are organized by domain in the `/tests` directory and cover key areas such as:
+
+- Authentication (`auth.test.js`)
+- Messaging (`messages.test.js`)
+- Conversations (`conversations.test.js`)
+- User management (`users.test.js`)
+- Utility functions (`utils.test.js`)
+
+### Running Tests
+
+To run the full test suite:
+
+```bash
+npm test
+```
   
 ## Future Improvements
 
