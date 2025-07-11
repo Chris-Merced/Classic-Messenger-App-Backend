@@ -93,10 +93,10 @@ app.use('/userProfile', userProfileRouter)
 app.use('/messages', messagesRouter)
 app.use('/conversations', conversationRouter)
 app.use('/oauth', oauthRouter)
-app.get('/loaderio-363f93789958f968a3e18e63bd2ecfb0.txt', (req, res)=>{
-  console.log("made it loaderio verification")
-  res.type('text/plain');
-  res.send("loaderio-363f93789958f968a3e18e63bd2ecfb0")
+app.get('/loaderio-363f93789958f968a3e18e63bd2ecfb0.txt', (req, res) => {
+  console.log('made it loaderio verification')
+  res.type('text/plain')
+  res.send('loaderio-363f93789958f968a3e18e63bd2ecfb0')
 })
 //http server to use express routing
 const server = http.createServer(app)
@@ -108,9 +108,6 @@ server.on('upgrade', async (request, socket, head) => {
     wss.emit('connection', ws, request)
   })
 })
-
-
-
 
 //Keeps track of all users with verified sessions
 const activeUsers = {}
@@ -177,7 +174,33 @@ wss.on('connection', (ws, req) => {
         })
         return
       }
-    }else {
+    } else if (info.type === 'test') {
+      const testUsername = `testuser_${info.clientId || Math.random()}`
+
+      await redisPublisher.hSet(
+        'activeUsers',
+        testUsername,
+        JSON.stringify({
+          serverID: currentServerId,
+          lastSeen: Date.now(),
+        }),
+      )
+
+      activeUsers[testUsername] = {
+        ws: ws,
+        lastActive: Date.now(),
+      }
+
+      console.log(`Test user ${testUsername} stored in Redis and memory`)
+
+      ws.send(
+        JSON.stringify({
+          type: 'test_echo',
+          stored: true,
+          username: testUsername,
+        }),
+      )
+    } else if(info.registration) {
       const cookieStr = req.headers.cookie
       if (cookieStr) {
         const cookies = {}
@@ -211,7 +234,6 @@ wss.on('connection', (ws, req) => {
           }
         }
       }
-
     }
   })
 
