@@ -1,7 +1,7 @@
 const WebSocket = require('ws')
 
 const WS_URL = 'wss://classic-messenger-app-backend-45b0821935c8.herokuapp.com/'
-const NUM_CLIENTS = 100
+const NUM_CLIENTS = 250
 
 let connected = 0
 let failed = 0
@@ -107,4 +107,4 @@ ${connected >= NUM_CLIENTS * 0.95 ? 'Excellent performance!' : ''}
 ${connected < NUM_CLIENTS * 0.8 ? ' Some connections failed - check server capacity' : ''}
   `)
   process.exit(0)
-}, 40000)
+}, 80000)
