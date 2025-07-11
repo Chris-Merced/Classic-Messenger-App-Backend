@@ -138,7 +138,7 @@ wss.on('connection', (ws, req) => {
     console.log('made it to websocket OnMessage')
     const data = message.toString()
     const info = JSON.parse(data)
-    if (!info.registration) {
+    if (!info.registration && info.type!=='test') {
       if (info.reciever) {
         recipients = await Promise.all(
           info.reciever.map(async (username) => {

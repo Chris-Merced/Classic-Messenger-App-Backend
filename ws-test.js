@@ -31,7 +31,6 @@ function createClient(id) {
           timestamp: Date.now()
         }));
         messages++;
-        user++
       }
     }, 5000);
     
