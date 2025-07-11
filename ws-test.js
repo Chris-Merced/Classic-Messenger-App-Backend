@@ -8,6 +8,7 @@ const NUM_CLIENTS = 100; // Start with 100, then try 250, 500, etc.
 let connected = 0;
 let failed = 0;
 let messages = 0;
+let user=0
 
 console.log(`🚀 Starting WebSocket test with ${NUM_CLIENTS} clients...`);
 console.log(`📍 Target: ${WS_URL}\n`);
@@ -27,11 +28,12 @@ function createClient(id) {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
           type: 'test',
-          username: 'lmaoxd',
+          username:`lmaoxd${user}`,
           message: `Test from client ${id}`,
           timestamp: Date.now()
         }));
         messages++;
+        user++
       }
     }, 5000);
     
