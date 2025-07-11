@@ -4,8 +4,10 @@ const db = require('../db/queries')
 
 async function loginHandler(req, res) {
   try {
-    const user = await db.getUserByUsername(req.body.username)
+    console.log('made it handler')
 
+    const user = await db.getUserByUsername(req.body.username)
+    console.log("made it past db")
     if (user) {
       const passConfirm = await verifyPassword(user.password, req.body.password)
       if (passConfirm) {
@@ -36,6 +38,7 @@ async function loginHandler(req, res) {
         })
       }
     } else {
+      console.log('NO USER MATCHING CREDENTIALS')
       res.status(404).json({
         message: 'Sorry there is no user that matches those credentials',
       })
