@@ -93,6 +93,10 @@ app.use('/userProfile', userProfileRouter)
 app.use('/messages', messagesRouter)
 app.use('/conversations', conversationRouter)
 app.use('/oauth', oauthRouter)
+app.get('/loaderio-363f93789958f968a3e18e63bd2ecfb0.txt', (req, res)=>{
+  res.type('text/plain');
+  res.send("loaderio-363f93789958f968a3e18e63bd2ecfb0.txt")
+})
 //http server to use express routing
 const server = http.createServer(app)
 
@@ -104,7 +108,7 @@ server.on('upgrade', async (request, socket, head) => {
   })
 })
 
-app.use(express.static('public'));
+
 
 
 //Keeps track of all users with verified sessions
