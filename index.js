@@ -104,6 +104,9 @@ server.on('upgrade', async (request, socket, head) => {
   })
 })
 
+app.use(express.static('public'));
+
+
 //Keeps track of all users with verified sessions
 const activeUsers = {}
 
