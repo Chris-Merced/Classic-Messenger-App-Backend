@@ -211,6 +211,8 @@ wss.on('connection', (ws, req) => {
               lastActive: Date.now(),
             }
           }
+        }else{
+          console.log("we made it")
         }
       }
 
