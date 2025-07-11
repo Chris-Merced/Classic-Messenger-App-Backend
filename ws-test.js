@@ -58,11 +58,11 @@ for (let i = 0; i < NUM_CLIENTS; i++) {
   setTimeout(() => createClient(i), i * 100); 
 }
 
-// Show final results
+
 setTimeout(() => {
   console.log(`
 ============================
-📊 FINAL RESULTS:
+FINAL RESULTS:
 ============================
 ✅ Successful connections: ${connected}/${NUM_CLIENTS}
 Failed connections: ${failed}
