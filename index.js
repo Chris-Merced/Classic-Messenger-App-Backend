@@ -210,7 +210,22 @@ wss.on('connection', (ws, req) => {
             }
           }
         }
+      }else{
+        await redisPublisher.hSet(
+              'activeUsers',
+              data.username,
+              JSON.stringify({
+                serverID: currentServerId,
+                lastSeen: Date.now(),
+              }),
+        )
+        activeUsers[data.username] ={
+          ws:ws,
+          lastActive: Date.now()
+        }
+
       }
+
     }
   })
 
