@@ -177,6 +177,8 @@ wss.on('connection', (ws, req) => {
     } else if (info.type === 'test') {
       const testUsername = `testuser_${info.clientId || Math.random()}`
 
+      userIdentifier = testUsername;
+
       await redisPublisher.hSet(
         'activeUsers',
         testUsername,
