@@ -6,7 +6,7 @@ const NUM_CLIENTS = 100;
 let connected = 0;
 let failed = 0;
 let messages = 0;
-let user=0
+
 
 console.log(`Starting WebSocket test with ${NUM_CLIENTS} clients...`);
 console.log(`Target: ${WS_URL}\n`);
@@ -26,7 +26,7 @@ function createClient(id) {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
           type: 'test',
-          username:`lmaoxd${user}`,
+          username:`lmaoxd${id}`,
           message: `Test from client ${id}`,
           timestamp: Date.now()
         }));
@@ -48,7 +48,7 @@ function createClient(id) {
   });
   
   ws.on('message', (data) => {
-    let message = json.parse(data)
+    let message = JSON.parse(data)
     console.log(message)
   });
 }
@@ -63,7 +63,7 @@ setTimeout(() => {
 ============================
 FINAL RESULTS:
 ============================
-✅ Successful connections: ${connected}/${NUM_CLIENTS}
+Successful connections: ${connected}/${NUM_CLIENTS}
 Failed connections: ${failed}
 Messages sent: ${messages}
 Success rate: ${((connected/NUM_CLIENTS)*100).toFixed(1)}%
