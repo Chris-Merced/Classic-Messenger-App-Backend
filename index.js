@@ -177,7 +177,9 @@ wss.on('connection', (ws, req) => {
         })
         return
       }
-    } else {
+    } else if(info.type==='test'){
+      console.log("we made it ")
+    }else {
       const cookieStr = req.headers.cookie
       if (cookieStr) {
         const cookies = {}
