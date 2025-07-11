@@ -200,6 +200,8 @@ wss.on('connection', (ws, req) => {
           type: 'test_echo',
           stored: true,
           username: testUsername,
+          messageId: info.messageId,
+          timestamp: Date.now(),
         }),
       )
     } else if(info.registration) {
