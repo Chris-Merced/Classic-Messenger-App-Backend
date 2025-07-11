@@ -96,7 +96,7 @@ app.use('/oauth', oauthRouter)
 app.get('/loaderio-363f93789958f968a3e18e63bd2ecfb0.txt', (req, res)=>{
   console.log("made it loaderio verification")
   res.type('text/plain');
-  res.send("loaderio-363f93789958f968a3e18e63bd2ecfb0.txt")
+  res.send("loaderio-363f93789958f968a3e18e63bd2ecfb0")
 })
 //http server to use express routing
 const server = http.createServer(app)
