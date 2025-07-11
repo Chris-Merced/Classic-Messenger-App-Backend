@@ -177,8 +177,6 @@ wss.on('connection', (ws, req) => {
         })
         return
       }
-    } else if(info.type==='test'){
-      console.log("we made it ")
     }else {
       const cookieStr = req.headers.cookie
       if (cookieStr) {
@@ -192,7 +190,6 @@ wss.on('connection', (ws, req) => {
           const decodedSession = decodeURIComponent(cookies.sessionToken)
           const sessionObj = JSON.parse(decodedSession)
           const data = await db.getUserBySession(sessionObj.sessionID)
-          console.log("made it here?")
           if (data) {
             console.log('made it to data exists for: ')
             console.log(data.username)
@@ -212,8 +209,6 @@ wss.on('connection', (ws, req) => {
               lastActive: Date.now(),
             }
           }
-        }else{
-          console.log("we made it")
         }
       }
 
