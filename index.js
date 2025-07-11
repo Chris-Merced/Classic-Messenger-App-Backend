@@ -192,6 +192,7 @@ wss.on('connection', (ws, req) => {
           const decodedSession = decodeURIComponent(cookies.sessionToken)
           const sessionObj = JSON.parse(decodedSession)
           const data = await db.getUserBySession(sessionObj.sessionID)
+          console.log("made it here?")
           if (data) {
             console.log('made it to data exists for: ')
             console.log(data.username)
