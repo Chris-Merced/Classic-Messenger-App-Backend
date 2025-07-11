@@ -1,6 +1,5 @@
 const WebSocket = require('ws');
 
-
 const WS_URL = 'wss://classic-messenger-app-backend-45b0821935c8.herokuapp.com/';
 const NUM_CLIENTS = 100; 
 
@@ -17,7 +16,7 @@ function createClient(id) {
   
   ws.on('open', () => {
     connected++;
-    console.log(`✅ Connected: ${connected}/${NUM_CLIENTS}`);
+    console.log(`Connected: ${connected}/${NUM_CLIENTS}`);
     
     
     ws.send(JSON.stringify({ registration: true }));
@@ -69,9 +68,9 @@ Failed connections: ${failed}
 Messages sent: ${messages}
 Success rate: ${((connected/NUM_CLIENTS)*100).toFixed(1)}%
 
-${connected === NUM_CLIENTS ? ' Perfect! All connections succeeded!' : ''}
-${connected >= NUM_CLIENTS * 0.95 ? ' Excellent performance!' : ''}
-${connected < NUM_CLIENTS * 0.8 ? '  Some connections failed - check server capacity' : ''}
+${connected === NUM_CLIENTS ? 'Perfect! All connections succeeded!' : ''}
+${connected >= NUM_CLIENTS * 0.95 ? 'Excellent performance!' : ''}
+${connected < NUM_CLIENTS * 0.8 ? ' Some connections failed - check server capacity' : ''}
   `);
   process.exit(0);
 }, 40000); 
