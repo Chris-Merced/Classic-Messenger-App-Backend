@@ -223,6 +223,9 @@ wss.on('connection', (ws, req) => {
           ws:ws,
           lastActive: Date.now()
         }
+        data = {message: "made it"
+        }
+        ws.send(JSON.stringify(data))
 
       }
 

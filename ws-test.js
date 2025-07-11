@@ -48,7 +48,8 @@ function createClient(id) {
   });
   
   ws.on('message', (data) => {
-    // Count received messages if needed
+    let message = json.parse(data)
+    console.log(message)
   });
 }
 
