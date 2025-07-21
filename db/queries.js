@@ -763,6 +763,7 @@ async function addFriend(userID, requestID) {
   let smaller = null
   let larger = null
 
+
   try {
     if (userID < requestID) {
       smaller = userID
