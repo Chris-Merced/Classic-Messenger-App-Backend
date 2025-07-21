@@ -31,7 +31,7 @@ const currentServerId = process.env.DYNO || 'local-server'
 
 connectToRedis()
 
-async function setUpSubscriber() {
+async function setUpMessageSubscriber() {
   try {
     await redisSubscriber.subscribe('chatMessages', (message) => {
       try {
@@ -60,7 +60,37 @@ async function setUpSubscriber() {
   }
 }
 
-setUpSubscriber()
+async function setUpFriendRequestSubscriber() {
+  try {
+    await redisSubscriber.subscribe('friendRequests', (request) => {
+      try {
+        const requestData = JSON.parse(request)
+        if (requestData.reciever) {
+          requestData.reciever.forEach(async (reciever) => {
+            const userGET = await redisPublisher.hGet('activeUsers', reciever)
+            const user = JSON.parse(userGET)
+            if (
+              user &&
+              user.serverID === currentServerId &&
+              activeUsers[reciever]
+            ) {
+              userInformation = activeUsers[reciever]
+              userInformation.ws.send(JSON.stringify(requestData))
+            }
+          })
+        }
+      } catch (error) {
+        console.error('Error processing Redis message:', error)
+      }
+    })
+  } catch (error) {
+    console.error('Redis connection error:', error)
+    setTimeout(connectToRedis, 5000)
+  }
+}
+
+setUpMessageSubscriber()
+setUpFriendRequestSubscriber()
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -138,7 +168,7 @@ wss.on('connection', (ws, req) => {
     console.log('made it to websocket OnMessage')
     const data = message.toString()
     const info = JSON.parse(data)
-    if (!info.registration && info.type!=='test') {
+    if (!info.registration && info.type !== 'test') {
       if (info.reciever) {
         recipients = await Promise.all(
           info.reciever.map(async (username) => {
@@ -156,22 +186,36 @@ wss.on('connection', (ws, req) => {
           const { id } = await db.getUserByUsername(userID)
           const isBlocked = await db.checkIfBlocked(id, blockedUserID)
           if (!isBlocked) {
-            if(info.type === "message"){
-            if (recipient.serverID === currentServerId) {
-              const userData = activeUsers[recipient.username]
-              if (userData) {
-                userData.ws.send(JSON.stringify(info))
+            if (info.type === 'message') {
+              if (recipient.serverID === currentServerId) {
+                const userData = activeUsers[recipient.username]
+                if (userData) {
+                  userData.ws.send(JSON.stringify(info))
+                }
+                return
+              } else {
+                await redisPublisher.publish(
+                  'chatMessages',
+                  JSON.stringify({ ...info, reciever: [recipient.username] }),
+                )
               }
-              return
-            } else {
-              await redisPublisher.publish(
-                'chatMessages',
-                JSON.stringify({ ...info, reciever: [recipient.username] }),
-              )
-            }}else if(info.type === "friendRequest"){
-              console.log("we seem to have made it so far")
+            } else if (info.type === 'friendRequest') {
+              console.log('we seem to have made it so far')
               console.log(recipient)
               console.log(id)
+              if (recipient.serverID === currentServerId) {
+                const userData = activeUsers[recipient.username]
+                if (userData) {
+                  userData.ws.send(JSON.stringify(info))
+                }
+                return
+              } else {
+                await redisPublisher.publish(
+                  'friendRequests',
+                  JSON.stringify({ ...info, reciever: [recipient.username] }),
+                )
+              }
+              return
             }
           } else {
             return
@@ -182,7 +226,7 @@ wss.on('connection', (ws, req) => {
     } else if (info.type === 'test') {
       const testUsername = `testuser_${info.clientId || Math.random()}`
 
-      userIdentifier = testUsername;
+      userIdentifier = testUsername
 
       await redisPublisher.hSet(
         'activeUsers',
@@ -209,7 +253,7 @@ wss.on('connection', (ws, req) => {
           timestamp: Date.now(),
         }),
       )
-    } else if(info.registration) {
+    } else if (info.registration) {
       const cookieStr = req.headers.cookie
       if (cookieStr) {
         const cookies = {}
