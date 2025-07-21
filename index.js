@@ -156,6 +156,7 @@ wss.on('connection', (ws, req) => {
           const { id } = await db.getUserByUsername(userID)
           const isBlocked = await db.checkIfBlocked(id, blockedUserID)
           if (!isBlocked) {
+            if(info.type === "message"){
             if (recipient.serverID === currentServerId) {
               const userData = activeUsers[recipient.username]
               if (userData) {
@@ -167,6 +168,10 @@ wss.on('connection', (ws, req) => {
                 'chatMessages',
                 JSON.stringify({ ...info, reciever: [recipient.username] }),
               )
+            }}else if(info.type === "friendRequest"){
+              console.log("we seem to have made it so far")
+              console.log(recipient)
+              console.log(id)
             }
           } else {
             return
