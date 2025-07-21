@@ -22,10 +22,6 @@ const {
   connectToRedis,
 } = require('./redisClient')
 
-//TODO: PAGINATE MESSAGES IN ALL CHATS
-// PAGINATE THE SIDEBAR OR ONLY DISPLAY THE MOST RECENT 11
-//PAGINATE THE SEARCH USERS BAR AND CLEAN UP VISUAL ELEMENTS OF USER SEARCH
-
 //ID for redis tracking
 const currentServerId = process.env.DYNO || 'local-server'
 
