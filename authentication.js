@@ -16,9 +16,12 @@ async function compareSessionToken(token, userID) {
 async function checkAdminStatus(id) {
   try {
     const adminStatus = await db.checkAdminStatus(id)
+    console.log(adminStatus)
     if (adminStatus) {
+      console.log("admin true")
       return true
     } else {
+      console.log("admin false")
       return false
     }
   } catch (err) {

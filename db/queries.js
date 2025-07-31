@@ -1116,10 +1116,11 @@ async function getMutualFriends(userID, profileID) {
 
 async function checkAdminStatus(id) {
   try {
-    const { rows } = pool.query('SELECT admin_status FROM users WHERE id=$1', [
-      id,
-    ])
-    if (rows.admin_status) {
+    const { rows } = await pool.query(
+      'SELECT is_admin FROM users WHERE id=$1',
+      [id],
+    )
+    if (rows[0].is_admin) {
       return true
     } else {
       return false
@@ -1129,19 +1130,22 @@ async function checkAdminStatus(id) {
   }
 }
 
-async function deleteMessage(messageID){
-  try{
-    const result = await pool.query("DELETE from MESSAGES where id=$1 RETURNING *", [messageID])
-    if (result.rowCount>0){
-      console.log("Deleted: " + result.rows[0])
+async function deleteMessage(messageID) {
+  try {
+    const result = await pool.query(
+      'DELETE from MESSAGES where id=$1 RETURNING *',
+      [messageID],
+    )
+    if (result.rowCount > 0) {
+      console.log('Deleted: ' + result.rows[0])
       return true
-    }else{
-      console.log("No Messages match that ID for deletion")
+    } else {
+      console.log('No Messages match that ID for deletion')
       return false
     }
- }catch(err){
-   throw new Error(err.message)
- }
+  } catch (err) {
+    throw new Error(err.message)
+  }
 }
 
 module.exports = {
