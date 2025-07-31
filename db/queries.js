@@ -2,7 +2,6 @@ const { request } = require('express')
 const pool = require('./pool')
 const crypto = require('crypto')
 const argon2 = require('argon2')
-const { deleteMessage } = require('../controllers/adminController')
 
 async function addUser(user) {
   try {
