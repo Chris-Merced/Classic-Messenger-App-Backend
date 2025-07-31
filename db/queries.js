@@ -2,6 +2,7 @@ const { request } = require('express')
 const pool = require('./pool')
 const crypto = require('crypto')
 const argon2 = require('argon2')
+const { deleteMessage } = require('../controllers/adminController')
 
 async function addUser(user) {
   try {
@@ -1129,6 +1130,21 @@ async function checkAdminStatus(id) {
   }
 }
 
+async function deleteMessage(messageID){
+  try{
+    const result = await pool.query("DELETE from MESSAGES where id=$1 RETURNING *", [messageID])
+    if (result.rowCount>0){
+      console.log("Deleted: " + result.rows[0])
+      return true
+    }else{
+      console.log("No Messages match that ID for deletion")
+      return false
+    }
+ }catch(err){
+   throw new Error(err.message)
+ }
+}
+
 module.exports = {
   addUser,
   getUserByUsername,
@@ -1169,4 +1185,5 @@ module.exports = {
   getMutualFriends,
   getUserIDByConversationID,
   checkAdminStatus,
+  deleteMessage,
 }
