@@ -21,7 +21,7 @@ async function getUser(req, res) {
       const friendRequests = await db.getFriendRequests(userID)
       const { password, ...userWithoutPassword } = user
       const userObject =  {...userWithoutPassword, friendRequests}
-
+      
       res.status(200).json({ user: userObject })
     } else {
       return res.status(401).json({ message: 'No SessionID Stored' })

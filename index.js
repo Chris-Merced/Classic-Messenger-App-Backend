@@ -14,6 +14,7 @@ const conversationRouter = require('./routers/conversationRouter')
 const userProfileRouter = require('./routers/userProfileRouter')
 const messagesRouter = require('./routers/messagesRouter')
 const oauthRouter = require('./routers/oauthRouter')
+const adminRouter = require('./routers/adminRouter')
 const rateLimit = require('express-rate-limit')
 const { createClient } = require('redis')
 const {
@@ -119,11 +120,13 @@ app.use('/userProfile', userProfileRouter)
 app.use('/messages', messagesRouter)
 app.use('/conversations', conversationRouter)
 app.use('/oauth', oauthRouter)
+app.use('/admin', adminRouter)
 app.get('/loaderio-363f93789958f968a3e18e63bd2ecfb0.txt', (req, res) => {
   console.log('made it loaderio verification')
   res.type('text/plain')
   res.send('loaderio-363f93789958f968a3e18e63bd2ecfb0')
 })
+
 //http server to use express routing
 const server = http.createServer(app)
 
