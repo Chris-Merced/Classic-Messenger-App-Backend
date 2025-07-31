@@ -472,15 +472,15 @@ async function getChatMessagesByConversationID(conversationID, page, limit) {
 
 async function getUserIDByConversationID(conversationID, userID) {
   try {
-    const {rows} = await pool.query(
+    const { rows } = await pool.query(
       'SELECT user_id FROM conversation_participants WHERE conversation_id=$1 AND user_id!=$2',
       [conversationID, userID],
     )
 
-    if(rows[0]){
-      return rows[0].user_id 
-    }else{
-      return false;
+    if (rows[0]) {
+      return rows[0].user_id
+    } else {
+      return false
     }
   } catch (err) {
     console.log('Error getting user id by conversation id: \n' + err.message)
@@ -602,9 +602,7 @@ async function setIsRead(conversationID, recieverID) {
       'There was an error in updating is_read within the database: \n ' +
         err.message,
     )
-    throw new Error(
-        err.message
-    )
+    throw new Error(err.message)
   }
 }
 
@@ -762,7 +760,6 @@ async function checkFriendRequestSent(userID, profileID) {
 async function addFriend(userID, requestID) {
   let smaller = null
   let larger = null
-
 
   try {
     if (userID < requestID) {
@@ -1117,6 +1114,21 @@ async function getMutualFriends(userID, profileID) {
   }
 }
 
+async function checkAdminStatus(id) {
+  try {
+    const { rows } = pool.query('SELECT admin_status FROM users WHERE id=$1', [
+      id,
+    ])
+    if (rows.admin_status) {
+      return true
+    } else {
+      return false
+    }
+  } catch (err) {
+    throw new Error(err.message)
+  }
+}
+
 module.exports = {
   addUser,
   getUserByUsername,
@@ -1156,4 +1168,5 @@ module.exports = {
   addUserOAuth,
   getMutualFriends,
   getUserIDByConversationID,
+  checkAdminStatus,
 }

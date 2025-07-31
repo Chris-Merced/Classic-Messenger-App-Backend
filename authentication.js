@@ -13,4 +13,18 @@ async function compareSessionToken(token, userID) {
   }
 }
 
-module.exports = { compareSessionToken }
+async function checkAdminStatus(id) {
+  try {
+    const adminStatus = await db.checkAdminStatus(id)
+    if (adminStatus) {
+      return true
+    } else {
+      return false
+    }
+  } catch (err) {
+    console.log('Error verifying admin status' + err.message)
+    return false
+  }
+}
+
+module.exports = { compareSessionToken, checkAdminStatus }
