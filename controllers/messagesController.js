@@ -14,6 +14,7 @@ async function getChatMessagesByName(req, res) {
         messages.map(async (message) => {
           const userObject = await db.getUserByUserID(message.sender_id)
           return {
+            id: message.id,
             time: message.created_at,
             message: message.content,
             user: userObject.username,
