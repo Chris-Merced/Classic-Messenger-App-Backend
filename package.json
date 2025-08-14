@@ -6,8 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "test": "npx jest --detectOpenHandles",
-    "dev": "ts-node-dev --respawn index.js",
-    "build": "tsc"
+    "dev": "NODE_ENV=development node index.js"
   },
   "repository": {
     "type": "git",
