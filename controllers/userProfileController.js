@@ -432,6 +432,7 @@ async function getUserIDByUsername(req, res) {
 module.exports = {
   getUser,
   getUserPublicProfile,
+  getUserIDByUsername,
   getUsersBySearch,
   addFriendRequest,
   getFriendRequests,
