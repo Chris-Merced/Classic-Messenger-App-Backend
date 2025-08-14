@@ -4,9 +4,10 @@
   "description": "Backend infrastructure to support a rendition of a classic messenger application",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node dist/index.js",
     "test": "npx jest --detectOpenHandles",
-    "dev": "NODE_ENV=development node index.js"
+    "dev": "ts-node-dev --respawn index.js",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
