@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const env_1 = require("./env");
+const env_1 = require("./types/env");
 const config = {
     development: {
         connectionString: env_1.env.DATABASE_URL || env_1.env.LOCAL_DATABASE_URL,
