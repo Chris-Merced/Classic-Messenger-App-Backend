@@ -51,7 +51,7 @@ async function getOnlineUsers(req, res) {
         console.log("user list");
         console.log(req.query.userList);
         const userList = req.query.userList.split(',');
-        for (user of userList) {
+        for (let user of userList) {
             const response = await redisPublisher.hGet('activeUsers', user);
             const userExist = JSON.parse(response);
             if (userExist) {
