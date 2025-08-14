@@ -20,8 +20,8 @@ async function getUser(req, res) {
       }
       const friendRequests = await db.getFriendRequests(userID)
       const { password, ...userWithoutPassword } = user
-      const userObject =  {...userWithoutPassword, friendRequests}
-      
+      const userObject = { ...userWithoutPassword, friendRequests }
+
       res.status(200).json({ user: userObject })
     } else {
       return res.status(401).json({ message: 'No SessionID Stored' })
@@ -125,7 +125,7 @@ async function checkFriendRequestSent(req, res) {
       const userID = req.query.userID
       const profileID = req.query.profileID
       const requestSent = await db.checkFriendRequestSent(userID, profileID)
-      
+
       res.status(200).json(requestSent)
     } else {
       res.status(403).json('You Do Not Have Permission To View This Data')
@@ -419,6 +419,16 @@ async function getMutualFriends(req, res) {
   }
 }
 
+async function getUserIDByUsername(req, res) {
+  try {
+    const user = await db.getUserByUsername(req.query.id)
+    res.status(200).json({ id: user.id })
+  } catch (err) {
+    console.log('Error getting user ID by username' + err.message)
+    res.status(500).json('Error retrieving user credentials')
+  }
+}
+
 module.exports = {
   getUser,
   getUserPublicProfile,
@@ -440,4 +450,5 @@ module.exports = {
   editAboutMe,
   getMutualFriends,
   checkFriendRequestSent,
+  getUserIDByUsername,
 }
