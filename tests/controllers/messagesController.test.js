@@ -17,7 +17,7 @@ jest.mock('../../authentication', () => ({
   compareSessionToken: jest.fn(),
 }))
 
-const db = require('../../db/queries')
+const db = require('../../src/db/queries')
 const auth = require('../../authentication')
 
 function resDouble() {
@@ -78,7 +78,11 @@ describe('messagesController Unit Testing for Crucial Functions', () => {
 
     await getChatMessagesByName(req, res)
 
-    expect(db.getChatMessagesByConversationID).toHaveBeenCalledWith('DM-42', 0, 10)
+    expect(db.getChatMessagesByConversationID).toHaveBeenCalledWith(
+      'DM-42',
+      0,
+      10,
+    )
     expect(res.status).toHaveBeenCalledWith(200)
     expect(res.json).toHaveBeenCalledWith({
       messages: [

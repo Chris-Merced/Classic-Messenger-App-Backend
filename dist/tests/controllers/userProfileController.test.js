@@ -11,7 +11,7 @@ jest.mock('../../db/queries', () => ({
 jest.mock('../../authentication', () => ({
     compareSessionToken: jest.fn(),
 }));
-const db = require('../../db/queries');
+const db = require('../../src/db/queries');
 const auth = require('../../authentication');
 function resDouble() {
     const res = {};

@@ -6,7 +6,7 @@ jest.mock('../../db/queries', () => ({
     checkUsernameExists: jest.fn(),
     addUserOAuth: jest.fn(),
 }));
-const db = require('../../db/queries');
+const db = require('../../src/db/queries');
 jest.mock('crypto', () => ({ randomUUID: () => 'uuid-123' }));
 global.fetch = jest.fn();
 function resDouble() {

@@ -6,7 +6,7 @@ jest.mock('../../db/queries', () => ({
 jest.mock('argon2', () => ({
     hash: jest.fn(),
 }));
-const db = require('../../db/queries');
+const db = require('../../src/db/queries');
 const argon2 = require('argon2');
 function resDouble() {
     const res = {};

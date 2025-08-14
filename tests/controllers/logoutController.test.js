@@ -4,7 +4,7 @@ jest.mock('../../db/queries', () => ({
   deleteSession: jest.fn(),
 }))
 
-const db = require('../../db/queries')
+const db = require('../../src/db/queries')
 
 function fakeReq(sessionID = 42) {
   return {

@@ -19,8 +19,8 @@ jest.mock('../../redisClient', () => ({
   redisSubscriber: {},
 }))
 
-const db = require('../../db/queries')
-const { redisPublisher } = require('../../redisClient')
+const db = require('../../src/db/queries')
+const { redisPublisher } = require('../../src/redisClient')
 
 function makeRes() {
   const json = jest.fn()

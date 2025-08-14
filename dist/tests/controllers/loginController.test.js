@@ -5,7 +5,7 @@ jest.mock('../../db/queries', () => ({
     storeSession: jest.fn(),
 }));
 jest.mock('argon2', () => ({ verify: jest.fn() }));
-const db = require('../../db/queries');
+const db = require('../../src/db/queries');
 const argon2 = require('argon2');
 function mockRes() {
     const res = {};
@@ -32,7 +32,11 @@ describe('loginHandler Unit Testing for Crucial Functions ', () => {
         expect(db.storeSession).toHaveBeenCalledWith(42, expect.any(String));
         expect(res.cookie).toHaveBeenCalledWith('sessionToken', expect.stringContaining('"sessionID":'), expect.objectContaining({ httpOnly: true }));
         expect(res.status).toHaveBeenCalledWith(201);
-        expect(res.json).toHaveBeenCalledWith({ id: 42, username: 'Alice', verified: true });
+        expect(res.json).toHaveBeenCalledWith({
+            id: 42,
+            username: 'Alice',
+            verified: true,
+        });
     });
     test('wrong password → 401 & “Incorrect Password”', async () => {
         db.getUserByUsername.mockResolvedValue({
