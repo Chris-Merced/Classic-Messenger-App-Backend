@@ -149,6 +149,7 @@ wss.on('connection', (ws, req) => {
                 recipients = await Promise.all(info.reciever.map(async (username) => {
                     const user = await redisPublisher.hGet('activeUsers', username);
                     const parsedUser = JSON.parse(user);
+                    let completeUser = {};
                     return (completeUser = { ...parsedUser, username });
                 }));
             }

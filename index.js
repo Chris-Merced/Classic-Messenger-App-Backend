@@ -173,7 +173,7 @@ wss.on('connection', (ws, req) => {
           info.reciever.map(async (username) => {
             const user = await redisPublisher.hGet('activeUsers', username)
             const parsedUser = JSON.parse(user)
-
+            let completeUser = {}
             return (completeUser = { ...parsedUser, username })
           }),
         )

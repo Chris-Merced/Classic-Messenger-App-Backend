@@ -359,9 +359,20 @@ async function getMutualFriends(req, res) {
         res.status(500).json('Could not retrieve mutual friends');
     }
 }
+async function getUserIDByUsername(req, res) {
+    try {
+        const user = await db.getUserByUsername(req.query.id);
+        res.status(200).json({ id: user.id });
+    }
+    catch (err) {
+        console.log('Error getting user ID by username' + err.message);
+        res.status(500).json('Error retrieving user credentials');
+    }
+}
 module.exports = {
     getUser,
     getUserPublicProfile,
+    getUserIDByUsername,
     getUsersBySearch,
     addFriendRequest,
     getFriendRequests,
