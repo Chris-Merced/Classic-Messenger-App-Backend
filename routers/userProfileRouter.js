@@ -10,7 +10,6 @@ userProfileRouter.get(
   userProfileController.getUserPublicProfile,
 )
 userProfileRouter.get('/usersBySearch', userProfileController.getUsersBySearch)
-userProfileRouter.get('/userIDByUsername', userProfileController.getUserIDByUsername)
 userProfileRouter.post('/friendRequest', userProfileController.addFriendRequest)
 userProfileRouter.get('/friendRequest', userProfileController.getFriendRequests)
 userProfileRouter.get('/friendRequestSent', userProfileController.checkFriendRequestSent)
