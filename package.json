@@ -34,11 +34,13 @@
     "redis": "^4.7.0",
     "sharp": "^0.34.1",
     "uuid": "^11.1.0",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "zod": "^4.0.17"
   },
   "devDependencies": {
     "jest": "^29.7.0",
     "prettier": "^3.4.2",
-    "supertest": "^7.0.0"
+    "supertest": "^7.0.0",
+    "typescript": "^5.9.2"
   }
 }

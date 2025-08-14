@@ -1,11 +1,12 @@
 "use strict";
-require('dotenv').config();
+Object.defineProperty(exports, "__esModule", { value: true });
+const env_1 = require("./env");
 const config = {
     development: {
-        connectionString: process.env.DATABASE_URL || process.env.LOCAL_DATABASE_URL,
+        connectionString: env_1.env.DATABASE_URL || env_1.env.LOCAL_DATABASE_URL,
     },
     production: {
-        connectionString: process.env.DATABASE_URL,
+        connectionString: env_1.env.DATABASE_URL,
         ssl: {
             rejectUnauthorized: false,
         },
@@ -14,5 +15,5 @@ const config = {
         connectionTimeoutMillis: 2000,
     },
 };
-module.exports = config[process.env.NODE_ENV || 'development'];
+module.exports = config[env_1.env.NODE_ENV || 'development'];
 //# sourceMappingURL=config.js.map

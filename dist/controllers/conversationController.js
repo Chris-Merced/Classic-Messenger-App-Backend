@@ -48,8 +48,6 @@ async function addMessageToConversations(req, res) {
 async function getOnlineUsers(req, res) {
     try {
         var activeUsers = {};
-        console.log("user list");
-        console.log(req.query.userList);
         const userList = req.query.userList.split(',');
         for (let user of userList) {
             const response = await redisPublisher.hGet('activeUsers', user);
