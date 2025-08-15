@@ -49,6 +49,13 @@ export interface MessagesRow{
     is_read: boolean | null;
 }
 
+export interface SessionsRow{
+    session_id: string;
+    user_id: number | null;
+    created_at: Date | null;
+    expires_at: Date | null;
+}
+
 
 
 
