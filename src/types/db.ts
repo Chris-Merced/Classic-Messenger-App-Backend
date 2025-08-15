@@ -35,6 +35,11 @@ export interface FriendRequestsRow{
     status: string | null;
 }
 
+export interface FriendsRow{
+    user_id: number;
+    friend_id: number;
+}
+
 
 
 
