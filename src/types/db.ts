@@ -11,8 +11,8 @@ export interface UserRow {
 }
 
 export interface BlockedRow{
-    user_id: number | null;
-    blocked_id: number | null;
+    user_id: number;
+    blocked_id: number;
 }
 
 export interface ConversationParticipantsRow{
@@ -21,6 +21,18 @@ export interface ConversationParticipantsRow{
     user_id: number | null;
     added_at: Date | null;
 }
+
+export interface ConversationsRow{
+    id: number;
+    name: string | null;
+    is_group: boolean | null;
+    created_at: Date;
+}
+
+
+
+
+
 
 
 
