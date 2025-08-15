@@ -40,6 +40,15 @@ export interface FriendsRow{
     friend_id: number;
 }
 
+export interface MessagesRow{
+    id: number;
+    conversation_id: number | null;
+    sender_id: number | null;
+    content: string;
+    created_at: Date | null;
+    is_read: boolean | null;
+}
+
 
 
 
