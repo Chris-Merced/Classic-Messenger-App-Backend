@@ -1,4 +1,3 @@
-const { request } = require('express')
 const pool = require('./pool')
 const crypto = require('crypto')
 const argon2 = require('argon2')
