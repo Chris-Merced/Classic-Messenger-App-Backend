@@ -2,7 +2,7 @@ export interface UserRow {
     id: number;
     username: string;
     password: string; //hashed
-    email: string | null;
+    email: string;
     is_admin: boolean | null;
     created_at: Date | null;
     is_public: boolean | null;
@@ -55,7 +55,6 @@ export interface SessionsRow{
     created_at: Date | null;
     expires_at: Date | null;
 }
-
 
 
 

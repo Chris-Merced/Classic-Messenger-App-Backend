@@ -1,10 +1,10 @@
 "use strict";
-const { request } = require('express');
 const pool = require('./pool');
 const crypto = require('crypto');
 const argon2 = require('argon2');
 async function addUser(user) {
     try {
+        console.log(user);
         let userNameData = await pool.query('SELECT * FROM users WHERE username ILIKE $1', [user.username.trim()]);
         if (userNameData.rows[0] &&
             userNameData.rows[0].username.toLowerCase() ===
