@@ -29,6 +29,12 @@ export interface ConversationsRow{
     created_at: Date;
 }
 
+export interface FriendRequestsRow{
+    user_id: number;
+    request_id: number;
+    status: string | null;
+}
+
 
 
 
