@@ -5,20 +5,20 @@ import { z } from "zod";
 
 import type { QueryResult } from "pg";
 
-
 // TODO: SCROLL DOWN FOR CONTINUING TYPE MIGRATION
 const UserInputSchema = z.object({
   username: z.string(),
   email: z.string(),
   password: z.string(),
 });
-export type userInput = z.infer<typeof UserInputSchema>;
+export type UserInput = z.infer<typeof UserInputSchema>;
 
 type UserNameRow = { username: string };
 type UserEmailRow = { email: string };
 type UserIDRow = { id: number };
 
-async function addUser(user: userInput) {
+export async function addUser(user: UserInput) {
+  console.log("NEW TYPED ROUTE")
   try {
     const userData = UserInputSchema.parse(user);
 
@@ -51,11 +51,9 @@ async function addUser(user: userInput) {
     );
     const id = await getUserIDByUsername(user.username.trim());
 
-    if (id === -1) {
-      throw new Error("Error retrieving new UserID By Username");
+    if (id) {
+      await addParticipant(1, id);
     }
-
-    await addParticipant(1, id);
     return;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -64,11 +62,9 @@ async function addUser(user: userInput) {
   }
 }
 
-// START HERE BY VERIFYING DATABASE QUERIES AND MOVE DOWN
-
-async function getUserIDByUsername(username: string): Promise<number> {
+export async function getUserIDByUsername(username: string): Promise<number | void> {
   try {
-    const { rows } = await pool.query(
+    const { rows }: QueryResult<UserIDRow> = await pool.query(
       "SELECT id FROM users WHERE LOWER(username)=LOWER($1)",
       [username.toLowerCase()]
     );
@@ -76,28 +72,24 @@ async function getUserIDByUsername(username: string): Promise<number> {
       return rows[0].id;
     } else {
       console.log("Within getUserIDByUsername: \n Username does not exist");
-      return -1;
     }
   } catch (err) {
-    const message = err instanceof Error ?  err.message : String(err)
+    const message = err instanceof Error ? err.message : String(err);
     console.log(
       "There was an error in retrieving User ID By Username: \n" + message
     );
-    return -1;
   }
 }
 
-async function addParticipant(conversation_id: number, user_id: number) {
+export async function addParticipant(conversation_id: number, user_id: number) {
   try {
     await pool.query(
       "INSERT INTO conversation_participants (conversation_id, user_id) VALUES ($1, $2)",
       [conversation_id, user_id]
     );
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
+    const message = err instanceof Error ? err.message : String(err);
     console.error("Error adding participant to conversation: \n" + message);
-    throw new Error(
-      "Error adding participant to conversation: \n" + message
-    );
+    throw new Error("Error adding participant to conversation: \n" + message);
   }
 }

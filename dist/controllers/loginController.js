@@ -8,7 +8,7 @@ async function loginHandler(req, res) {
         console.log(req.body.username);
         console.log(req.body.password);
         const user = await db.getUserByUsername(req.body.username);
-        console.log("made it past db");
+        console.log("made it past db 1");
         if (user) {
             const passConfirm = await verifyPassword(user.password, req.body.password);
             if (passConfirm) {

@@ -1,11 +1,12 @@
 "use strict";
 const argon2 = require('argon2');
 const db = require('../db/queries');
+const typedDB = require('../db/queriesTyped');
 async function signupHandler(req, res) {
     try {
         const hashedPassword = await hashPassword(req.body.password);
         const user = { ...req.body, password: hashedPassword };
-        await db.addUser(user);
+        await typedDB.addUser(user);
         res.status(201).json({ message: 'User Created Successfully' });
     }
     catch (err) {
