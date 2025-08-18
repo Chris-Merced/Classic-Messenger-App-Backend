@@ -5,7 +5,8 @@ import { z } from "zod";
 
 import type { QueryResult } from "pg";
 
-// TODO: SCROLL DOWN FOR CONTINUING TYPE MIGRATION
+// TODO: Continue on in queries.js with the next non-coupled function
+// after addUser
 const UserInputSchema = z.object({
   username: z.string(),
   email: z.string(),

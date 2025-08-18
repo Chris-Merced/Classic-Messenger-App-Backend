@@ -8,7 +8,8 @@ exports.getUserIDByUsername = getUserIDByUsername;
 exports.addParticipant = addParticipant;
 const pool_1 = __importDefault(require("./pool"));
 const zod_1 = require("zod");
-// TODO: SCROLL DOWN FOR CONTINUING TYPE MIGRATION
+// TODO: Continue on in queries.js with the next non-coupled function
+// after addUser
 const UserInputSchema = zod_1.z.object({
     username: zod_1.z.string(),
     email: zod_1.z.string(),
