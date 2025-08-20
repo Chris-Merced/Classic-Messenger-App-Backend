@@ -6,10 +6,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.addUser = addUser;
 exports.getUserIDByUsername = getUserIDByUsername;
 exports.addParticipant = addParticipant;
+exports.addUserOAuth = addUserOAuth;
+exports.getUserByUsername = getUserByUsername;
+exports.getUsersByUsernameSearch = getUsersByUsernameSearch;
 const pool_1 = __importDefault(require("./pool"));
+const argon2_1 = __importDefault(require("argon2"));
 const zod_1 = require("zod");
-// TODO: Continue on in queries.js with the next non-coupled function
-// after addUser
+// TODO: Do each function one by one and we'll connect routes after all of
+//       queries is done -
+//       - Start after GetUsersByUsernameSearch
 const UserInputSchema = zod_1.z.object({
     username: zod_1.z.string(),
     email: zod_1.z.string(),
@@ -67,6 +72,65 @@ async function addParticipant(conversation_id, user_id) {
         const message = err instanceof Error ? err.message : String(err);
         console.error("Error adding participant to conversation: \n" + message);
         throw new Error("Error adding participant to conversation: \n" + message);
+    }
+}
+async function addUserOAuth(email, username) {
+    try {
+        const tempPassword = crypto.randomUUID();
+        const hashedPassword = await argon2_1.default.hash(tempPassword);
+        await pool_1.default.query("INSERT INTO users (username,password, email) VALUES ($1, $2, $3)", [username.trim(), hashedPassword, email.trim().toLowerCase()]);
+        const id = await getUserIDByUsername(username.trim());
+        if (id) {
+            await addParticipant(1, id);
+        }
+        else {
+            throw new Error("Could not find user ID by Username");
+        }
+        return id;
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.log("Error adding user to database via OAuth method: \n" + message);
+        throw new Error("Error adding user to database via OAuth method: \n" + message);
+    }
+}
+async function getUserByUsername(username) {
+    try {
+        const { rows } = await pool_1.default.query("SELECT * FROM users WHERE LOWER(username)=LOWER($1) ", [username]);
+        const user = rows[0];
+        return user;
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Error getting user by username: \n" + message);
+        throw new Error("Error getting user by username: \n" + message);
+    }
+}
+const GetUserByUsernameSchema = zod_1.z.object({
+    id: zod_1.z.number(),
+    username: zod_1.z.string(),
+});
+const searchInputSchema = zod_1.z.object({
+    username: zod_1.z.string(),
+    page: zod_1.z.number().nonnegative().int(),
+    limit: zod_1.z.number().nonnegative().int(),
+});
+async function getUsersByUsernameSearch(username, page, limit) {
+    try {
+        const { username: q, page: p, limit: l, } = searchInputSchema.parse({ username, page, limit });
+        const offset = p * l;
+        const { rows } = await pool_1.default.query("SELECT * FROM USERS WHERE username ILIKE $1 LIMIT $2 OFFSET $3", [`%${q}%`, l, offset]);
+        const users = rows.map((row) => {
+            const { id, username } = row;
+            const newRow = { id, username };
+            return newRow;
+        });
+        return users;
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Problem getting users by username Search: \n" + message);
+        throw new Error("Problem getting users by username Search: \n" + message);
     }
 }
 //# sourceMappingURL=queriesTyped.js.map

@@ -3,10 +3,11 @@ import { UserRow } from "../types/db";
 import argon2 from "argon2";
 import { z } from "zod";
 
-import type { QueryResult } from "pg";
+import type { Query, QueryResult } from "pg";
 
-// TODO: Continue on in queries.js with the next non-coupled function
-// after addUser
+// TODO: Do each function one by one and we'll connect routes after all of
+//       queries is done -
+//       - Start after GetUsersByUsernameSearch
 const UserInputSchema = z.object({
   username: z.string(),
   email: z.string(),
@@ -19,7 +20,7 @@ type UserEmailRow = { email: string };
 type UserIDRow = { id: number };
 
 export async function addUser(user: UserInput) {
-  console.log("NEW TYPED ROUTE")
+  console.log("NEW TYPED ROUTE");
   try {
     const userData = UserInputSchema.parse(user);
 
@@ -50,7 +51,7 @@ export async function addUser(user: UserInput) {
       "INSERT INTO users (username,password, email) VALUES ($1, $2, $3)",
       [user.username.trim(), user.password, user.email.trim().toLowerCase()]
     );
-    const id = await getUserIDByUsername(user.username.trim());
+    const id: number | void = await getUserIDByUsername(user.username.trim());
 
     if (id) {
       await addParticipant(1, id);
@@ -63,7 +64,9 @@ export async function addUser(user: UserInput) {
   }
 }
 
-export async function getUserIDByUsername(username: string): Promise<number | void> {
+export async function getUserIDByUsername(
+  username: string
+): Promise<number | void> {
   try {
     const { rows }: QueryResult<UserIDRow> = await pool.query(
       "SELECT id FROM users WHERE LOWER(username)=LOWER($1)",
@@ -92,5 +95,92 @@ export async function addParticipant(conversation_id: number, user_id: number) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Error adding participant to conversation: \n" + message);
     throw new Error("Error adding participant to conversation: \n" + message);
+  }
+}
+
+export async function addUserOAuth(
+  email: string,
+  username: string
+): Promise<number> {
+  try {
+    const tempPassword: string = crypto.randomUUID();
+    const hashedPassword: string = await argon2.hash(tempPassword);
+
+    await pool.query(
+      "INSERT INTO users (username,password, email) VALUES ($1, $2, $3)",
+      [username.trim(), hashedPassword, email.trim().toLowerCase()]
+    );
+    const id: number | void = await getUserIDByUsername(username.trim());
+    if (id) {
+      await addParticipant(1, id);
+    } else {
+      throw new Error("Could not find user ID by Username");
+    }
+    return id;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.log("Error adding user to database via OAuth method: \n" + message);
+    throw new Error(
+      "Error adding user to database via OAuth method: \n" + message
+    );
+  }
+}
+
+export async function getUserByUsername(username: string): Promise<UserRow> {
+  try {
+    const { rows }: QueryResult<UserRow> = await pool.query(
+      "SELECT * FROM users WHERE LOWER(username)=LOWER($1) ",
+      [username]
+    );
+    const user: UserRow = rows[0];
+    return user;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Error getting user by username: \n" + message);
+    throw new Error("Error getting user by username: \n" + message);
+  }
+}
+
+const GetUserByUsernameSchema = z.object({
+  id: z.number(),
+  username: z.string(),
+});
+export type GetUserByUsernameResult = z.infer<typeof GetUserByUsernameSchema>;
+
+const searchInputSchema = z.object({
+  username: z.string(),
+  page: z.number().nonnegative().int(),
+  limit: z.number().nonnegative().int(),
+});
+
+export async function getUsersByUsernameSearch(
+  username: string,
+  page: number,
+  limit: number
+): Promise<GetUserByUsernameResult[]> {
+  try {
+    const {
+      username: q,
+      page: p,
+      limit: l,
+    } = searchInputSchema.parse({ username, page, limit });
+
+    const offset: number = p * l;
+
+    const { rows }: QueryResult<UserRow> = await pool.query(
+      "SELECT * FROM USERS WHERE username ILIKE $1 LIMIT $2 OFFSET $3",
+      [`%${q}%`, l, offset]
+    );
+
+    const users: GetUserByUsernameResult[] = rows.map((row) => {
+      const { id, username } = row;
+      const newRow = { id, username };
+      return newRow;
+    });
+    return users;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Problem getting users by username Search: \n" + message);
+    throw new Error("Problem getting users by username Search: \n" + message);
   }
 }
