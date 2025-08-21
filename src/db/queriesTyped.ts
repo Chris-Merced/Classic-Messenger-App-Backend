@@ -19,8 +19,8 @@ type UserNameRow = { username: string };
 type UserEmailRow = { email: string };
 type UserIDRow = { id: number };
 
-function checkErrorType(err: unknown): string{
-  return err instanceof Error ? err.message : String(err)
+function checkErrorType(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
 }
 
 export async function addUser(user: UserInput) {
@@ -190,18 +190,20 @@ export async function getUsersByUsernameSearch(
 }
 
 const userWithoutPasswordSchema = z.object({
-    id: z.number(),
-    username: z.string(),
-    email: z.string(),
-    is_admin: z.boolean().nullable(),
-    created_at: z.date().nullable(),
-    is_public: z.boolean().nullable(),
-    profile_picture: z.string().nullable(),
-    about_me: z.string().nullable(),
-})
-type userWithoutPassword = z.infer<typeof userWithoutPasswordSchema>
+  id: z.number(),
+  username: z.string(),
+  email: z.string(),
+  is_admin: z.boolean().nullable(),
+  created_at: z.date().nullable(),
+  is_public: z.boolean().nullable(),
+  profile_picture: z.string().nullable(),
+  about_me: z.string().nullable(),
+});
+type userWithoutPassword = z.infer<typeof userWithoutPasswordSchema>;
 
-export async function getUserByUserID(userID: number): Promise<userWithoutPassword> {
+export async function getUserByUserID(
+  userID: number
+): Promise<userWithoutPassword> {
   try {
     const { rows }: QueryResult<UserRow> = await pool.query(
       "SELECT * FROM users WHERE id = $1",
@@ -239,7 +241,9 @@ export async function getUserBySession(token: string) {
   }
 }
 
-export async function checkEmailExists(email: string): Promise<UserRow | Boolean >{
+export async function checkEmailExists(
+  email: string
+): Promise<UserRow | Boolean> {
   try {
     const { rows }: QueryResult<UserRow> = await pool.query(
       "SELECT * FROM users WHERE LOWER(email)=LOWER($1)",
@@ -251,7 +255,7 @@ export async function checkEmailExists(email: string): Promise<UserRow | Boolean
       return false;
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
+    const message = err instanceof Error ? err.message : String(err);
     console.log("Error checking if email already exists: \n" + message);
     throw new Error("Error checking if email already exists: \n" + message);
   }
@@ -260,44 +264,67 @@ export async function checkEmailExists(email: string): Promise<UserRow | Boolean
 export async function checkUsernameExists(username: string): Promise<boolean> {
   try {
     const { rows }: QueryResult<UserRow> = await pool.query(
-      'SELECT * FROM users WHERE username ILIKE $1',
-      [username.trim()],
-    )
+      "SELECT * FROM users WHERE username ILIKE $1",
+      [username.trim()]
+    );
     if (rows[0]) {
-      return true
+      return true;
     } else {
-      return false
+      return false;
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.log(
-      'Error while checking if username exists in db: \n' + message,
-    )
-    throw new Error('Error checking username exists: \n' + message)
+    const message = err instanceof Error ? err.message : String(err);
+    console.log("Error while checking if username exists in db: \n" + message);
+    throw new Error("Error checking username exists: \n" + message);
   }
 }
 
-export async function checkSession(token: string, userID: number): Promise<boolean> {
+export async function checkSession(
+  token: string,
+  userID: number
+): Promise<boolean> {
   try {
     if (!userID || !token) {
-      console.log('checkSession: No User Information to Validate')
-      return false
+      console.log("checkSession: No User Information to Validate");
+      return false;
     }
     const { rows }: QueryResult<SessionsRow> = await pool.query(
-      'SELECT * FROM sessions WHERE session_id = $1 AND user_id = $2',
-      [JSON.parse(token).sessionID, userID],
-    )
+      "SELECT * FROM sessions WHERE session_id = $1 AND user_id = $2",
+      [JSON.parse(token).sessionID, userID]
+    );
     if (rows[0]) {
-      return true
+      return true;
     } else {
-      return false
+      return false;
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    throw new Error('Error cross referencing tokens and userID: \n' + message)
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error("Error cross referencing tokens and userID: \n" + message);
   }
 }
 
+export async function getSessionBySessionID(
+  sessionID: string
+): Promise<number | null> {
+  try {
+    if (sessionID !== undefined) {
+      const { rows }: QueryResult<SessionsRow> = await pool.query(
+        "SELECT * FROM sessions WHERE session_id = $1",
+        [sessionID]
+      );
 
-
-
+      if (rows.length > 0) {
+        const userID = rows[0].user_id;
+        return userID;
+      } else {
+        throw new Error("No session found with that ID");
+      }
+    } else {
+      throw new Error("Session ID is undefined");
+    }
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.error("Error getting session by Session ID: \n" + message);
+    throw new Error("Error getting session by session ID: \n" + message);
+  }
+}
