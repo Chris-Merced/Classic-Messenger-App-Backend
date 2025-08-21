@@ -1,5 +1,5 @@
 import pool from "./pool";
-import { UserRow } from "../types/db";
+import { UserRow, SessionsRow } from "../types/db";
 import argon2 from "argon2";
 import { z } from "zod";
 
@@ -18,6 +18,10 @@ export type UserInput = z.infer<typeof UserInputSchema>;
 type UserNameRow = { username: string };
 type UserEmailRow = { email: string };
 type UserIDRow = { id: number };
+
+function checkErrorType(err: unknown): string{
+  return err instanceof Error ? err.message : String(err)
+}
 
 export async function addUser(user: UserInput) {
   console.log("NEW TYPED ROUTE");
@@ -253,7 +257,7 @@ export async function checkEmailExists(email: string): Promise<UserRow | Boolean
   }
 }
 
-async function checkUsernameExists(username: string): Promise<boolean> {
+export async function checkUsernameExists(username: string): Promise<boolean> {
   try {
     const { rows }: QueryResult<UserRow> = await pool.query(
       'SELECT * FROM users WHERE username ILIKE $1',
@@ -272,5 +276,28 @@ async function checkUsernameExists(username: string): Promise<boolean> {
     throw new Error('Error checking username exists: \n' + message)
   }
 }
+
+export async function checkSession(token: string, userID: number): Promise<boolean> {
+  try {
+    if (!userID || !token) {
+      console.log('checkSession: No User Information to Validate')
+      return false
+    }
+    const { rows }: QueryResult<SessionsRow> = await pool.query(
+      'SELECT * FROM sessions WHERE session_id = $1 AND user_id = $2',
+      [JSON.parse(token).sessionID, userID],
+    )
+    if (rows[0]) {
+      return true
+    } else {
+      return false
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    throw new Error('Error cross referencing tokens and userID: \n' + message)
+  }
+}
+
+
 
 
