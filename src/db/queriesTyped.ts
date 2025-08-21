@@ -1,5 +1,10 @@
 import pool from "./pool";
-import { UserRow, SessionsRow } from "../types/db";
+import {
+  UserRow,
+  SessionsRow,
+  ConversationsRow,
+  ConversationParticipantsRow,
+} from "../types/db";
 import argon2 from "argon2";
 import { z } from "zod";
 
@@ -329,8 +334,10 @@ export async function getSessionBySessionID(
   }
 }
 
-
-export async function storeSession(userID: number, sessionID: string): Promise<void> {
+export async function storeSession(
+  userID: number,
+  sessionID: string
+): Promise<void> {
   try {
     await pool.query(
       `
@@ -339,38 +346,193 @@ export async function storeSession(userID: number, sessionID: string): Promise<v
       VALUES 
         ($1, $2, NOW(), NOW() + INTERVAL '1 day')
       `,
-      [sessionID, userID],
-    )
-    return
+      [sessionID, userID]
+    );
+    return;
   } catch (err) {
-    const message = checkErrorType(err)
-    console.error('Error storing user in session: \n' + message)
-    throw new Error('Error storing session: \n' + message)
+    const message = checkErrorType(err);
+    console.error("Error storing user in session: \n" + message);
+    throw new Error("Error storing session: \n" + message);
   }
 }
 
-
 export async function deleteSession(sessionID: string): Promise<void> {
   try {
-    await pool.query('DELETE FROM sessions WHERE session_id = ($1)', [
+    await pool.query("DELETE FROM sessions WHERE session_id = ($1)", [
       sessionID,
-    ])
+    ]);
   } catch (err) {
-    const message = checkErrorType(err)
-    console.error('Error Deleting Session Data: \n' + message)
-    throw new Error('Error deleting session with Session ID: \n' + message)
+    const message = checkErrorType(err);
+    console.error("Error Deleting Session Data: \n" + message);
+    throw new Error("Error deleting session with Session ID: \n" + message);
   }
 }
 
 export async function cleanupSchedule(): Promise<void> {
   try {
-    await pool.query('DELETE FROM sessions WHERE expires_at<NOW();')
+    await pool.query("DELETE FROM sessions WHERE expires_at<NOW();");
   } catch (err) {
-    const message = checkErrorType(err)
-    console.error('Error in scheduled database cleanup: \n' + message)
-    throw new Error('Error in scheduled database cleanup: \n' + message)
+    const message = checkErrorType(err);
+    console.error("Error in scheduled database cleanup: \n" + message);
+    throw new Error("Error in scheduled database cleanup: \n" + message);
   }
 }
 
+const MessageSchema = z.object({
+  type: z.string(),
+  message: z.string(),
+  registration: z.boolean(),
+  conversationName: z.string().nullable().optional(),
+  conversationID: z.number(),
+  user: z.string(),
+  userID: z.number(),
+  reciever: z.array(z.string()),
+  time: z.string(),
+});
+type Message = z.infer<typeof MessageSchema>;
 
+export async function addMessageToConversations(
+  data: string
+): Promise<QueryResult | void> {
+  try {
+    const unverifiedMessage: Message = await JSON.parse(data);
+    const message = MessageSchema.parse(unverifiedMessage);
+    if (message.conversationName) {
+      const doesExist = await checkConversationByName(message.conversationName);
+      if (doesExist) {
+        await checkIfParticipant(message);
+        const response = await addMessage(message);
+        return response;
+      } else {
+        await createConversationByName(message);
+      }
+    } else if (message.conversationID) {
+      await addMessage(message);
+    }
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.error("Error adding message to database: \n" + message);
+    throw new Error("Error adding message to database: \n" + message);
+  }
+}
 
+export async function checkConversationByName(
+  conversationName: string
+): Promise<boolean> {
+  try {
+    const conversation = await getConversationByName(conversationName);
+    if (conversation) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.error(
+      "Error checking if user is a part of the conversation: \n" + message
+    );
+    throw new Error(
+      "Error checking if user is a part of the conversation: \n" + message
+    );
+  }
+}
+
+export async function createConversationByName(data: Message): Promise<void> {
+  try {
+    await pool.query("INSERT INTO conversations (name) VALUES ($1)", [
+      data.conversationName,
+    ]);
+    const conversation: ConversationsRow = await getConversationByName(
+      data.conversationName
+    );
+    await addParticipant(conversation.id, data.userID);
+    await pool.query(
+      "INSERT INTO messages (conversation_id, sender_id, content) VALUES ($1, $2, $3)",
+      [conversation.id, data.userID, data.message]
+    );
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.error(
+      "Error creating conversation in database with name: \n" + message
+    );
+    throw new Error(
+      "Error creating conversation in database with name: \n" + message
+    );
+  }
+}
+
+export async function getConversationByName(
+  name: string | null | undefined
+): Promise<ConversationsRow> {
+  try {
+    const { rows }: QueryResult<ConversationsRow> = await pool.query(
+      "SELECT * FROM conversations WHERE name = $1",
+      [name]
+    );
+    return rows[0];
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.error("Error getting conversation by name: \n" + message);
+    throw new Error("Error getting conversation by name: \n" + message);
+  }
+}
+
+export async function checkIfParticipant(data: Message) {
+  try {
+    const conversation: ConversationsRow = await getConversationByName(
+      data.conversationName
+    );
+    const participants: ConversationParticipantsRow[] =
+      await getParticipantsByConversationID(conversation.id);
+
+    const isParticipant = participants.some((participant) => {
+      return participant.user_id === data.userID;
+    });
+
+    if (!isParticipant) {
+      await addParticipant(conversation.id, data.userID);
+    }
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.error(
+      "Error Checking if User is a participant of conversation: \n" + message
+    );
+    throw new Error(
+      "Error checking if user is a participant of conversation: \n" + message
+    );
+  }
+}
+
+async function getParticipantsByConversationID(
+  conversationID: number
+): Promise<ConversationParticipantsRow[]> {
+  try {
+    const { rows }: QueryResult<ConversationParticipantsRow> = await pool.query(
+      "SELECT * FROM conversation_participants WHERE conversation_id = $1",
+      [conversationID]
+    );
+    return rows;
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.error(
+      "Error finding conversation participants by conversation ID: " + message
+    );
+    throw new Error(
+      "Error finding conversation participants by conversation ID " + message
+    );
+  }
+}
+
+async function addMessage(data: Message): Promise<QueryResult<never>> {
+  try {
+    const response: QueryResult<never> = await pool.query(
+      "INSERT INTO messages (conversation_id, sender_id, content) VALUES ($1, $2, $3)",
+      [data.conversationID, data.userID, data.message]
+    );
+    return response;
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.error("Error adding message to the database: \n" + message);
+    throw new Error("Error adding message to the database: \n" + message);
+  }
+}

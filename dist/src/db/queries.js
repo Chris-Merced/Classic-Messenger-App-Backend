@@ -219,6 +219,7 @@ async function cleanupSchedule() {
     }
 }
 async function addMessageToConversations(message) {
+    console.log(message);
     try {
         const data = await JSON.parse(message);
         if (data.conversationName) {
