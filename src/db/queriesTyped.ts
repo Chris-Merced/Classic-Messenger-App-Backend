@@ -252,3 +252,25 @@ export async function checkEmailExists(email: string): Promise<UserRow | Boolean
     throw new Error("Error checking if email already exists: \n" + message);
   }
 }
+
+async function checkUsernameExists(username: string): Promise<boolean> {
+  try {
+    const { rows }: QueryResult<UserRow> = await pool.query(
+      'SELECT * FROM users WHERE username ILIKE $1',
+      [username.trim()],
+    )
+    if (rows[0]) {
+      return true
+    } else {
+      return false
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.log(
+      'Error while checking if username exists in db: \n' + message,
+    )
+    throw new Error('Error checking username exists: \n' + message)
+  }
+}
+
+
