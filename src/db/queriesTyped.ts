@@ -328,3 +328,24 @@ export async function getSessionBySessionID(
     throw new Error("Error getting session by session ID: \n" + message);
   }
 }
+
+
+export async function storeSession(userID: number, sessionID: string): Promise<void> {
+  try {
+    await pool.query(
+      `
+      INSERT INTO 
+        sessions (session_id, user_id, created_at, expires_at) 
+      VALUES 
+        ($1, $2, NOW(), NOW() + INTERVAL '1 day')
+      `,
+      [sessionID, userID],
+    )
+    return
+  } catch (err) {
+    const message = checkErrorType(err)
+    console.error('Error storing user in session: \n' + message)
+    throw new Error('Error storing session: \n' + message)
+  }
+}
+
