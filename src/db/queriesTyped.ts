@@ -362,3 +362,15 @@ export async function deleteSession(sessionID: string): Promise<void> {
   }
 }
 
+export async function cleanupSchedule(): Promise<void> {
+  try {
+    await pool.query('DELETE FROM sessions WHERE expires_at<NOW();')
+  } catch (err) {
+    const message = checkErrorType(err)
+    console.error('Error in scheduled database cleanup: \n' + message)
+    throw new Error('Error in scheduled database cleanup: \n' + message)
+  }
+}
+
+
+
