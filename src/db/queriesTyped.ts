@@ -185,26 +185,37 @@ export async function getUsersByUsernameSearch(
   }
 }
 
+const userWithoutPasswordSchema = z.object({
+    id: z.number(),
+    username: z.string(),
+    email: z.string(),
+    is_admin: z.boolean().nullable(),
+    created_at: z.date().nullable(),
+    is_public: z.boolean().nullable(),
+    profile_picture: z.string().nullable(),
+    about_me: z.string().nullable(),
+})
+type userWithoutPassword = z.infer<typeof userWithoutPasswordSchema>
 
-export async function getUserByUserID(userID : number) {
+export async function getUserByUserID(userID: number): Promise<userWithoutPassword> {
   try {
-    const { rows }: QueryResult<UserRow> = await pool.query('SELECT * FROM users WHERE id = $1', [
-      userID,
-    ])
-    const userData: UserRow = rows[0]
-    const { password, ...userWithoutPassword } = userData
-    return userWithoutPassword
+    const { rows }: QueryResult<UserRow> = await pool.query(
+      "SELECT * FROM users WHERE id = $1",
+      [userID]
+    );
+    const userData: UserRow = rows[0];
+    const { password, ...userWithoutPassword } = userData;
+    return userWithoutPassword;
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.error('Error getting user by user ID: \n' + message)
-    throw new Error('Error getting user by user ID: \n' + message)
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Error getting user by user ID: \n" + message);
+    throw new Error("Error getting user by user ID: \n" + message);
   }
 }
 
-
 export async function getUserBySession(token: string) {
   try {
-    const { rows }:QueryResult<UserNameRow> = await pool.query(
+    const { rows }: QueryResult<UserNameRow> = await pool.query(
       `
       SELECT 
         users.username 
@@ -215,12 +226,29 @@ export async function getUserBySession(token: string) {
       WHERE 
         session_id = $1
       `,
-      [token],
-    )
-    return rows[0]
+      [token]
+    );
+    return rows[0];
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.error('Error getting the user ID by session: \n' + message)
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Error getting the user ID by session: \n" + message);
   }
 }
 
+export async function checkEmailExists(email: string): Promise<UserRow | Boolean >{
+  try {
+    const { rows }: QueryResult<UserRow> = await pool.query(
+      "SELECT * FROM users WHERE LOWER(email)=LOWER($1)",
+      [email.trim().toLowerCase()]
+    );
+    if (rows[0]) {
+      return rows[0];
+    } else {
+      return false;
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.log("Error checking if email already exists: \n" + message);
+    throw new Error("Error checking if email already exists: \n" + message);
+  }
+}
