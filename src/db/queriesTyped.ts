@@ -186,7 +186,7 @@ export async function getUsersByUsernameSearch(
 }
 
 
-async function getUserByUserID(userID : number) {
+export async function getUserByUserID(userID : number) {
   try {
     const { rows }: QueryResult<UserRow> = await pool.query('SELECT * FROM users WHERE id = $1', [
       userID,
@@ -200,3 +200,27 @@ async function getUserByUserID(userID : number) {
     throw new Error('Error getting user by user ID: \n' + message)
   }
 }
+
+
+export async function getUserBySession(token: string) {
+  try {
+    const { rows }:QueryResult<UserNameRow> = await pool.query(
+      `
+      SELECT 
+        users.username 
+      FROM 
+        users 
+      JOIN 
+        sessions ON users.id=sessions.user_id 
+      WHERE 
+        session_id = $1
+      `,
+      [token],
+    )
+    return rows[0]
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('Error getting the user ID by session: \n' + message)
+  }
+}
+
