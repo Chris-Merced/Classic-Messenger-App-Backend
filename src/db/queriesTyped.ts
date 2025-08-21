@@ -184,3 +184,19 @@ export async function getUsersByUsernameSearch(
     throw new Error("Problem getting users by username Search: \n" + message);
   }
 }
+
+
+async function getUserByUserID(userID : number) {
+  try {
+    const { rows }: QueryResult<UserRow> = await pool.query('SELECT * FROM users WHERE id = $1', [
+      userID,
+    ])
+    const userData: UserRow = rows[0]
+    const { password, ...userWithoutPassword } = userData
+    return userWithoutPassword
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('Error getting user by user ID: \n' + message)
+    throw new Error('Error getting user by user ID: \n' + message)
+  }
+}
