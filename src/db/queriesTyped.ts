@@ -349,3 +349,16 @@ export async function storeSession(userID: number, sessionID: string): Promise<v
   }
 }
 
+
+export async function deleteSession(sessionID: string): Promise<void> {
+  try {
+    await pool.query('DELETE FROM sessions WHERE session_id = ($1)', [
+      sessionID,
+    ])
+  } catch (err) {
+    const message = checkErrorType(err)
+    console.error('Error Deleting Session Data: \n' + message)
+    throw new Error('Error deleting session with Session ID: \n' + message)
+  }
+}
+
