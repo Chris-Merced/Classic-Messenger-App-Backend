@@ -4,6 +4,7 @@ import {
   SessionsRow,
   ConversationsRow,
   ConversationParticipantsRow,
+  MessagesRow,
 } from "../types/db";
 import argon2 from "argon2";
 import { z } from "zod";
@@ -534,5 +535,67 @@ async function addMessage(data: Message): Promise<QueryResult<never>> {
     const message = checkErrorType(err);
     console.error("Error adding message to the database: \n" + message);
     throw new Error("Error adding message to the database: \n" + message);
+  }
+}
+
+
+
+export async function getChatMessagesByName(name: string, page: number, limit: number) : Promise<MessagesRow[]> {
+  try {
+    const conversation: ConversationsRow = await getConversationByName(name)
+    const rows : MessagesRow[]= await getChatMessagesByConversationID(
+      conversation.id,
+      page,
+      limit,
+    )
+    return rows
+  } catch (err) {
+    const message = checkErrorType(err)
+    console.error('Error retrieving messages from database: \n ' + message)
+    throw new Error('Error getting chat messages by name: \n ' + message)
+  }
+}
+
+export async function getChatMessagesByConversationID(conversationID: number | string, page: number, limit: number) : Promise<MessagesRow[]>{
+  try {
+    if (!conversationID || conversationID === 'undefined') {
+      throw new Error(
+        'getChatMessagesByConversationID: No user information to retrieve messages for',
+      )
+    }
+
+    const offset = page * limit
+
+    const { rows }: QueryResult<MessagesRow> = await pool.query(
+      `
+      SELECT * 
+      FROM 
+        (
+          SELECT * 
+          FROM 
+            messages 
+          WHERE 
+            conversation_id = $1
+          ORDER BY 
+            created_at 
+          DESC LIMIT $2 OFFSET $3
+        ) 
+      AS 
+        page 
+      ORDER BY 
+        created_at 
+        ASC
+      `,
+      [conversationID, limit, offset],
+    )
+    return rows
+  } catch (err) {
+    const message = checkErrorType(err)
+    console.error(
+      'Error retrieving the chat messages by conversationID: \n' + message,
+    )
+    throw new Error(
+      'Error retrieving chat messages by conversationID: \n' + message,
+    )
   }
 }
