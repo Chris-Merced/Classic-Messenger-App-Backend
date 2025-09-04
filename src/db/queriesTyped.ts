@@ -605,3 +605,184 @@ export async function getChatMessagesByConversationID(
     );
   }
 }
+
+type ConversationUserIDRow = { user_id: number };
+
+export async function getUserIDByConversationID(
+  conversationID: number,
+  userID: number
+): Promise<number | boolean> {
+  try {
+    const { rows }: QueryResult<ConversationUserIDRow> = await pool.query(
+      "SELECT user_id FROM conversation_participants WHERE conversation_id=$1 AND user_id!=$2",
+      [conversationID, userID]
+    );
+
+    if (rows[0]) {
+      return rows[0].user_id;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.log("Error getting user id by conversation id: \n" + message);
+    throw new Error("Error getting user id by conversation id: \n" + message);
+  }
+}
+
+export async function getUserChats(
+  userID: number,
+  page: number,
+  limit: number
+) {
+  try {
+    const offset: number = page * limit;
+
+    const { rows } = await pool.query(
+      `
+        SELECT 
+          cp.conversation_id, 
+          c.is_group, 
+          c.name,
+          m.latest_created_at
+        FROM conversation_participants cp
+        JOIN conversations c 
+        ON c.id = cp.conversation_id
+        JOIN (
+          SELECT conversation_id, MAX(created_at) AS latest_created_at
+          FROM messages
+          GROUP BY conversation_id
+        ) m ON m.conversation_id = cp.conversation_id
+        WHERE cp.user_id = $1
+        ORDER BY m.latest_created_at DESC
+        LIMIT $2
+        OFFSET $3;
+        `,
+      [userID, limit, offset]
+    );
+
+    const chatList = await Promise.all(
+      rows.map(async (row) => {
+        const participants: ConversationParticipantsRow[] =
+          await getParticipantsByConversationID(row.conversation_id);
+        const names: string[] = await parseNamesByUserID(participants, userID);
+        return { ...row, participants: names };
+      })
+    );
+
+    const chatListIsRead = await Promise.all(
+      chatList.map(async (chat) => {
+        if (chat.name || chat.participants.length > 1) {
+          return { ...chat, is_read: true };
+        } else {
+          const id = await getUserIDByUsername(chat.participants[0]);
+
+          const { rows } = await pool.query(
+            `
+            SELECT 
+              is_read 
+            FROM 
+              messages 
+            WHERE 
+              conversation_id = $1 
+              AND 
+              sender_id = $2 
+            ORDER BY 
+              id 
+            DESC LIMIT 1
+            `,
+
+            [chat.conversation_id, id]
+          );
+
+          if (!rows[0]) {
+            return { ...chat, is_read: true, created_at: 0 };
+          } else {
+            return {
+              ...chat,
+              is_read: rows[0].is_read,
+            };
+          }
+        }
+      })
+    );
+    if (page == 0) {
+      for (let i = 0; i < chatListIsRead.length; i++) {
+        if (chatListIsRead[i].name) {
+          const chat = chatListIsRead[i];
+          chatListIsRead.splice(i, 1);
+          chatListIsRead.splice(0, 0, chat);
+        }
+      }
+    }
+    return chatListIsRead;
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.error("Error retrieving user chats: \n" + message);
+    throw new Error("Error retrieving user chats: \n" + message);
+  }
+}
+
+export async function setIsRead(conversationID: number, recieverID: number) {
+  try {
+    const isTrue: boolean = true;
+
+    const response = await pool.query(
+      `
+      UPDATE 
+        messages 
+      SET 
+        is_read=$1 
+      WHERE id = ( 
+            SELECT id 
+            FROM messages 
+            WHERE conversation_id=$2 AND sender_id = $3 
+            ORDER BY id 
+            DESC LIMIT 1)`,
+      [isTrue, conversationID, recieverID]
+    );
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.log(
+      "There was an error in updating is_read within the database: \n " +
+        message
+    );
+    throw new Error(message);
+  }
+}
+
+async function parseNamesByUserID(
+  participants: ConversationParticipantsRow[],
+  userID: number
+): Promise<string[]> {
+  try {
+    const ids: (number | null)[] = participants.map((participant) => {
+      const id = participant.user_id;
+      return id;
+    });
+    const filtered: (number | null)[] = ids.filter((id) => {
+      return Number(id) != Number(userID);
+    });
+
+    const names: string[] = await Promise.all(
+      filtered.map(async (id) => {
+        const { rows } = await pool.query(
+          "SELECT users.username FROM users WHERE id=$1",
+          [id]
+        );
+        return rows[0].username;
+      })
+    );
+    return names;
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.log(
+      "Error in parsing usernames from websocket data -- parseNamesByUserID \n" +
+        message
+    );
+    throw new Error(
+      "Error in parsing usernames from websocket data -- parseNamesByUserID \n" +
+        message
+    );
+  }
+}
