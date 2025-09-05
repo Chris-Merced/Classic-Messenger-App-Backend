@@ -5,6 +5,7 @@ import {
   ConversationsRow,
   ConversationParticipantsRow,
   MessagesRow,
+  FriendRequestsRow,
 } from "../types/db";
 import argon2 from "argon2";
 import { z } from "zod";
@@ -870,4 +871,47 @@ export async function checkDirectMessageConversationExists(
   }
 }
 
+export async function addFriendRequestToDatabase(userID: number, profileID: number) {
+  try {
+    await pool.query(
+      'INSERT INTO friend_requests (user_id, request_id, status) VALUES ($1, $2, $3)',
+      [userID, profileID, 'pending'],
+    )
+  } catch (err) {
+    const message = checkErrorType(err)
+    return message
+  }
+}
+
+export async function getFriendRequests(userID: number): Promise<{id:number, username: string}[]> {
+  try {
+    const { rows }: QueryResult<FriendRequestsRow> = await pool.query(
+      'SELECT * FROM friend_requests WHERE request_id=$1',
+      [userID],
+    )
+    const users = await Promise.all(
+      rows.map(async (friendRequest) => {
+        const user: userWithoutPassword = await getUserByUserID(friendRequest.user_id)
+        const {
+          email,
+          is_admin,
+          created_at,
+          about_me,
+          is_public,
+          profile_picture,
+          ...strippedUser
+        } = user
+
+        return strippedUser
+      }),
+    )
+    return users
+  } catch (err) {
+    const message = checkErrorType(err)
+    throw new Error(
+
+      'Error when getting friend requests from database \n' + message,
+    )
+  }
+}
 
