@@ -630,15 +630,22 @@ export async function getUserIDByConversationID(
   }
 }
 
+type userChatsRow = {
+  conversation_id: number;
+  is_group: boolean;
+  name: string;
+  latest_created_at: Date;
+};
+
 export async function getUserChats(
   userID: number,
   page: number,
   limit: number
-) {
+): Promise<(userChatsRow & { participants: string[]; is_read: boolean })[]> {
   try {
     const offset: number = page * limit;
 
-    const { rows } = await pool.query(
+    const { rows }: QueryResult<userChatsRow> = await pool.query(
       `
         SELECT 
           cp.conversation_id, 
@@ -661,16 +668,23 @@ export async function getUserChats(
       [userID, limit, offset]
     );
 
-    const chatList = await Promise.all(
-      rows.map(async (row) => {
-        const participants: ConversationParticipantsRow[] =
-          await getParticipantsByConversationID(row.conversation_id);
-        const names: string[] = await parseNamesByUserID(participants, userID);
-        return { ...row, participants: names };
-      })
-    );
+    const chatList: (userChatsRow & { participants: string[] })[] =
+      await Promise.all(
+        rows.map(async (row) => {
+          const participants: ConversationParticipantsRow[] =
+            await getParticipantsByConversationID(row.conversation_id);
+          const names: string[] = await parseNamesByUserID(
+            participants,
+            userID
+          );
+          return { ...row, participants: names };
+        })
+      );
 
-    const chatListIsRead = await Promise.all(
+    const chatListIsRead: (userChatsRow & {
+      participants: string[];
+      is_read: boolean;
+    })[] = await Promise.all(
       chatList.map(async (chat) => {
         if (chat.name || chat.participants.length > 1) {
           return { ...chat, is_read: true };
@@ -764,9 +778,9 @@ async function parseNamesByUserID(
       return Number(id) != Number(userID);
     });
 
-    const names: string[] = await Promise.all(
+    const names: Promise<string[]> = Promise.all(
       filtered.map(async (id) => {
-        const { rows } = await pool.query(
+        const { rows }: QueryResult<{ username: string }> = await pool.query(
           "SELECT users.username FROM users WHERE id=$1",
           [id]
         );
