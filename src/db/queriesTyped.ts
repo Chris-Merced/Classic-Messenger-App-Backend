@@ -630,7 +630,7 @@ export async function getUserIDByConversationID(
   }
 }
 
-type userChatsRow = {
+type UserChatsRow = {
   conversation_id: number;
   is_group: boolean;
   name: string;
@@ -641,11 +641,17 @@ export async function getUserChats(
   userID: number,
   page: number,
   limit: number
-): Promise<(userChatsRow & { participants: string[]; is_read: boolean })[]> {
+): Promise<
+  (UserChatsRow & {
+    participants: string[];
+    is_read: boolean;
+    created_at?: number;
+  })[]
+> {
   try {
     const offset: number = page * limit;
 
-    const { rows }: QueryResult<userChatsRow> = await pool.query(
+    const { rows }: QueryResult<UserChatsRow> = await pool.query(
       `
         SELECT 
           cp.conversation_id, 
@@ -668,7 +674,7 @@ export async function getUserChats(
       [userID, limit, offset]
     );
 
-    const chatList: (userChatsRow & { participants: string[] })[] =
+    const chatList: (UserChatsRow & { participants: string[] })[] =
       await Promise.all(
         rows.map(async (row) => {
           const participants: ConversationParticipantsRow[] =
@@ -681,7 +687,7 @@ export async function getUserChats(
         })
       );
 
-    const chatListIsRead: (userChatsRow & {
+    const chatListIsRead: (UserChatsRow & {
       participants: string[];
       is_read: boolean;
     })[] = await Promise.all(
@@ -800,3 +806,68 @@ async function parseNamesByUserID(
     );
   }
 }
+
+export async function checkDirectMessageConversationExists(
+  userID: number,
+  profileID: number
+): Promise<number> {
+  try {
+    const { rows }: QueryResult<{ conversation_id: number; name: string }> =
+      await pool.query(
+        `
+      SELECT DISTINCT 
+        cp.conversation_id, 
+        c.name
+      FROM 
+        conversation_participants cp
+      JOIN 
+        conversations c ON cp.conversation_id = c.id
+      WHERE 
+        cp.conversation_id IN (
+          SELECT conversation_id 
+          FROM conversation_participants 
+          GROUP BY conversation_id 
+          HAVING COUNT(*) = 2
+        )
+        AND cp.conversation_id IN (
+          SELECT conversation_id 
+          FROM conversation_participants 
+          WHERE user_id IN ($1, $2) 
+          GROUP BY conversation_id 
+          HAVING COUNT(*) = 2
+        )
+        AND c.name IS NULL
+      `,
+        [userID, profileID]
+      );
+    if (rows[0]) {
+      const conversation = JSON.stringify(rows[0]);
+      console.log("Conversation exists: " + conversation);
+      return rows[0].conversation_id;
+    } else {
+      console.log("Attempting to create Conversation: ");
+      const { rows }: QueryResult<{id: number}> = await pool.query(
+        "INSERT INTO conversations DEFAULT VALUES RETURNING id"
+      );
+      console.log("new conversation: " + rows[0]);
+      const conversation_id: number = rows[0].id;
+      console.log("conversation id assigned: " + conversation_id);
+      await addParticipant(conversation_id, userID);
+      await addParticipant(conversation_id, profileID);
+
+      return conversation_id;
+    }
+  } catch (err) {
+    const message = checkErrorType(err)
+    console.log(
+      "Error in checking if a DM already exists -- checkDirectMessageConversationExists: \n" +
+        message
+    );
+    throw new Error(
+      "Error in checking if a DM already exists -- checkDirectMessageConversationExists: \n" +
+        message
+    );
+  }
+}
+
+
