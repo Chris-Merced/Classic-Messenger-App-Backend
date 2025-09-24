@@ -6,11 +6,13 @@ import {
   ConversationParticipantsRow,
   MessagesRow,
   FriendRequestsRow,
+  FriendsRow,
 } from "../types/db";
 import argon2 from "argon2";
 import { z } from "zod";
 
 import type { Query, QueryResult } from "pg";
+import type { Request, Response } from "express";
 
 // TODO: Do each function one by one and we'll connect routes after all of
 //       queries is done -
@@ -847,7 +849,7 @@ export async function checkDirectMessageConversationExists(
       return rows[0].conversation_id;
     } else {
       console.log("Attempting to create Conversation: ");
-      const { rows }: QueryResult<{id: number}> = await pool.query(
+      const { rows }: QueryResult<{ id: number }> = await pool.query(
         "INSERT INTO conversations DEFAULT VALUES RETURNING id"
       );
       console.log("new conversation: " + rows[0]);
@@ -859,7 +861,7 @@ export async function checkDirectMessageConversationExists(
       return conversation_id;
     }
   } catch (err) {
-    const message = checkErrorType(err)
+    const message = checkErrorType(err);
     console.log(
       "Error in checking if a DM already exists -- checkDirectMessageConversationExists: \n" +
         message
@@ -871,27 +873,34 @@ export async function checkDirectMessageConversationExists(
   }
 }
 
-export async function addFriendRequestToDatabase(userID: number, profileID: number) {
+export async function addFriendRequestToDatabase(
+  userID: number,
+  profileID: number
+) {
   try {
     await pool.query(
-      'INSERT INTO friend_requests (user_id, request_id, status) VALUES ($1, $2, $3)',
-      [userID, profileID, 'pending'],
-    )
+      "INSERT INTO friend_requests (user_id, request_id, status) VALUES ($1, $2, $3)",
+      [userID, profileID, "pending"]
+    );
   } catch (err) {
-    const message = checkErrorType(err)
-    return message
+    const message = checkErrorType(err);
+    return message;
   }
 }
 
-export async function getFriendRequests(userID: number): Promise<{id:number, username: string}[]> {
+export async function getFriendRequests(
+  userID: number
+): Promise<{ id: number; username: string }[]> {
   try {
     const { rows }: QueryResult<FriendRequestsRow> = await pool.query(
-      'SELECT * FROM friend_requests WHERE request_id=$1',
-      [userID],
-    )
+      "SELECT * FROM friend_requests WHERE request_id=$1",
+      [userID]
+    );
     const users = await Promise.all(
       rows.map(async (friendRequest) => {
-        const user: userWithoutPassword = await getUserByUserID(friendRequest.user_id)
+        const user: userWithoutPassword = await getUserByUserID(
+          friendRequest.user_id
+        );
         const {
           email,
           is_admin,
@@ -900,18 +909,196 @@ export async function getFriendRequests(userID: number): Promise<{id:number, use
           is_public,
           profile_picture,
           ...strippedUser
-        } = user
+        } = user;
 
-        return strippedUser
-      }),
-    )
-    return users
+        return strippedUser;
+      })
+    );
+    return users;
   } catch (err) {
-    const message = checkErrorType(err)
+    const message = checkErrorType(err);
     throw new Error(
-
-      'Error when getting friend requests from database \n' + message,
-    )
+      "Error when getting friend requests from database \n" + message
+    );
   }
 }
 
+export async function checkFriendRequestSent(
+  userID: number,
+  profileID: number
+): Promise<Boolean> {
+  try {
+    const { rows }: QueryResult<FriendRequestsRow> = await pool.query(
+      "SELECT * FROM friend_requests WHERE user_id=$1 AND request_id=$2",
+      [userID, profileID]
+    );
+    if (rows[0]) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.log("Error in database checking friend request: \n" + message);
+    throw new Error("Error in database checking friend request: \n" + message);
+  }
+}
+
+export async function addFriend(
+  res: Response,
+  userID: number,
+  requestID: number
+) {
+  let smaller: number | null = null;
+  let larger: number | null = null;
+
+  try {
+    if (userID < requestID) {
+      smaller = userID;
+      larger = requestID;
+    } else {
+      smaller = requestID;
+      larger = userID;
+    }
+
+    await pool.query(
+      "INSERT INTO friends (user_id, friend_id) VALUES ($1, $2)",
+      [smaller, larger]
+    );
+
+    await pool.query(
+      `
+      DELETE FROM 
+        friend_requests 
+      WHERE 
+        (user_id = $1 AND request_id = $2)
+      OR 
+        (user_id = $2 AND request_id=$1)`,
+      [userID, requestID]
+    );
+  } catch (err: any) {
+    if (err.code && err.code === "23505") {
+      console.log(
+        "Users are already Friends \n UserID1: " +
+          userID +
+          "\n UserID2: " +
+          requestID
+      );
+      res.status(409).json({ message: "Users are already Friends" });
+    }
+    console.log("Error in database query for add friend \n" + err.message);
+    throw new Error("Error while adding to database \n" + err.message);
+  }
+}
+
+export async function denyFriend(userID: number, requestID: number) {
+  try {
+    const response: QueryResult = await pool.query(
+      "DELETE FROM friend_requests WHERE user_ID=$1 AND request_id=$2",
+      [userID, requestID]
+    );
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.log(
+      "Error in database query while denying friend request: \n" + message
+    );
+    throw new Error(
+      "There was an error while denying friend request: \n" + message
+    );
+  }
+}
+
+export async function removeFriend(userID: number, friendID: number) {
+  try {
+    let smaller: number | null = null;
+    let larger: number | null = null;
+    if (userID < friendID) {
+      smaller = userID;
+      larger = friendID;
+    } else {
+      smaller = friendID;
+      larger = userID;
+    }
+
+    pool.query("DELETE FROM friends WHERE user_id=$1 AND friend_id=$2", [
+      smaller,
+      larger,
+    ]);
+  } catch (err) {
+    const message = checkErrorType(err);
+    throw new Error("Error while removing friend from database: \n" + message);
+  }
+}
+
+export async function checkIfFriends(
+  userID: number,
+  friendID: number
+): Promise<FriendsRow> {
+  let smaller: number | null = null;
+  let larger: number | null = null;
+
+  try {
+    if (userID < friendID) {
+      smaller = userID;
+      larger = friendID;
+    } else {
+      smaller = friendID;
+      larger = userID;
+    }
+
+    const { rows }: QueryResult<FriendsRow> = await pool.query(
+      "SELECT * FROM friends WHERE user_id=$1 AND friend_id=$2",
+      [smaller, larger]
+    );
+    return rows[0];
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.log(
+      "There was an error in checking friend status in database: \n" + message
+    );
+    throw new Error(
+      "There was an error in checking friend status in database \n" + message
+    );
+  }
+}
+
+
+export async function getFriends(userID: number): Promise<number[]> {
+  try {
+    const { rows }: QueryResult<UserIDRow> = await pool.query(
+      `(
+        SELECT 
+          friend_id AS id 
+        FROM 
+          friends 
+        WHERE 
+          user_id=$1 
+      )
+
+      UNION 
+      
+      ( 
+        SELECT 
+          user_id AS id 
+        FROM 
+          friends 
+        WHERE 
+          friend_id=$1
+      )`,
+      [userID]
+    );
+    const friendsList: number[] = rows.map((row) => {
+      return row.id;
+    });
+
+    return friendsList;
+  } catch (err) {
+    const message = checkErrorType(err)
+    console.log(
+      "Error in retrieval of user friends during query: \n" + message
+    );
+    throw new Error(
+      "Error in retrieval of user friends during query: \n" + message
+    );
+  }
+}
