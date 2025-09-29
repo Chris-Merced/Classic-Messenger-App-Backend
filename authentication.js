@@ -13,16 +13,16 @@ async function compareSessionToken(token, userID) {
   }
 }
 
-async function checkAdminStatus(id) {
+async function checkAdminStatus(req, res, token, id) {
   try {
-    const adminStatus = await db.checkAdminStatus(id)
+    const adminStatus = await db.checkAdminStatus(token, id)
     console.log(adminStatus)
     if (adminStatus) {
       console.log("admin true")
       return true
     } else {
       console.log("admin false")
-      return false
+      res.status(403).json({error: "Forbidden"})
     }
   } catch (err) {
     console.log('Error verifying admin status' + err.message)
