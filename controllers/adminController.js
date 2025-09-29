@@ -7,8 +7,7 @@ async function deleteMessage(req, res) {
       req.cookies.sessionToken,
       req.body.id,
     )
-    const isAdmin = await authentication.checkAdminStatus(req.body.id)
-    if (authenticated && isAdmin) {
+    if (authenticated) {
       const success = await db.deleteMessage(req.body.messageID)
       if (success) {
         res.status(200).json('Message Deleted Successfully')
