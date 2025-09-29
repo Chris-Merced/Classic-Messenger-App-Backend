@@ -2,6 +2,7 @@ const { request } = require("express");
 const pool = require("./pool");
 const crypto = require("crypto");
 const argon2 = require("argon2");
+const { Protocol } = require("@aws-sdk/client-s3");
 
 async function addUser(user) {
   try {
@@ -133,6 +134,8 @@ async function getUserByUserID(userID) {
 
 async function getUserBySession(token) {
   try {
+    console.log(token)
+    console.log("^TOKEN IN DB")
     const { rows } = await pool.query(
       `
       SELECT 
@@ -146,7 +149,10 @@ async function getUserBySession(token) {
       `,
       [token]
     );
+    console.log(rows[0])
+    console.log("^RETURNED ROW")
     return rows[0];
+
   } catch (err) {
     console.error("Error getting the user ID by session: \n" + err.message);
   }
@@ -265,6 +271,7 @@ async function deleteSession(sessionID) {
 async function cleanupSchedule() {
   try {
     await pool.query("DELETE FROM sessions WHERE expires_at<NOW();");
+    await pool.query("UPDATE users SET banned=FALSE, ban_expires=NULL WHERE ban_expires<NOW()")
   } catch (err) {
     console.error("Error in scheduled database cleanup: \n" + err.message);
     throw new Error("Error in scheduled database cleanup: \n" + err.message);
@@ -1153,6 +1160,52 @@ async function deleteMessage(messageID) {
   }
 }
 
+async function banUser(banExpiresAt, id) {
+  try {
+    let timeUpdateResult = null;
+    await pool.query("DELETE FROM sessions WHERE user_id = $1", [
+      id,
+    ]);
+    const bannedResult = await pool.query(
+      "UPDATE users SET banned=TRUE WHERE id=$1 RETURNING id",
+      [id]
+    );
+
+    if (bannedResult.rowCount === 0) {
+      return false;
+    }
+
+    if (banExpiresAt !== "perm") {
+      const { rowCount } = await pool.query(
+        "UPDATE users SET ban_expires=$1 WHERE id=$2",
+        [banExpiresAt, id]
+      );
+      timeUpdateResult = rowCount > 0;
+    }
+    if (banExpiresAt === "perm") {
+      const { rowCount } = await pool.query(
+        "UPDATE users SET ban_expires=NULL WHERE id=$1",
+        [id]
+      );
+
+      timeUpdateResult = rowCount > 0;
+    }
+
+    if (timeUpdateResult) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    console.log("Error while banning user in DB");
+    throw err
+  }
+}
+
+function unbanUser(){
+
+}
+
 module.exports = {
   addUser,
   getUserByUsername,
@@ -1194,4 +1247,6 @@ module.exports = {
   getUserIDByConversationID,
   checkAdminStatus,
   deleteMessage,
+  banUser,
+  unbanUser
 };
