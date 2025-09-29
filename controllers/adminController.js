@@ -23,4 +23,9 @@ async function deleteMessage(req, res) {
   }
 }
 
-module.exports = { deleteMessage }
+async function banUser(req, res){
+  const days = req.query.days
+  const username = req.query.username
+}
+
+module.exports = { deleteMessage, banUser }
