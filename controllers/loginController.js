@@ -12,6 +12,12 @@ async function loginHandler(req, res) {
     if (user) {
       const passConfirm = await verifyPassword(user.password, req.body.password)
       if (passConfirm) {
+
+        console.log(user)
+        if(user.banned){
+          return res.status(403).json({message:"User is banned"})
+        }
+
         const sessionID = crypto.randomUUID()
         await db.storeSession(user.id, sessionID)
 

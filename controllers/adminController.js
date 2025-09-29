@@ -1,31 +1,55 @@
-const db = require('../db/queries')
-const authentication = require('../authentication')
+const db = require("../db/queries");
+const authentication = require("../authentication");
 
 async function deleteMessage(req, res) {
   try {
     const authenticated = await authentication.compareSessionToken(
       req.cookies.sessionToken,
-      req.body.id,
-    )
+      req.body.id
+    );
     if (authenticated) {
-      const success = await db.deleteMessage(req.body.messageID)
+      const success = await db.deleteMessage(req.body.messageID);
       if (success) {
-        res.status(200).json('Message Deleted Successfully')
+        res.status(200).json("Message Deleted Successfully");
       } else {
-        res.status(404).json('Message not found for deletion')
+        res.status(404).json("Message not found for deletion");
       }
     } else {
-      res.status(403).json('Unauthorized Action')
+      res.status(403).json("Unauthorized Action");
     }
   } catch (err) {
-    console.log('Error deleting message from database' + err.message)
-    res.status(500).json('Internal Server Error')
+    console.log("Error deleting message from database" + err.message);
+    res.status(500).json("Internal Server Error");
   }
 }
 
-async function banUser(req, res){
-  const days = req.query.days
-  const username = req.query.username
+async function banUser(req, res) {
+  let days = req.query.days;
+  const username = req.query.username;
+
+  try {
+    const user = await db.getUserByUsername(username);
+    let banExpiresAt = null;
+    if (user) {
+      if (days === "perm") {
+        banExpiresAt = "perm";
+      } else {
+        days = parseInt(days);
+        banExpiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      }
+      const result = await db.banUser(banExpiresAt, user.id);
+      if (result) {
+        res.status(200).json({ message: "Good ban" });
+      } else {
+        res.status(500).json({ error: "Server error while banning user" });
+      }
+    } else {
+      res.status(404).json({ error: "User not found" });
+    }
+  } catch (err) {
+    console.log("Error banning user " + err.message);
+    res.status(500).json({ error: "Server error while banning user" });
+  }
 }
 
-module.exports = { deleteMessage, banUser }
+module.exports = { deleteMessage, banUser };
