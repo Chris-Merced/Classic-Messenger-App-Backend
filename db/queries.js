@@ -134,8 +134,8 @@ async function getUserByUserID(userID) {
 
 async function getUserBySession(token) {
   try {
-    console.log(token)
-    console.log("^TOKEN IN DB")
+    console.log(token);
+    console.log("^TOKEN IN DB");
     const { rows } = await pool.query(
       `
       SELECT 
@@ -149,10 +149,9 @@ async function getUserBySession(token) {
       `,
       [token]
     );
-    console.log(rows[0])
-    console.log("^RETURNED ROW")
+    console.log(rows[0]);
+    console.log("^RETURNED ROW");
     return rows[0];
-
   } catch (err) {
     console.error("Error getting the user ID by session: \n" + err.message);
   }
@@ -271,7 +270,9 @@ async function deleteSession(sessionID) {
 async function cleanupSchedule() {
   try {
     await pool.query("DELETE FROM sessions WHERE expires_at<NOW();");
-    await pool.query("UPDATE users SET banned=FALSE, ban_expires=NULL WHERE ban_expires<NOW()")
+    await pool.query(
+      "UPDATE users SET banned=FALSE, ban_expires=NULL WHERE ban_expires<NOW()"
+    );
   } catch (err) {
     console.error("Error in scheduled database cleanup: \n" + err.message);
     throw new Error("Error in scheduled database cleanup: \n" + err.message);
@@ -1163,9 +1164,7 @@ async function deleteMessage(messageID) {
 async function banUser(banExpiresAt, id) {
   try {
     let timeUpdateResult = null;
-    await pool.query("DELETE FROM sessions WHERE user_id = $1", [
-      id,
-    ]);
+    await pool.query("DELETE FROM sessions WHERE user_id = $1", [id]);
     const bannedResult = await pool.query(
       "UPDATE users SET banned=TRUE WHERE id=$1 RETURNING id",
       [id]
@@ -1198,12 +1197,25 @@ async function banUser(banExpiresAt, id) {
     }
   } catch (err) {
     console.log("Error while banning user in DB");
-    throw err
+    throw err;
   }
 }
 
-function unbanUser(){
+async function unbanUser(id) {
+  try {
+    const { rowCount } = await pool.query(
+      "UPDATE users SET banned=true, ban_expires=null WHERE id=$1",
+      [id]
+    );
 
+    if (rowCount > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    throw new Error("Error modifying db while unbanning: " + err.message);
+  }
 }
 
 module.exports = {
@@ -1248,5 +1260,5 @@ module.exports = {
   checkAdminStatus,
   deleteMessage,
   banUser,
-  unbanUser
+  unbanUser,
 };
