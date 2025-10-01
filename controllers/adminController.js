@@ -54,7 +54,7 @@ async function banUser(req, res) {
 
 async function unbanUser(req, res) {
   try {
-    const username = req.query.username;
+    const username = req.body.username;
     const user = await db.getUserByUsername(username)
     if(user){
       const response =  await db.unbanUser(user.id)
