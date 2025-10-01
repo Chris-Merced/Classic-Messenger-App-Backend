@@ -75,6 +75,7 @@ async function unbanUser(req, res) {
 
 async function makeAdmin(req, res) {
   try {
+    console.log("made it")
     const username = req.body.username;
     const user = await db.getUserByUsername(username);
 
