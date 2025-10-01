@@ -1218,6 +1218,22 @@ async function unbanUser(id) {
   }
 }
 
+async function makeAdmin(id) {
+  try {
+    const { rowCount } = await pool.query(
+      "UPDATE users SET is_admin=true WHERE id=$1",
+      [id]
+    );
+    if (rowCount > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    throw new Error("Error modifying db while making admin");
+  }
+}
+
 module.exports = {
   addUser,
   getUserByUsername,
@@ -1261,4 +1277,5 @@ module.exports = {
   deleteMessage,
   banUser,
   unbanUser,
+  makeAdmin,
 };
