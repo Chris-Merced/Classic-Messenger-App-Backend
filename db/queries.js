@@ -1204,7 +1204,7 @@ async function banUser(banExpiresAt, id) {
 async function unbanUser(id) {
   try {
     const { rowCount } = await pool.query(
-      "UPDATE users SET banned=true, ban_expires=null WHERE id=$1",
+      "UPDATE users SET banned=false, ban_expires=null WHERE id=$1",
       [id]
     );
 
