@@ -52,4 +52,26 @@ async function banUser(req, res) {
   }
 }
 
-module.exports = { deleteMessage, banUser };
+async function unbanUser(req, res) {
+  try {
+    const username = req.query.username;
+    const user = await db.getUserByUsername(username)
+    if(user){
+      const response =  await db.unbanUser(user.id)
+      if(response){
+        res.status(200).json({message: "User unbanned"})
+        
+      }else{
+        res.status(500).json({message:"User could not be unbanned"})
+      }
+    }else{
+      console.log("Could not find user of username")
+      res.status(404).json({error: "User Does Not Exist"})
+    }
+  } catch (err) {
+    console.log("Error while banning user" + err.message);
+    res.status(500).json({ error: "Server error while banning user" });
+  }
+}
+
+module.exports = { deleteMessage, banUser, unbanUser };
