@@ -1,6 +1,9 @@
 const db = require('../db/queries')
 const authentication = require('../authentication')
 
+//START HERE FOR CONTINUED MIGRATION --  CONTINUE DOWNWARDS CREATING NEW
+//  AND SEPERATE FILES FOR TYPESCRIPT FOR CLEAN MERGING IN THE FUTURE
+
 async function deleteMessage(req, res) {
   try {
     const authenticated = await authentication.compareSessionToken(
