@@ -7,6 +7,7 @@ import {
   MessagesRow,
   FriendRequestsRow,
   FriendsRow,
+  BlockedRow,
 } from "../types/db";
 import argon2 from "argon2";
 import { z } from "zod";
@@ -1062,7 +1063,6 @@ export async function checkIfFriends(
   }
 }
 
-
 export async function getFriends(userID: number): Promise<number[]> {
   try {
     const { rows }: QueryResult<UserIDRow> = await pool.query(
@@ -1093,7 +1093,7 @@ export async function getFriends(userID: number): Promise<number[]> {
 
     return friendsList;
   } catch (err) {
-    const message = checkErrorType(err)
+    const message = checkErrorType(err);
     console.log(
       "Error in retrieval of user friends during query: \n" + message
     );
@@ -1102,3 +1102,51 @@ export async function getFriends(userID: number): Promise<number[]> {
     );
   }
 }
+
+export async function blockUser(userID: number, blockedID:number) {
+  try {
+    pool.query("INSERT INTO blocked (user_id, blocked_id) VALUES ($1, $2)", [
+      userID,
+      blockedID,
+    ]);
+  } catch (err) {
+    const message = checkErrorType(err)
+    console.log(
+      "Error within blockUser function in database query: \n" + message
+    );
+    throw new Error("Error while attempting to block user: \n" + message);
+  }
+}
+
+export async function checkIfBlocked(userID: number, blockedID: number): Promise<boolean> {
+  try {
+    const { rows }: QueryResult<BlockedRow> = await pool.query(
+      "SELECT * FROM blocked WHERE user_id=$1 AND blocked_id=$2",
+      [userID, blockedID]
+    );
+    if (rows[0]) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    const message = checkErrorType(err)
+    console.log("Error in checking the database: \n" + message);
+    throw new Error("Error checking database: \n" + message);
+  }
+}
+
+export async function unblockUser(userID: number, unblockedID: number) {
+  try {
+    await pool.query("DELETE FROM blocked WHERE user_id=$1 AND blocked_id=$2", [
+      userID,
+      unblockedID,
+    ]);
+  } catch (err) {
+    const message = checkErrorType(err)
+    console.log("Error in unblocking user within query: \n" + message);
+    throw new Error("Error in unblocking user: \n" + message);
+  }
+}
+
+

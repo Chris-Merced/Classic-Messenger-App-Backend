@@ -910,6 +910,7 @@ async function getFriends(userID) {
   }
 }
 
+
 async function blockUser(userID, blockedID) {
   try {
     pool.query('INSERT INTO blocked (user_id, blocked_id) VALUES ($1, $2)', [
