@@ -1103,14 +1103,14 @@ export async function getFriends(userID: number): Promise<number[]> {
   }
 }
 
-export async function blockUser(userID: number, blockedID:number) {
+export async function blockUser(userID: number, blockedID: number) {
   try {
     pool.query("INSERT INTO blocked (user_id, blocked_id) VALUES ($1, $2)", [
       userID,
       blockedID,
     ]);
   } catch (err) {
-    const message = checkErrorType(err)
+    const message = checkErrorType(err);
     console.log(
       "Error within blockUser function in database query: \n" + message
     );
@@ -1118,7 +1118,10 @@ export async function blockUser(userID: number, blockedID:number) {
   }
 }
 
-export async function checkIfBlocked(userID: number, blockedID: number): Promise<boolean> {
+export async function checkIfBlocked(
+  userID: number,
+  blockedID: number
+): Promise<boolean> {
   try {
     const { rows }: QueryResult<BlockedRow> = await pool.query(
       "SELECT * FROM blocked WHERE user_id=$1 AND blocked_id=$2",
@@ -1130,7 +1133,7 @@ export async function checkIfBlocked(userID: number, blockedID: number): Promise
       return false;
     }
   } catch (err) {
-    const message = checkErrorType(err)
+    const message = checkErrorType(err);
     console.log("Error in checking the database: \n" + message);
     throw new Error("Error checking database: \n" + message);
   }
@@ -1143,121 +1146,236 @@ export async function unblockUser(userID: number, unblockedID: number) {
       unblockedID,
     ]);
   } catch (err) {
-    const message = checkErrorType(err)
+    const message = checkErrorType(err);
     console.log("Error in unblocking user within query: \n" + message);
     throw new Error("Error in unblocking user: \n" + message);
   }
 }
 
+type CheckIfPublicRow = { is_public: boolean };
 
-type CheckIfPublicRow = {is_public:boolean}
-
-export async function checkIfPublic(userID: number) : Promise<boolean> {
+export async function checkIfPublic(userID: number): Promise<boolean> {
   try {
-    const { rows }:QueryResult<CheckIfPublicRow> = await pool.query(
-      'SELECT is_public FROM users WHERE id=$1',
-      [userID],
-    )
-    const isPublic = rows[0].is_public
-    return isPublic
+    const { rows }: QueryResult<CheckIfPublicRow> = await pool.query(
+      "SELECT is_public FROM users WHERE id=$1",
+      [userID]
+    );
+    const isPublic = rows[0].is_public;
+    return isPublic;
   } catch (err) {
-    const message = checkErrorType(err)
+    const message = checkErrorType(err);
     throw new Error(
-      'There was a problem in checking database for profile status: \n' +
-        message,
-    )
+      "There was a problem in checking database for profile status: \n" +
+        message
+    );
   }
 }
 
-export async function changeProfileStatus(userID: number, status: boolean):Promise<QueryResult<UserRow>> {
+export async function changeProfileStatus(
+  userID: number,
+  status: boolean
+): Promise<QueryResult<UserRow>> {
   try {
     if (status) {
       const response: QueryResult<UserRow> = await pool.query(
-        'UPDATE users SET is_public = FALSE WHERE id=$1 RETURNING *',
-        [userID],
-      )
-      return response
+        "UPDATE users SET is_public = FALSE WHERE id=$1 RETURNING *",
+        [userID]
+      );
+      return response;
     } else {
       const response: QueryResult<UserRow> = await pool.query(
-        'UPDATE users SET is_public = TRUE WHERE id=$1 RETURNING *',
-        [userID],
-      )
-      return response
+        "UPDATE users SET is_public = TRUE WHERE id=$1 RETURNING *",
+        [userID]
+      );
+      return response;
     }
   } catch (err) {
-    const message = checkErrorType(err)
+    const message = checkErrorType(err);
     throw new Error(
-      'There was a problem changing profile status within database: \n' +
-        message,
-    )
+      "There was a problem changing profile status within database: \n" +
+        message
+    );
   }
 }
 
-type ProfilePictureConfirmation = {message: string, url:string | null}
+type ProfilePictureConfirmation = { message: string; url: string | null };
 
-export async function addProfilePictureURL(key: string, userID: number): Promise<ProfilePictureConfirmation> {
+export async function addProfilePictureURL(
+  key: string,
+  userID: number
+): Promise<ProfilePictureConfirmation> {
   try {
     const { rows }: QueryResult<UserRow> = await pool.query(
-      'UPDATE users SET profile_picture=$1 WHERE id=$2 RETURNING *',
-      [key, userID],
-    )
+      "UPDATE users SET profile_picture=$1 WHERE id=$2 RETURNING *",
+      [key, userID]
+    );
     return {
-      message: 'Profile Picture Successfully uploaded',
+      message: "Profile Picture Successfully uploaded",
       url: rows[0].profile_picture,
-    }
+    };
   } catch (err) {
-    const message = checkErrorType(err)
-    console.log(
-      'Error within Database adding profile picture: \n' +message,
-    )
-    throw new Error(
-      'Error adding to database profile picture: \n' +message,
-    )
+    const message = checkErrorType(err);
+    console.log("Error within Database adding profile picture: \n" + message);
+    throw new Error("Error adding to database profile picture: \n" + message);
   }
 }
 
-type GetProfilePictureURL = Pick<UserRow, "profile_picture">
+type GetProfilePictureURL = Pick<UserRow, "profile_picture">;
 
-export async function getProfilePictureURL(userID: number):Promise<GetProfilePictureURL | null> {
+export async function getProfilePictureURL(
+  userID: number
+): Promise<GetProfilePictureURL | null> {
   try {
     const { rows }: QueryResult<GetProfilePictureURL> = await pool.query(
-      'SELECT profile_picture FROM users WHERE id = $1',
-      [userID],
-    )
+      "SELECT profile_picture FROM users WHERE id = $1",
+      [userID]
+    );
     if (rows[0]) {
-      return rows[0]
+      return rows[0];
     } else {
-      return null
+      return null;
     }
   } catch (err) {
-    const message = checkErrorType(err)
+    const message = checkErrorType(err);
     console.log(
-      'There was an error in retrieving the profile picture url from the database: \n' +
-        message,
-    )
+      "There was an error in retrieving the profile picture url from the database: \n" +
+        message
+    );
     throw new Error(
-      'There was an error in retrieving the profile picture url from the database: \n' +
-        message,
-    )
+      "There was an error in retrieving the profile picture url from the database: \n" +
+        message
+    );
   }
 }
 
-export async function getProfilePictureURLByUserName(userName: string): Promise<string | null> {
+export async function getProfilePictureURLByUserName(
+  userName: string
+): Promise<string | null> {
   try {
     const { rows }: QueryResult<GetProfilePictureURL> = await pool.query(
-      'SELECT profile_picture FROM users WHERE username=$1',
-      [userName],
+      "SELECT profile_picture FROM users WHERE username=$1",
+      [userName]
+    );
+    return rows[0].profile_picture;
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.log(
+      "There was an error in retrieving the profile picture by user name: \n" +
+        message
+    );
+    throw new Error(
+      "There was an error in retrieving the profile picture by user name: \n" +
+        message
+    );
+  }
+}
+
+export async function editAboutMe(
+  aboutMe: string,
+  userID: number
+): Promise<UserRow> {
+  try {
+    const { rows }: QueryResult<UserRow> = await pool.query(
+      "UPDATE users SET about_me=$1 WHERE id=$2 RETURNING *",
+      [aboutMe, userID]
+    );
+    return rows[0];
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.log(
+      "There was an error updating user about me in database: \n" + message
+    );
+    throw new Error(
+      "\n There was an error updating user about me in database: \n" + message
+    );
+  }
+}
+
+type MutualFriends = Pick<UserRow, "id" | "username" | "profile_picture">;
+
+export async function getMutualFriends(
+  userID: number,
+  profileID: number
+): Promise<MutualFriends[]> {
+  try {
+    const { rows }: QueryResult<MutualFriends> = await pool.query(
+      `
+      WITH user1_friends AS (
+        SELECT friend_id AS friend
+        FROM friends
+        WHERE user_id = $1
+        UNION
+        SELECT user_id AS friend
+        FROM friends
+        WHERE friend_id = $1
+      ),
+      user2_friends AS (
+        SELECT friend_id AS friend
+        FROM friends
+        WHERE user_id = $2
+        UNION
+        SELECT user_id AS friend
+        FROM friends
+        WHERE friend_id = $2
+      )
+      SELECT u.id, u.username, u.profile_picture
+      FROM users u
+      JOIN (
+        SELECT friend FROM user1_friends
+        INTERSECT
+        SELECT friend FROM user2_friends
+      ) mutual ON mutual.friend = u.id
+      `,
+      [userID, profileID]
+    );
+
+    return rows;
+  } catch (err) {
+    const message = checkErrorType(err);
+    console.log(
+      "There was an error in retrieving mutual friends: \n" + message
+    );
+    throw new Error(
+      "There was an error in retrieving mutual friends: \n" + message
+    );
+  }
+}
+
+
+type CheckAdminStatus = Pick<UserRow, "is_admin">
+
+export async function checkAdminStatus(id: number): Promise<boolean> {
+  try {
+    const { rows }:QueryResult<CheckAdminStatus> = await pool.query(
+      'SELECT is_admin FROM users WHERE id=$1',
+      [id],
     )
-    return rows[0].profile_picture
+    if (rows[0].is_admin) {
+      return true
+    } else {
+      return false
+    }
   } catch (err) {
     const message = checkErrorType(err)
-    console.log(
-      'There was an error in retrieving the profile picture by user name: \n' +
-        message,
+    throw new Error(message)
+  }
+}
+
+export async function deleteMessage(messageID: number):Promise<boolean> {
+  try {
+    const result: QueryResult<MessagesRow> = await pool.query(
+      'DELETE from MESSAGES where id=$1 RETURNING *',
+      [messageID],
     )
-    throw new Error(
-      'There was an error in retrieving the profile picture by user name: \n' +
-        message,
-    )
+    if (result.rowCount! > 0) {
+      console.log('Deleted: ' + result.rows[0])
+      return true
+    } else {
+      console.log('No Messages match that ID for deletion')
+      return false
+    }
+  } catch (err) {
+    const message = checkErrorType(err)
+    throw new Error(message)
   }
 }
