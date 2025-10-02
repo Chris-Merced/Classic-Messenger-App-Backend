@@ -1150,3 +1150,114 @@ export async function unblockUser(userID: number, unblockedID: number) {
 }
 
 
+type CheckIfPublicRow = {is_public:boolean}
+
+export async function checkIfPublic(userID: number) : Promise<boolean> {
+  try {
+    const { rows }:QueryResult<CheckIfPublicRow> = await pool.query(
+      'SELECT is_public FROM users WHERE id=$1',
+      [userID],
+    )
+    const isPublic = rows[0].is_public
+    return isPublic
+  } catch (err) {
+    const message = checkErrorType(err)
+    throw new Error(
+      'There was a problem in checking database for profile status: \n' +
+        message,
+    )
+  }
+}
+
+export async function changeProfileStatus(userID: number, status: boolean):Promise<QueryResult<UserRow>> {
+  try {
+    if (status) {
+      const response: QueryResult<UserRow> = await pool.query(
+        'UPDATE users SET is_public = FALSE WHERE id=$1 RETURNING *',
+        [userID],
+      )
+      return response
+    } else {
+      const response: QueryResult<UserRow> = await pool.query(
+        'UPDATE users SET is_public = TRUE WHERE id=$1 RETURNING *',
+        [userID],
+      )
+      return response
+    }
+  } catch (err) {
+    const message = checkErrorType(err)
+    throw new Error(
+      'There was a problem changing profile status within database: \n' +
+        message,
+    )
+  }
+}
+
+type ProfilePictureConfirmation = {message: string, url:string | null}
+
+export async function addProfilePictureURL(key: string, userID: number): Promise<ProfilePictureConfirmation> {
+  try {
+    const { rows }: QueryResult<UserRow> = await pool.query(
+      'UPDATE users SET profile_picture=$1 WHERE id=$2 RETURNING *',
+      [key, userID],
+    )
+    return {
+      message: 'Profile Picture Successfully uploaded',
+      url: rows[0].profile_picture,
+    }
+  } catch (err) {
+    const message = checkErrorType(err)
+    console.log(
+      'Error within Database adding profile picture: \n' +message,
+    )
+    throw new Error(
+      'Error adding to database profile picture: \n' +message,
+    )
+  }
+}
+
+type GetProfilePictureURL = Pick<UserRow, "profile_picture">
+
+export async function getProfilePictureURL(userID: number):Promise<GetProfilePictureURL | null> {
+  try {
+    const { rows }: QueryResult<GetProfilePictureURL> = await pool.query(
+      'SELECT profile_picture FROM users WHERE id = $1',
+      [userID],
+    )
+    if (rows[0]) {
+      return rows[0]
+    } else {
+      return null
+    }
+  } catch (err) {
+    const message = checkErrorType(err)
+    console.log(
+      'There was an error in retrieving the profile picture url from the database: \n' +
+        message,
+    )
+    throw new Error(
+      'There was an error in retrieving the profile picture url from the database: \n' +
+        message,
+    )
+  }
+}
+
+export async function getProfilePictureURLByUserName(userName: string): Promise<string | null> {
+  try {
+    const { rows }: QueryResult<GetProfilePictureURL> = await pool.query(
+      'SELECT profile_picture FROM users WHERE username=$1',
+      [userName],
+    )
+    return rows[0].profile_picture
+  } catch (err) {
+    const message = checkErrorType(err)
+    console.log(
+      'There was an error in retrieving the profile picture by user name: \n' +
+        message,
+    )
+    throw new Error(
+      'There was an error in retrieving the profile picture by user name: \n' +
+        message,
+    )
+  }
+}
