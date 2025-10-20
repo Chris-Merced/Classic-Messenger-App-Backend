@@ -11,7 +11,7 @@ import {
 } from "../types/db";
 import argon2 from "argon2";
 import { z } from "zod";
-
+import { checkErrorType } from "../authentication";
 import type { Query, QueryResult } from "pg";
 import type { Request, Response } from "express";
 
@@ -29,9 +29,7 @@ type UserNameRow = { username: string };
 type UserEmailRow = { email: string };
 type UserIDRow = { id: number };
 
-function checkErrorType(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
-}
+
 
 export async function addUser(user: UserInput) {
   console.log("NEW TYPED ROUTE");
