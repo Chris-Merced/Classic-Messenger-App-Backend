@@ -1,12 +1,32 @@
-const db = require("../db/queriesOld");
-const { redisPublisher, redisSubscriber } = require("../redisClient");
+import * as db from "../db/queries";
+import { redisPublisher, redisSubscriber } from "../redisClient";
+import {z } from "zod";
+import type {Response, Request} from "express";
+import { FriendsRow } from "../types/db";
+import { checkErrorType } from "../authentication";
 
-async function checkDirectMessageConversation(req, res) {
+const QuerySchema = z.object({
+  userID: z.coerce.number().int().positive(),
+  profileID: z.coerce.number().int().positive()
+})
+
+
+async function checkDirectMessageConversation(req: Request, res: Response) {
+  
   try {
-    const userID = req.query.userID;
-    const profileID = req.query.profileID;
-    const isPublic = await db.checkIfPublic(profileID);
-    let areFriends = false;
+
+    const parsed = QuerySchema.safeParse(req.query)
+
+    if(!parsed.success){
+      console.log(z.treeifyError(parsed.error))
+      return res.status(400).json({error: z.treeifyError(parsed.error)})
+    }
+
+    const {userID, profileID} = parsed.data;
+    
+
+    const isPublic:boolean = await db.checkIfPublic(profileID);
+    let areFriends: FriendsRow | false = false;
 
     if (!isPublic) {
       areFriends = await db.checkIfFriends(userID, profileID);
@@ -14,7 +34,7 @@ async function checkDirectMessageConversation(req, res) {
 
     if (areFriends || isPublic) {
       console.log("You made it to checkDirectMessageConversation");
-      const conversation_id = await db.checkDirectMessageConversationExists(
+      const conversation_id: number = await db.checkDirectMessageConversationExists(
         userID,
         profileID
       );
@@ -23,14 +43,18 @@ async function checkDirectMessageConversation(req, res) {
       }
     }
   } catch (err) {
+    const message = checkErrorType(err)
     console.log(
-      "There was an error in checking direct message conversation: \n" + err
+      "There was an error in checking direct message conversation: \n" + message
     );
     res.status(500).json({
       message: "There was an error in checking direct message conversation",
     });
   }
 }
+
+//CONTINUE HERE
+
 
 async function addMessageToConversations(req, res) {
   try {
