@@ -2,7 +2,7 @@ import * as db from "../db/queries";
 import { redisPublisher, redisSubscriber } from "../redisClient";
 import {z } from "zod";
 import type {Response, Request} from "express";
-import { FriendsRow } from "../types/db";
+import { FriendsRow, UserRow } from "../types/db";
 import { checkErrorType } from "../authentication";
 
 const QuerySchema = z.object({
@@ -56,12 +56,29 @@ async function checkDirectMessageConversation(req: Request, res: Response) {
 //CONTINUE HERE
 
 
-async function addMessageToConversations(req, res) {
+const AddMessageQuery = z.object({
+  userID: z.coerce.number().int().positive(),
+  reciever: z.array(z.coerce.string())
+})
+
+async function addMessageToConversations(req : Request, res: Response) {
   try {
-    const userID = req.body.reciever[0];
-    const blockedUserID = req.body.userID;
-    const { id } = await db.getUserByUsername(userID);
-    const isBlocked = await db.checkIfBlocked(id, blockedUserID);
+
+    const parsed = AddMessageQuery.safeParse(req.body);
+
+    if(!parsed.success){
+      console.log(z.treeifyError(parsed.error))
+      return res.status(400).json({error: z.treeifyError(parsed.error)})
+    }
+    
+    const {userID: blockedUserID, reciever: [username]} = parsed.data
+
+    //Keeping original logic in for debugging later
+    //const userID = req.body.reciever[0];
+    //const blockedUserID = req.body.userID;
+
+    const { id } : Pick<UserRow, "id"> = await db.getUserByUsername(username);
+    const isBlocked: boolean = await db.checkIfBlocked(id, blockedUserID);
 
     if (!isBlocked) {
       await db.addMessageToConversations(JSON.stringify(req.body));
@@ -72,7 +89,9 @@ async function addMessageToConversations(req, res) {
         .json("You do not have permission to send a message to this user");
     }
   } catch (err) {
-    console.error("Error adding message to conversation: " + err.message);
+    const message = checkErrorType(err)
+    console.error("Error adding message to conversation: " + message);
+    res.status(400).json({error: "Error adding message to conversation"})
   }
 }
 
