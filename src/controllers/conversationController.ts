@@ -53,9 +53,6 @@ async function checkDirectMessageConversation(req: Request, res: Response) {
   }
 }
 
-//CONTINUE HERE
-
-
 const AddMessageQuery = z.object({
   userID: z.coerce.number().int().positive(),
   reciever: z.array(z.coerce.string())
@@ -95,23 +92,46 @@ async function addMessageToConversations(req : Request, res: Response) {
   }
 }
 
-async function getOnlineUsers(req, res) {
+export async function getOnlineUsers(req: Request, res: Response) {
   try {
     var activeUsers = {};
-    const userList = req.query.userList.split(",");
+    let userList: Array<string> = [];
+
+
+    //Temporary explicit message for debugging later
+    // to normalize behavior with frontend in edge case
+    if (!req.query.userList){
+      console.log("No User List to parse")
+      console.log("Error occured in: conversationController: getOnlineUsers")
+      return res.status(404).json({error: "No User List To Parse"})
+    }
+    if(typeof req.query.userList === 'string'){
+      userList = req.query.userList.split(",");
+    } 
 
     for (let user of userList) {
-      const response = await redisPublisher.hGet("activeUsers", user);
+      const response: string | undefined = await redisPublisher.hGet("activeUsers", user);
+      
+      if(typeof response === 'string'){
+        return true;
+      }else{
+        return false;
+      }
+
+      //keep original logic for debugging purposes later
+      /*
       const userExist = JSON.parse(response);
       if (userExist) {
         activeUsers[user] = true;
       } else {
         activeUsers[user] = false;
       }
+      */
     }
     res.status(200).json({ activeUsers });
   } catch (err) {
-    console.log("Error in retrieving online users list: \n" + err);
+    const message = checkErrorType(err)
+    console.log("Error in retrieving online users list: \n" + message);
     res.status(500).json({ message: "Error in retrieving online users list" });
   }
 }
