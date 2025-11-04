@@ -33,7 +33,7 @@ The backend for the Classic Messenger App is a secure, scalable Node.js server b
 
 ## Installation & Setup
 
-[Note that this setup needs to be married with the installation of the provided in the Frontend repository which can be found here!](https://github.com/Chris-Merced/Classic-Messenger-App-Frontend)
+[Note that this setup needs to be married with the installation provided in the Frontend repository which can be found here!](https://github.com/Chris-Merced/Classic-Messenger-App-Frontend)
 
 ### Prerequisites
 
