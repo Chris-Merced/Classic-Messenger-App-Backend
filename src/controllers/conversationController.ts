@@ -5,12 +5,6 @@ import type { Response, Request } from "express";
 import { FriendsRow, UserRow } from "../types/db";
 import { checkErrorType } from "../authentication";
 
-//TODO:
-//  Module is converted to TypeScript, check if works in a live environment
-//  The module was changed using git mv so all modules that use this export
-//    should be normalized
-//  Move on to loginController next
-
 
 const QuerySchema = z.object({
   userID: z.coerce.number().int().positive(),
