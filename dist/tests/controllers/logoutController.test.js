@@ -1,9 +1,9 @@
 "use strict";
-const { logoutUser } = require('../../controllers/logoutController');
-jest.mock('../../db/queries', () => ({
+const { logoutUser } = require("../../controllers/logoutController");
+jest.mock("../../db/queries", () => ({
     deleteSession: jest.fn(),
 }));
-const db = require('../../src/db/queries');
+const db = require("../../src/db/queriesOld");
 function fakeReq(sessionID = 42) {
     return {
         cookies: {
@@ -17,21 +17,21 @@ function fakeRes() {
     res.json = jest.fn().mockReturnValue(res);
     return res;
 }
-describe('logoutUser Controller Unit Testing for Crucial Functions', () => {
+describe("logoutUser Controller Unit Testing for Crucial Functions", () => {
     afterEach(() => {
         jest.clearAllMocks();
     });
-    test('successful path deletes session and returns 200', async () => {
+    test("successful path deletes session and returns 200", async () => {
         const req = fakeReq(99);
         const res = fakeRes();
         await logoutUser(req, res);
         expect(db.deleteSession).toHaveBeenCalledTimes(1);
         expect(db.deleteSession).toHaveBeenCalledWith(99);
         expect(res.status).toHaveBeenCalledWith(200);
-        expect(res.json).toHaveBeenCalledWith({ message: 'Logout Successful' });
+        expect(res.json).toHaveBeenCalledWith({ message: "Logout Successful" });
     });
-    test('error path DB throws ⇒ logs & responds 500', async () => {
-        db.deleteSession.mockRejectedValueOnce(new Error('DB down'));
+    test("error path DB throws ⇒ logs & responds 500", async () => {
+        db.deleteSession.mockRejectedValueOnce(new Error("DB down"));
         const req = fakeReq(123);
         const res = fakeRes();
         await logoutUser(req, res);

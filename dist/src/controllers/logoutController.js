@@ -1,16 +1,16 @@
 "use strict";
-const db = require('../db/queries');
+const db = require("../db/queriesOld");
 async function logoutUser(req, res) {
     try {
         const data = JSON.parse(req.cookies.sessionToken);
         await db.deleteSession(data.sessionID);
-        res.status(200).json({ message: 'Logout Successful' });
+        res.status(200).json({ message: "Logout Successful" });
     }
     catch (err) {
-        console.error('Error in logging out user: ' + err.message);
+        console.error("Error in logging out user: " + err.message);
         res
             .status(500)
-            .json({ message: 'Error in logging out user: ' + err.message });
+            .json({ message: "Error in logging out user: " + err.message });
     }
 }
 module.exports = { logoutUser };

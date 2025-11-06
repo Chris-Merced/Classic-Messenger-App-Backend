@@ -1,11 +1,11 @@
 "use strict";
-const db = require('../db/queries');
-const authentication = require('../authentication');
+const db = require("../db/queriesOld");
+const authentication = require("../authentication");
 async function getChatMessagesByName(req, res) {
     try {
         if (req.query.chatName &&
-            req.query.chatName !== 'undefined' &&
-            req.query.chatName !== 'null') {
+            req.query.chatName !== "undefined" &&
+            req.query.chatName !== "null") {
             const messages = await db.getChatMessagesByName(req.query.chatName, req.query.page, req.query.limit);
             const newMessages = await Promise.all(messages.map(async (message) => {
                 const userObject = await db.getUserByUserID(message.sender_id);
@@ -18,7 +18,7 @@ async function getChatMessagesByName(req, res) {
             }));
             res.status(200).json({ messages: newMessages });
         }
-        else if (req.query.conversationID !== 'undefined') {
+        else if (req.query.conversationID !== "undefined") {
             const sessionToken = req.cookies.sessionToken;
             const isValid = await authentication.compareSessionToken(sessionToken, req.query.userID);
             let checkID = req.query.userID;
@@ -34,22 +34,24 @@ async function getChatMessagesByName(req, res) {
                     };
                 }));
                 const recieverIDReal = await db.getUserIDByConversationID(req.query.conversationID, req.query.userID);
-                res.status(200).json({ recieverID: recieverIDReal, messages: newMessages });
+                res
+                    .status(200)
+                    .json({ recieverID: recieverIDReal, messages: newMessages });
             }
             else {
-                throw new Error('No chat name or conversation ID detected');
+                throw new Error("No chat name or conversation ID detected");
             }
         }
         else {
             return {
-                time: '',
-                message: 'Attempt at invalid access to user direct messages',
-                user: 'SystemMessage',
+                time: "",
+                message: "Attempt at invalid access to user direct messages",
+                user: "SystemMessage",
             };
         }
     }
     catch (err) {
-        console.error('Error getting chat messages: ' + err.message);
+        console.error("Error getting chat messages: " + err.message);
     }
 }
 async function getUserChats(req, res) {
@@ -68,9 +70,9 @@ async function getUserChats(req, res) {
         res.status(200).json({ userChats: userChats });
     }
     catch (err) {
-        console.error('Error getting user chats: ' + err.message);
+        console.error("Error getting user chats: " + err.message);
         res.status(500).json({
-            error: 'Error getting user chats',
+            error: "Error getting user chats",
             message: err.message,
         });
     }

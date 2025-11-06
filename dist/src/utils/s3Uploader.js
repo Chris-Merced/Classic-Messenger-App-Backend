@@ -1,6 +1,6 @@
 "use strict";
-const { S3Client, PutObjectCommand, DeleteObjectCommand, } = require('@aws-sdk/client-s3');
-const db = require('../db/queries.js');
+const { S3Client, PutObjectCommand, DeleteObjectCommand, } = require("@aws-sdk/client-s3");
+const db = require("../db/queriesOld.js");
 const s3 = new S3Client({
     region: process.env.AWS_REGION,
     credentials: {
@@ -17,8 +17,8 @@ const deleteFromS3 = async (key) => {
         s3.send(new DeleteObjectCommand(deleteParams));
     }
     catch (err) {
-        console.log('There was an error in deleting image from S3 bucket: \n' + err);
-        throw new Error('There was an error in deleting image from S3 Bucket');
+        console.log("There was an error in deleting image from S3 bucket: \n" + err);
+        throw new Error("There was an error in deleting image from S3 Bucket");
     }
 };
 const uploadToS3 = async (buffer, key, contentType) => {
@@ -33,8 +33,8 @@ const uploadToS3 = async (buffer, key, contentType) => {
         return `https://${params.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
     }
     catch (err) {
-        console.log('There was an error while uplading image to S3 bucket: \n' + err);
-        throw new Error('There was an error while uplading image to S3 bucket');
+        console.log("There was an error while uplading image to S3 bucket: \n" + err);
+        throw new Error("There was an error while uplading image to S3 bucket");
     }
 };
 module.exports = { uploadToS3, deleteFromS3 };
