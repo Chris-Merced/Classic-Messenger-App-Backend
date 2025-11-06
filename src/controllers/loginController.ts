@@ -2,8 +2,9 @@ import * as argon2 from "argon2"
 import * as crypto from "crypto"
 import * as db from "../db/queries"
 
+import type {Response,Request} from "express"
 
-export async function loginHandler(req, res) {
+export async function loginHandler(req:, res) {
   try {
     console.log("made it handler");
     console.log(req.body.username);
