@@ -18,7 +18,6 @@ export async function loginHandler(req: Request, res: Response) {
   try {
     console.log("made it handler");
     console.log(req.body.username);
-    console.log(req.body.password);
 
     const parsed = LoginHandlerSchema.safeParse(req.body);
 

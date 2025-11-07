@@ -40,11 +40,6 @@ const db = __importStar(require("../db/queries"));
 const redisClient_1 = require("../redisClient");
 const zod_1 = require("zod");
 const authentication_1 = require("../authentication");
-//TODO:
-//  Module is converted to TypeScript, check if works in a live environment
-//  The module was changed using git mv so all modules that use this export
-//    should be normalized
-//  Move on to loginController next
 const QuerySchema = zod_1.z.object({
     userID: zod_1.z.coerce.number().int().positive(),
     profileID: zod_1.z.coerce.number().int().positive(),
