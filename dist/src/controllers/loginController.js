@@ -51,7 +51,6 @@ async function loginHandler(req, res) {
     try {
         console.log("made it handler");
         console.log(req.body.username);
-        console.log(req.body.password);
         const parsed = LoginHandlerSchema.safeParse(req.body);
         if (!parsed.success) {
             console.log("Error with form data");
