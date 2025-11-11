@@ -613,7 +613,7 @@ type ConversationUserIDRow = { user_id: number };
 export async function getUserIDByConversationID(
   conversationID: number,
   userID: number
-): Promise<number | boolean> {
+): Promise<number | null> {
   try {
     const { rows }: QueryResult<ConversationUserIDRow> = await pool.query(
       "SELECT user_id FROM conversation_participants WHERE conversation_id=$1 AND user_id!=$2",
@@ -623,7 +623,7 @@ export async function getUserIDByConversationID(
     if (rows[0]) {
       return rows[0].user_id;
     } else {
-      return false;
+      return null;
     }
   } catch (err) {
     const message = checkErrorType(err);

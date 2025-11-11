@@ -43,7 +43,7 @@ export interface FriendsRow{
 export interface MessagesRow{
     id: number;
     conversation_id: number | null;
-    sender_id: number | null;
+    sender_id: number;
     content: string;
     created_at: Date | null;
     is_read: boolean | null;

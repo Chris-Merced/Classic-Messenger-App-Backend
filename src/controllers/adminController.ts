@@ -3,12 +3,6 @@ import * as authentication from "../authentication"
 import type { Request, Response } from "express";
 import { checkErrorType } from "../authentication";
 
-//REROUTE ALL DB IMPORTS AT THE TOP TO NEW QUERIES.TS, ENSURE EVERYTHING IS FUNCTIONAL
-// FILES AFFECTED: INDEX.JS, AUTHENTICATION.JS, ALL CONTROLLERS
-// TESTS WILL ALSO BE AFFECTED
-//AFTER THAT
-//START HERE FOR CONTINUED MIGRATION --  CONTINUE DOWNWARDS CREATING NEW
-//  AND SEPERATE FILES FOR TYPESCRIPT FOR CLEAN MERGING IN THE FUTURE
 
 async function deleteMessage(req: Request, res:Response) {
   try {
