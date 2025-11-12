@@ -43,12 +43,12 @@ const GetChatMessagesSchema = zod_1.z.object({
     chatName: zod_1.z.string(),
     conversationID: zod_1.z.coerce.number().int().positive(),
     userID: zod_1.z.coerce.number().int().positive(),
-    page: zod_1.z.coerce.number().int().positive(),
+    page: zod_1.z.coerce.number().int().nonnegative(),
     limit: zod_1.z.coerce.number().int().positive(),
 });
 async function getChatMessagesByName(req, res) {
     try {
-        const parsed = GetChatMessagesSchema.safeParse(req);
+        const parsed = GetChatMessagesSchema.safeParse(req.query);
         if (!parsed.success) {
             console.log("Error in req params for chat messages");
             console.log(zod_1.z.treeifyError(parsed.error));
@@ -125,16 +125,24 @@ async function getChatMessagesByName(req, res) {
     }
 }
 const GetUserChatsSchema = zod_1.z.object({
-    page: zod_1.z.coerce.number().int().positive(),
+    page: zod_1.z.coerce.number().int().nonnegative(),
     limit: zod_1.z.coerce.number().int().positive(),
     userID: zod_1.z.coerce.number().int().positive(),
 });
 async function getUserChats(req, res) {
     try {
-        const parsed = GetUserChatsSchema.safeParse(req);
+        console.log(req.query.page);
+        const parsed = GetUserChatsSchema.safeParse(req.query);
         if (!parsed.success) {
             console.log("Error parsing request object for getUserChats");
             console.log(zod_1.z.treeifyError(parsed.error));
+            const error = zod_1.z.treeifyError(parsed.error);
+            console.log("page");
+            console.log(error.properties?.page?.errors);
+            console.log("limit");
+            console.log(error.properties?.limit?.errors);
+            console.log("userID");
+            console.log(error.properties?.userID?.errors);
             return res.status(500).json({ error: zod_1.z.treeifyError(parsed.error) });
         }
         const { page, limit, userID } = parsed.data;
