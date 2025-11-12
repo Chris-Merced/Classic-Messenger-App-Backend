@@ -131,18 +131,10 @@ const GetUserChatsSchema = zod_1.z.object({
 });
 async function getUserChats(req, res) {
     try {
-        console.log(req.query.page);
         const parsed = GetUserChatsSchema.safeParse(req.query);
         if (!parsed.success) {
             console.log("Error parsing request object for getUserChats");
             console.log(zod_1.z.treeifyError(parsed.error));
-            const error = zod_1.z.treeifyError(parsed.error);
-            console.log("page");
-            console.log(error.properties?.page?.errors);
-            console.log("limit");
-            console.log(error.properties?.limit?.errors);
-            console.log("userID");
-            console.log(error.properties?.userID?.errors);
             return res.status(500).json({ error: zod_1.z.treeifyError(parsed.error) });
         }
         const { page, limit, userID } = parsed.data;
