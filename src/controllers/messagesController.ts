@@ -2,15 +2,15 @@ import * as db from "../db/queries";
 import * as authentication from "../authentication";
 import { checkErrorType } from "../authentication";
 import { Request, Response } from "express";
-import { z } from "zod";
+import { check, z } from "zod";
 import { MessagesRow } from "../types/db";
 
 const GetChatMessagesSchema = z.object({
   chatName: z.string(),
-  conversationID: z.coerce.number(),
-  userID: z.coerce.number(),
-  page: z.coerce.number(),
-  limit: z.coerce.number(),
+  conversationID: z.coerce.number().int().positive(),
+  userID: z.coerce.number().int().positive(),
+  page: z.coerce.number().int().positive(),
+  limit: z.coerce.number().int().positive(),
 });
 
 export async function getChatMessagesByName(req: Request, res: Response) {
@@ -29,7 +29,11 @@ export async function getChatMessagesByName(req: Request, res: Response) {
     // frontend needs to have a normalized falsy value when chatName is not present
     // so that the if condition is less verbose and easily readable
     if (chatName && chatName !== "undefined" && chatName !== "null") {
-      const messages: MessagesRow[] = await db.getChatMessagesByName(chatName, page, limit);
+      const messages: MessagesRow[] = await db.getChatMessagesByName(
+        chatName,
+        page,
+        limit
+      );
 
       const userWithoutPasswordSchema = z.object({
         id: z.number(),
@@ -89,8 +93,10 @@ export async function getChatMessagesByName(req: Request, res: Response) {
           userID
         );
 
-        if (!recieverIDReal){
-          return res.status(403).json({error: "You do not have permission to access this data"})
+        if (!recieverIDReal) {
+          return res
+            .status(403)
+            .json({ error: "You do not have permission to access this data" });
         }
 
         res
@@ -107,17 +113,29 @@ export async function getChatMessagesByName(req: Request, res: Response) {
       };
     }
   } catch (err) {
-    const message = checkErrorType(err)
+    const message = checkErrorType(err);
     console.error("Error getting chat messages: " + message);
-    res.status(500).json({error: "Could not retrieve chat messages"})
+    res.status(500).json({ error: "Could not retrieve chat messages" });
   }
 }
 
-async function getUserChats(req, res) {
+const GetUserChatsSchema = z.object({
+  page: z.coerce.number().int().positive(),
+  limit: z.coerce.number().int().positive(),
+  userID: z.coerce.number().int().positive(),
+});
+
+export async function getUserChats(req: Request, res: Response) {
   try {
-    const page = req.query.page;
-    const limit = req.query.limit;
-    const userID = req.query.userID;
+    const parsed = GetUserChatsSchema.safeParse(req);
+
+    if (!parsed.success) {
+      console.log("Error parsing request object for getUserChats");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(500).json({ error: z.treeifyError(parsed.error) });
+    }
+
+    const { page, limit, userID } = parsed.data;
 
     const userChatsWithoutProfilePictures = await db.getUserChats(
       userID,
@@ -138,10 +156,11 @@ async function getUserChats(req, res) {
 
     res.status(200).json({ userChats: userChats });
   } catch (err) {
-    console.error("Error getting user chats: " + err.message);
+    const message = checkErrorType(err)
+    console.error("Error getting user chats: " + message);
     res.status(500).json({
       error: "Error getting user chats",
-      message: err.message,
+      message: message,
     });
   }
 }
