@@ -36,12 +36,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const db = __importStar(require("../db/queries"));
 const authentication = __importStar(require("../authentication"));
 const authentication_1 = require("../authentication");
-//REROUTE ALL DB IMPORTS AT THE TOP TO NEW QUERIES.TS, ENSURE EVERYTHING IS FUNCTIONAL
-// FILES AFFECTED: INDEX.JS, AUTHENTICATION.JS, ALL CONTROLLERS
-// TESTS WILL ALSO BE AFFECTED
-//AFTER THAT
-//START HERE FOR CONTINUED MIGRATION --  CONTINUE DOWNWARDS CREATING NEW
-//  AND SEPERATE FILES FOR TYPESCRIPT FOR CLEAN MERGING IN THE FUTURE
 async function deleteMessage(req, res) {
     try {
         const authenticated = await authentication.compareSessionToken(req.cookies.sessionToken, req.body.id);

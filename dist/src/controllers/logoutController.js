@@ -38,7 +38,7 @@ const db = __importStar(require("../db/queriesOld"));
 const zod_1 = require("zod");
 const authentication_1 = require("../authentication");
 const SessionCookieSchema = zod_1.z.object({
-    sessionID: zod_1.z.string()
+    sessionID: zod_1.z.string(),
 });
 async function logoutUser(req, res) {
     try {
@@ -56,9 +56,7 @@ async function logoutUser(req, res) {
     catch (err) {
         const message = (0, authentication_1.checkErrorType)(err);
         console.error("Error in logging out user: " + message);
-        res
-            .status(500)
-            .json({ message: "Error in logging out user: " + message });
+        res.status(500).json({ message: "Error in logging out user: " + message });
     }
 }
 module.exports = { logoutUser };

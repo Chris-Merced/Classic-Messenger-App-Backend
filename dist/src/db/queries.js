@@ -496,7 +496,7 @@ async function getUserIDByConversationID(conversationID, userID) {
             return rows[0].user_id;
         }
         else {
-            return false;
+            return null;
         }
     }
     catch (err) {
