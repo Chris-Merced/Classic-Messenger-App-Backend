@@ -127,19 +127,12 @@ const GetUserChatsSchema = z.object({
 
 export async function getUserChats(req: Request, res: Response) {
   try {
-    console.log(req.query.page)
     const parsed = GetUserChatsSchema.safeParse(req.query);
     
     if (!parsed.success) {
       console.log("Error parsing request object for getUserChats");
       console.log(z.treeifyError(parsed.error));
-      const error = z.treeifyError(parsed.error)
-      console.log("page")
-      console.log(error.properties?.page?.errors)
-      console.log("limit")
-      console.log(error.properties?.limit?.errors)
-      console.log("userID")
-      console.log(error.properties?.userID?.errors)
+
       return res.status(500).json({ error: z.treeifyError(parsed.error) });
     }
 
