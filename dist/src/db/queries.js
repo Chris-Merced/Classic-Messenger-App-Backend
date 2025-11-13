@@ -223,7 +223,7 @@ async function checkEmailExists(email) {
             return rows[0];
         }
         else {
-            return false;
+            return null;
         }
     }
     catch (err) {

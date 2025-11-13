@@ -1,6 +1,45 @@
 "use strict";
-const db = require("../db/queriesOld");
-const crypto = require("crypto");
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.oauthLogin = oauthLogin;
+exports.oauthSignup = oauthSignup;
+const db = __importStar(require("../db/queries"));
+const crypto = __importStar(require("crypto"));
+const env_1 = require("../types/env");
+const authentication_1 = require("../authentication");
+const zod_1 = require("zod");
 async function oauthLogin(req, res) {
     const code = req.body.code;
     if (!code) {
@@ -12,9 +51,9 @@ async function oauthLogin(req, res) {
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: new URLSearchParams({
                 code,
-                client_id: process.env.OAUTH_CLIENTID,
-                client_secret: process.env.OAUTH_SECRET,
-                redirect_uri: process.env.FRONTEND_OAUTH_URL,
+                client_id: env_1.env.OAUTH_CLIENTID,
+                client_secret: env_1.env.OAUTH_SECRET,
+                redirect_uri: env_1.env.FRONTEND_OAUTH_URL,
                 grant_type: "authorization_code",
             }),
         });
@@ -29,9 +68,14 @@ async function oauthLogin(req, res) {
             },
         });
         const { email } = await userRes.json();
-        const emailStatus = await db.checkEmailExists(email);
-        if (emailStatus) {
-            const user = emailStatus;
+        const user = await db.checkEmailExists(email);
+        if (!user) {
+            console.log("Email does not exist in database");
+            return res
+                .status(404)
+                .json({ error: "Email does not exist in database" });
+        }
+        else {
             const sessionID = crypto.randomUUID();
             await db.storeSession(user.id, sessionID);
             const sessionToken = {
@@ -49,27 +93,32 @@ async function oauthLogin(req, res) {
             });
             console.log("cookie sent");
         }
-        else {
-            res.status(200).json({
-                status: "signup incomplete",
-                message: "Authentication passed but user is not in the system",
-                email: `${email}`,
-            });
-        }
     }
     catch (err) {
-        console.log("Error during OAuth: \n" + err.message);
-        res.status(500).json({ error: "Error during OAuth Login" });
+        const message = (0, authentication_1.checkErrorType)(err);
+        console.log("Error during OAuth: \n" + message);
+        res.status(500).json({ error: "Error during OAuth Login " + message });
     }
 }
+const OauthSignupSchema = zod_1.z.object({
+    email: zod_1.z.string(),
+    username: zod_1.z.string(),
+});
 async function oauthSignup(req, res) {
     try {
-        const usernameExists = await db.checkUsernameExists(req.body.username);
+        const parsed = OauthSignupSchema.safeParse(req.body);
+        if (!parsed.success) {
+            console.log("error in req object for oauthSignup");
+            console.log(zod_1.z.treeifyError(parsed.error));
+            return res.status(500).json({ error: zod_1.z.treeifyError(parsed.error) });
+        }
+        const { email, username } = parsed.data;
+        const usernameExists = await db.checkUsernameExists(username);
         if (usernameExists) {
             res.status(409).json({ error: "Username already exists" });
         }
         else {
-            const userID = await db.addUserOAuth(req.body.email, req.body.username);
+            const userID = await db.addUserOAuth(email, username);
             const sessionID = crypto.randomUUID();
             await db.storeSession(userID, sessionID);
             const sessionToken = {
@@ -90,8 +139,9 @@ async function oauthSignup(req, res) {
         console.log("made it to oauthSignup");
     }
     catch (err) {
-        console.log("There was an error attempting to signup in the OAuth process: \n" + err);
-        res.status(500).json({ error: "Error in OAuth signup process" });
+        const message = (0, authentication_1.checkErrorType)(err);
+        console.log("There was an error attempting to signup in the OAuth process: \n" + message);
+        res.status(500).json({ error: "Error in OAuth signup process " + message });
     }
 }
 module.exports = { oauthLogin, oauthSignup };

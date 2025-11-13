@@ -1,7 +1,7 @@
 import * as db from "../db/queries";
 import * as authentication from "../authentication";
 import { checkErrorType } from "../authentication";
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { check, z } from "zod";
 import { MessagesRow } from "../types/db";
 

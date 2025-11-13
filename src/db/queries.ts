@@ -251,7 +251,7 @@ export async function getUserBySession(token: string) {
 
 export async function checkEmailExists(
   email: string
-): Promise<UserRow | Boolean> {
+): Promise<UserRow | null> {
   try {
     const { rows }: QueryResult<UserRow> = await pool.query(
       "SELECT * FROM users WHERE LOWER(email)=LOWER($1)",
@@ -260,7 +260,7 @@ export async function checkEmailExists(
     if (rows[0]) {
       return rows[0];
     } else {
-      return false;
+      return null;
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

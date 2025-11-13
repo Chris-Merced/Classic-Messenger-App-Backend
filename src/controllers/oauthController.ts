@@ -1,8 +1,12 @@
-const db = require("../db/queriesOld");
-const crypto = require("crypto");
+import * as db from "../db/queries";
+import * as crypto from "crypto";
+import type { Response, Request } from "express";
+import { env } from "../types/env";
+import { checkErrorType } from "../authentication";
+import { z } from "zod";
 
-async function oauthLogin(req, res) {
-  const code = req.body.code;
+export async function oauthLogin(req: Request, res: Response) {
+  const code: string = req.body.code;
 
   if (!code) {
     res.status(400).json({ error: "Missing Code" });
@@ -13,9 +17,9 @@ async function oauthLogin(req, res) {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         code,
-        client_id: process.env.OAUTH_CLIENTID,
-        client_secret: process.env.OAUTH_SECRET,
-        redirect_uri: process.env.FRONTEND_OAUTH_URL,
+        client_id: env.OAUTH_CLIENTID,
+        client_secret: env.OAUTH_SECRET,
+        redirect_uri: env.FRONTEND_OAUTH_URL,
         grant_type: "authorization_code",
       }),
     });
@@ -25,6 +29,7 @@ async function oauthLogin(req, res) {
     if (tokenData.err) {
       return res.status(400).json({ error: tokenData.error_description });
     }
+
     console.log("Made it through token retrieval");
 
     const userRes = await fetch(
@@ -38,10 +43,14 @@ async function oauthLogin(req, res) {
 
     const { email } = await userRes.json();
 
-    const emailStatus = await db.checkEmailExists(email);
-    if (emailStatus) {
-      const user = emailStatus;
+    const user = await db.checkEmailExists(email);
 
+    if (!user) {
+      console.log("Email does not exist in database");
+      return res
+        .status(404)
+        .json({ error: "Email does not exist in database" });
+    } else {
       const sessionID = crypto.randomUUID();
       await db.storeSession(user.id, sessionID);
 
@@ -62,26 +71,34 @@ async function oauthLogin(req, res) {
       });
 
       console.log("cookie sent");
-    } else {
-      res.status(200).json({
-        status: "signup incomplete",
-        message: "Authentication passed but user is not in the system",
-        email: `${email}`,
-      });
     }
   } catch (err) {
-    console.log("Error during OAuth: \n" + err.message);
-    res.status(500).json({ error: "Error during OAuth Login" });
+    const message = checkErrorType(err);
+    console.log("Error during OAuth: \n" + message);
+    res.status(500).json({ error: "Error during OAuth Login " + message });
   }
 }
 
-async function oauthSignup(req, res) {
+const OauthSignupSchema = z.object({
+  email: z.string(),
+  username: z.string(),
+});
+
+export async function oauthSignup(req: Request, res: Response) {
   try {
-    const usernameExists = await db.checkUsernameExists(req.body.username);
+    const parsed = OauthSignupSchema.safeParse(req.body);
+    if (!parsed.success) {
+      console.log("error in req object for oauthSignup");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(500).json({ error: z.treeifyError(parsed.error) });
+    }
+    const { email, username } = parsed.data;
+    const usernameExists = await db.checkUsernameExists(username);
+
     if (usernameExists) {
       res.status(409).json({ error: "Username already exists" });
     } else {
-      const userID = await db.addUserOAuth(req.body.email, req.body.username);
+      const userID = await db.addUserOAuth(email, username);
 
       const sessionID = crypto.randomUUID();
       await db.storeSession(userID, sessionID);
@@ -106,10 +123,11 @@ async function oauthSignup(req, res) {
 
     console.log("made it to oauthSignup");
   } catch (err) {
+    const message = checkErrorType(err)
     console.log(
-      "There was an error attempting to signup in the OAuth process: \n" + err
+      "There was an error attempting to signup in the OAuth process: \n" + message
     );
-    res.status(500).json({ error: "Error in OAuth signup process" });
+    res.status(500).json({ error: "Error in OAuth signup process " + message});
   }
 }
 
