@@ -1,13 +1,18 @@
-const db = require("../db/queriesOld");
-const authentication = require("../authentication");
-const fileType = require("file-type");
-const s3 = require("../utils/s3Uploader");
-const sharp = require("sharp");
-const crypto = require("crypto");
+import * as db from "../db/queries";
+import * as authentication from "../authentication";
+import * as fileType from "file-type";
+import * as s3 from "../utils/s3Uploader";
+import * as sharp from "sharp";
+import * as crypto from "crypto";
+import { z } from "zod";
+import { Request, Response } from "express";
+import { checkErrorType } from "../authentication";
 
-async function getUser(req, res) {
+export async function getUser(req: Request, res: Response) {
   try {
-    const sessionData = JSON.parse(req.cookies.sessionToken);
+    const sessionData: { sessionID: string } = JSON.parse(
+      req.cookies.sessionToken
+    );
     if (sessionData.sessionID) {
       const userID = await db.getSessionBySessionID(sessionData.sessionID);
       if (!userID) {
@@ -19,47 +24,87 @@ async function getUser(req, res) {
         return res.status(404).json({ message: "User not found" });
       }
       const friendRequests = await db.getFriendRequests(userID);
-      const { password, ...userWithoutPassword } = user;
-      const userObject = { ...userWithoutPassword, friendRequests };
+      //keep original logic until resolved in production
+      //const { password, ...userWithoutPassword } = user;
+      //user already has password dissected in getFriendRequests so pass user + friendRequests
+      // into new object
+      const userObject = { user, friendRequests };
 
       res.status(200).json({ user: userObject });
     } else {
       return res.status(401).json({ message: "No SessionID Stored" });
     }
   } catch (err) {
-    console.error("Error getting user from database: " + err.message);
+    const message = checkErrorType(err);
+    console.error("Error getting user from database: " + message);
     res
       .status(500)
-      .json({ message: "Error getting user from database: " + err.message });
+      .json({ message: "Error getting user from database: " + message });
   }
 }
 
-async function getUserPublicProfile(req, res) {
+const GetUserPublicProfileSchema = z.object({
+  ID: z.coerce.number().min(1),
+});
+
+export async function getUserPublicProfile(req: Request, res: Response) {
   try {
-    const userData = await db.getUserByUserID(req.query.ID);
-    const { password, email, is_admin, ...user } = userData;
+    const parsed = GetUserPublicProfileSchema.safeParse(req.query);
+
+    if (!parsed.success) {
+      console.log("Error parsing request object for getUserPublicProfile");
+      console.log(z.treeifyError(parsed.error));
+      res.status(500).json({
+        error:
+          "Error parsing request object for user profile" +
+          z.treeifyError(parsed.error),
+      });
+    }
+    if (!parsed?.data?.ID) {
+      console.log("No User ID Provided for Public Profile Retrieval");
+      return res.status(400).json({ error: "Invalid User Profile Parameter" });
+    }
+    const { ID } = parsed.data;
+    const userData = await db.getUserByUserID(ID);
+    const { email, is_admin, ...user } = userData;
     res.status(200).json({ user: user });
   } catch (err) {
-    console.error("Error Retrieving Profile: ", err);
-    res.status(500).json({ message: "Error: " + err.message });
+    const message = checkErrorType(err);
+    console.error("Error Retrieving Profile: ", message);
+    res.status(500).json({ message: "Error: " + message });
   }
 }
 
-async function getUsersBySearch(req, res) {
+const GetUsersBySearchSchema = z.object({
+  username: z.string().min(1).max(16),
+  page: z.coerce.number().min(1),
+  limit: z.coerce.number(),
+});
+
+export async function getUsersBySearch(req: Request, res: Response) {
   try {
+    const parsed = GetUsersBySearchSchema.safeParse(req.query);
+    if (!parsed.success) {
+      console.log("Error parsing parameters in getUserBySearch");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(400).json({
+        error: "Error parsing paramters" + z.treeifyError(parsed.error),
+      });
+    }
+    const { page, limit, username } = parsed.data;
+    /*Keep original logic until runtime is proven to work
     const page = req.query.page;
     const limit = req.query.limit;
+    */
 
-    const users = await db.getUsersByUsernameSearch(
-      req.query.username,
-      page,
-      limit
-    );
+    const users = await db.getUsersByUsernameSearch(username, page, limit);
     res.status(201).json({ users: users });
   } catch (err) {
-    console.error("Error getting users during search" + err.message);
+    const message = checkErrorType(err);
+    console.error("Error getting users during search" + message);
+
     res.status(404).json({
-      message: "There was a problem with the username lookup: " + err.message,
+      message: "There was a problem with the username lookup: " + message,
     });
   }
 }
