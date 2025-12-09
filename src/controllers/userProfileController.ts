@@ -109,66 +109,119 @@ export async function getUsersBySearch(req: Request, res: Response) {
   }
 }
 
-async function addFriendRequest(req, res) {
+const FriendRequestSchema = z.object({
+  userID: z.coerce.number().positive(),
+  profileID: z.coerce.number().positive(),
+});
+
+export async function addFriendRequest(req: Request, res: Response) {
   try {
-    const sessionToken = req.cookies.sessionToken;
+    const sessionToken: string = req.cookies.sessionToken;
     console.log(sessionToken);
     const authenticated = await authentication.compareSessionToken(
       sessionToken,
       req.body.userID
     );
     if (authenticated) {
+      const parsed = FriendRequestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        console.log("Error with parameters when adding friend request");
+        console.log(z.treeifyError(parsed.error));
+        return res.status(400).json({
+          error: "Error adding friend request" + z.treeifyError(req.body),
+        });
+      }
+
+      const { userID, profileID } = parsed.data;
+      /*Keep original logic intact until runtime is proven to work
       const userID = req.body.userID;
       const profileID = req.body.profileID;
-
+      */
       const response = await db.addFriendRequestToDatabase(userID, profileID);
       res.status(200).json({ message: response });
     } else {
       res.status(403).json("You Do Not Have Permission To View This Data");
     }
   } catch (err) {
+    const message = checkErrorType(err);
+
     console.log(
-      "There was an error adding Friend Request to Database: \n" + err
+      "There was an error adding Friend Request to Database: \n" + message
     );
     res.status(500).json({
-      message: "There was an error adding Friend Request to Database:" + err,
+      message:
+        "There was an error adding Friend Request to Database:" + message,
     });
   }
 }
 
-async function getFriendRequests(req, res) {
+export async function getFriendRequests(req: Request, res: Response) {
   try {
-    const sessionToken = req.cookies.sessionToken;
+    const sessionToken: string = req.cookies.sessionToken;
 
+    const parsed = FriendRequestSchema.safeParse(req.query);
+    if (!parsed.success) {
+      console.log("Error in parameters while getting friend requests");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(400).json({
+        error:
+          "Error with parameters while getting friend requests" +
+          z.treeifyError(parsed.error),
+      });
+    }
+
+    const { userID, profileID } = parsed.data;
     const authenticated = await authentication.compareSessionToken(
       sessionToken,
-      req.query.userID
+      //comment preserves original logic until runtime is proven to work
+      //req.query.userID
+      userID
     );
     if (authenticated) {
-      const userID = req.query.userID;
+      //comment preserves original logic until runtime is proven to work
+      //const userID = req.query.userID;
       const data = await db.getFriendRequests(userID);
       res.status(200).json({ friendRequests: data });
     } else {
       res.status(403).json("You Do Not Have Permission To View This Data");
     }
   } catch (err) {
-    console.log("Error while attempting to get Friend Requests: \n" + err);
+    const message = checkErrorType(err);
+    console.log("Error while attempting to get Friend Requests: \n" + message);
     res.status(500).json({
-      message: "Error while attempting to get Friend Requests \n" + err,
+      message: "Error while attempting to get Friend Requests \n" + message,
     });
   }
 }
 
-async function checkFriendRequestSent(req, res) {
+export async function checkFriendRequestSent(req: Request, res: Response) {
   try {
-    const sessionToken = req.cookies.sessionToken;
+    const sessionToken: string = req.cookies.sessionToken;
+    const parsed = FriendRequestSchema.safeParse(req.query);
+
+    if (!parsed.success) {
+      console.log("Error with parameters while checking friend requests");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(400).json({
+        error:
+          "Error with parameters while checking friend requests" +
+          z.treeifyError(parsed.error),
+      });
+    }
+    const { userID, profileID } = parsed.data;
+
     const authenticated = await authentication.compareSessionToken(
       sessionToken,
-      req.query.userID
+      //preserve logic until runtime is proven to work
+      //req.query.userID
+      userID
     );
+
     if (authenticated) {
-      const userID = req.query.userID;
-      const profileID = req.query.profileID;
+      //preserve logic until runtime is proven to work
+      //const userID = req.query.userID;
+      //const profileID = req.query.profileID;
+
       const requestSent = await db.checkFriendRequestSent(userID, profileID);
 
       res.status(200).json(requestSent);
@@ -176,51 +229,108 @@ async function checkFriendRequestSent(req, res) {
       res.status(403).json("You Do Not Have Permission To View This Data");
     }
   } catch (err) {
-    console.log("Error checking if friend request has been sent: \n" + err);
+    const message = checkErrorType(err);
+    console.log("Error checking if friend request has been sent: \n" + message);
     res.status(500).json({
-      message: "Error checking if friend request has been sent: \n" + err,
+      message: "Error checking if friend request has been sent: \n" + message,
     });
   }
 }
 
-async function addFriend(req, res) {
-  try {
-    const userID = req.body.userID;
-    const requestID = req.body.requestID;
+const AddDenyFriendSchema = z.object({
+  userID: z.coerce.number().positive(),
+  requestID: z.coerce.number().positive(),
+});
 
-    const response = await db.addFriend(userID, requestID);
+export async function addFriend(req: Request, res: Response) {
+  try {
+    const parsed = AddDenyFriendSchema.safeParse(req.body);
+    if (!parsed.success) {
+      console.log("Error with parameters while adding friend");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(400).json({
+        error: "Error while adding friend " + z.treeifyError(parsed.error),
+      });
+    }
+
+    const { userID, requestID } = parsed.data;
+
+    //Preserve logic until runtime is proven to work
+    //const userID = req.body.userID;
+    //const requestID = req.body.requestID;
+
+    //original addFriend call only had two arguments; userID and RequestID
+    const response = await db.addFriend(res, userID, requestID);
     res.status(200).json({ message: response });
   } catch (err) {
+    const message = checkErrorType(err);
     console.log(
-      "There was an error while attempting to add friend to database \n" + err
+      "There was an error while attempting to add friend to database \n" +
+        message
     );
     res.status(500).json({
       message:
-        "There was an error attempting to add friend to the database \n" + err,
+        "There was an error attempting to add friend to the database \n" +
+        message,
     });
   }
 }
 
-async function denyFriend(req, res) {
+export async function denyFriend(req: Request, res: Response) {
   try {
+    const parsed = AddDenyFriendSchema.safeParse(req.body);
+    if (!parsed.success) {
+      console.log("Error with parameters while denying friend request");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(400).json({
+        error:
+          "Error with parameters while denying friend request" +
+          z.treeifyError(parsed.error),
+      });
+    }
+
+    const { userID, requestID } = parsed.data;
+    //preserve original logic until runtime is proven to work
     //swap values so that the users friend request
     //is not deleted but the requesters friend request is
-    const requestID = req.body.userID;
-    const userID = req.body.requestID;
+    //const requestID = req.body.userID;
+    //const userID = req.body.requestID;
 
     await db.denyFriend(userID, requestID);
     res.status(200).json({ message: "friend request denied" });
   } catch (err) {
-    console.log("There was an error in denying a friend request \n" + err);
+    
+    const message = checkErrorType(err);
+    console.log("There was an error in denying a friend request \n" + message);
     res.status(500).json({
-      message: "There was an error in denying a friend request \n" + err,
+      message: "There was an error in denying a friend request \n" + message,
     });
   }
 }
 
-async function removeFriend(req, res) {
+const RemoveFriendSchema = z.object({
+  userID: z.coerce.number().positive(),
+  friendID: z.coerce.number().positive(),
+});
+
+export async function removeFriend(req: Request, res: Response) {
   try {
-    db.removeFriend(req.body.userID, req.body.friendID);
+    const parsed = RemoveFriendSchema.safeParse(req.body);
+    if (!parsed.success) {
+      console.log("Error with parameters while removing friend");
+      console.log(z.treeifyError(parsed.error));
+      return res
+        .status(400)
+        .json({
+          error:
+            "Error with parameters while removing friend" +
+            z.treeifyError(parsed.error),
+        });
+    }
+    const { userID, friendID } = parsed.data;
+    //preserve original call until runtime is proven to work
+    //db.removeFriend(req.body.userID, req.body.friendID);
+    db.removeFriend(userID, friendID);
     res.status(200).json({ message: "You did it" });
   } catch (err) {
     console.log("Error while attempting to remove friend: \n" + err);
