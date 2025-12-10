@@ -1,12 +1,13 @@
 import * as db from "../db/queries";
 import * as authentication from "../authentication";
-import * as fileType from "file-type";
-import * as s3 from "../utils/s3Uploader";
-import * as sharp from "sharp";
-import * as crypto from "crypto";
-import { z } from "zod";
+import fileType from "file-type";
+import s3 from "../utils/s3Uploader";
+import sharp from "sharp";
+import crypto from "crypto";
+import { check, z } from "zod";
 import { Request, Response } from "express";
 import { checkErrorType } from "../authentication";
+import { type Express } from "express";
 
 export async function getUser(req: Request, res: Response) {
   try {
@@ -39,7 +40,7 @@ export async function getUser(req: Request, res: Response) {
     console.error("Error getting user from database: " + message);
     res
       .status(500)
-      .json({ message: "Error getting user from database: " + message });
+      .json({ error: "Error getting user from database: " + message });
   }
 }
 
@@ -71,7 +72,7 @@ export async function getUserPublicProfile(req: Request, res: Response) {
   } catch (err) {
     const message = checkErrorType(err);
     console.error("Error Retrieving Profile: ", message);
-    res.status(500).json({ message: "Error: " + message });
+    res.status(500).json({ error: "Error: " + message });
   }
 }
 
@@ -104,7 +105,7 @@ export async function getUsersBySearch(req: Request, res: Response) {
     console.error("Error getting users during search" + message);
 
     res.status(404).json({
-      message: "There was a problem with the username lookup: " + message,
+      error: "There was a problem with the username lookup: " + message,
     });
   }
 }
@@ -149,8 +150,7 @@ export async function addFriendRequest(req: Request, res: Response) {
       "There was an error adding Friend Request to Database: \n" + message
     );
     res.status(500).json({
-      message:
-        "There was an error adding Friend Request to Database:" + message,
+      error: "There was an error adding Friend Request to Database:" + message,
     });
   }
 }
@@ -189,7 +189,7 @@ export async function getFriendRequests(req: Request, res: Response) {
     const message = checkErrorType(err);
     console.log("Error while attempting to get Friend Requests: \n" + message);
     res.status(500).json({
-      message: "Error while attempting to get Friend Requests \n" + message,
+      error: "Error while attempting to get Friend Requests \n" + message,
     });
   }
 }
@@ -232,7 +232,7 @@ export async function checkFriendRequestSent(req: Request, res: Response) {
     const message = checkErrorType(err);
     console.log("Error checking if friend request has been sent: \n" + message);
     res.status(500).json({
-      message: "Error checking if friend request has been sent: \n" + message,
+      error: "Error checking if friend request has been sent: \n" + message,
     });
   }
 }
@@ -269,7 +269,7 @@ export async function addFriend(req: Request, res: Response) {
         message
     );
     res.status(500).json({
-      message:
+      error:
         "There was an error attempting to add friend to the database \n" +
         message,
     });
@@ -299,11 +299,10 @@ export async function denyFriend(req: Request, res: Response) {
     await db.denyFriend(userID, requestID);
     res.status(200).json({ message: "friend request denied" });
   } catch (err) {
-    
     const message = checkErrorType(err);
     console.log("There was an error in denying a friend request \n" + message);
     res.status(500).json({
-      message: "There was an error in denying a friend request \n" + message,
+      error: "There was an error in denying a friend request \n" + message,
     });
   }
 }
@@ -319,13 +318,11 @@ export async function removeFriend(req: Request, res: Response) {
     if (!parsed.success) {
       console.log("Error with parameters while removing friend");
       console.log(z.treeifyError(parsed.error));
-      return res
-        .status(400)
-        .json({
-          error:
-            "Error with parameters while removing friend" +
-            z.treeifyError(parsed.error),
-        });
+      return res.status(400).json({
+        error:
+          "Error with parameters while removing friend" +
+          z.treeifyError(parsed.error),
+      });
     }
     const { userID, friendID } = parsed.data;
     //preserve original call until runtime is proven to work
@@ -336,14 +333,30 @@ export async function removeFriend(req: Request, res: Response) {
     console.log("Error while attempting to remove friend: \n" + err);
     res
       .status(500)
-      .json({ message: "Error attempting to remove friend from database" });
+      .json({ error: "Error attempting to remove friend from database" });
   }
 }
 
-async function checkIfFriends(req, res) {
+export async function checkIfFriends(req: Request, res: Response) {
   try {
-    const userID = req.query.userID;
-    const friendID = req.query.friendID;
+    //THIS IS USING THE RemoveFriendSchema assuming queries remain the same
+    // if this does not work then create a new schema
+    const parsed = RemoveFriendSchema.safeParse(req.query);
+    if (!parsed.success) {
+      console.log("Error in parameters while checking if friends");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(400).json({
+        error:
+          "Error in parameters while checking friend status" +
+          z.treeifyError(parsed.error),
+      });
+    }
+
+    const { userID, friendID } = parsed.data;
+
+    //Keeping original logic until runtime is proven to work
+    //const userID = req.query.userID;
+    //const friendID = req.query.friendID;
     const friendRow = await db.checkIfFriends(userID, friendID);
 
     if (friendRow) {
@@ -352,18 +365,34 @@ async function checkIfFriends(req, res) {
       res.status(200).json({ friendStatus: false });
     }
   } catch (err) {
+    const message = checkErrorType(err);
     console.log(
-      "There was an error in checking friend status in controller \n" + err
+      "There was an error in checking friend status in controller \n" + message
     );
-    res
-      .status(500)
-      .json({ message: "There was an error checking friend status \n" + err });
+    res.status(500).json({
+      error: "There was an error checking friend status \n" + message,
+    });
   }
 }
 
-async function getFriends(req, res) {
+const GetFriendsSchema = z.object({
+  userID: z.coerce.number().positive(),
+});
+
+// This function should check for authentication so users cannot curl
+//    or fetch to retrieve user info
+export async function getFriends(req: Request, res: Response) {
   try {
-    const friendIDs = await db.getFriends(req.query.userID);
+    const parsed = GetFriendsSchema.safeParse(req.query);
+    if (!parsed.success) {
+      console.log("Error with parameters in getFriends");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(400).json({
+        error: "Error retrieving users friends " + z.treeifyError(parsed.error),
+      });
+    }
+    const { userID } = parsed.data;
+    const friendIDs = await db.getFriends(userID);
     const userData = await Promise.all(
       friendIDs.map(async (ID) => {
         return await db.getUserByUserID(ID);
@@ -371,116 +400,210 @@ async function getFriends(req, res) {
     );
 
     const friendsList = userData.map((user) => {
-      const { password, email, is_admin, ...newUser } = user;
+      //dereferencing originally had password in it
+      //its been removed since userData does not contain password property
+      const { email, is_admin, ...newUser } = user;
       return newUser;
     });
 
     res.status(200).json({ friendsList });
   } catch (err) {
-    console.log("Error retrieving user friends: \n" + err);
+    const message = checkErrorType(err);
+    console.log("Error retrieving user friends: \n" + message);
     res
       .status(404)
-      .json({ message: "Error retrieving user friends: \n" + err });
+      .json({ error: "Error retrieving user friends: \n" + message });
   }
 }
 
-async function blockUser(req, res) {
+const BlockUserSchema = z.object({
+  userID: z.coerce.number().positive(),
+  blockedID: z.coerce.number().positive(),
+});
+
+//This should require authentication so users cannot modify other users blocked lists
+export async function blockUser(req: Request, res: Response) {
   try {
-    db.blockUser(req.body.userID, req.body.blockedID);
+    const parsed = BlockUserSchema.safeParse(req.body);
+    if (!parsed.success) {
+      console.log("Error with parameters while blocking user");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(400).json({
+        error:
+          "Error with parameters while blocking user " +
+          z.treeifyError(parsed.error),
+      });
+    }
+    const { userID, blockedID } = parsed.data;
+    await db.blockUser(userID, blockedID);
+    //keeping original db call to preserve logic until runtime is proven to work
+    //db.blockUser(req.body.userID, req.body.blockedID);
     res.status(200).json({ message: "Successfully Blocked User" });
   } catch (err) {
     console.log("Error in blocking user:  \n" + err);
     res
       .status(500)
-      .json({ message: "There was an error in blocking user to database" });
+      .json({ error: "There was an error in blocking user to database" });
   }
 }
 
-async function checkIfBlocked(req, res) {
+export async function checkIfBlocked(req: Request, res: Response) {
   try {
-    const isBlocked = await db.checkIfBlocked(
-      req.query.userID,
-      req.query.blockedID
-    );
+    const parsed = BlockUserSchema.safeParse(req.query);
+    if (!parsed.success) {
+      console.log("Error with parameters while checking if user is blocked");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(400).json({
+        error:
+          "Error with paramteres while checking is user is blocked " +
+          z.treeifyError(parsed.error),
+      });
+    }
+    const { userID, blockedID } = parsed.data;
+    const isBlocked = await db.checkIfBlocked(userID, blockedID);
     res.status(200).json({ isBlocked: isBlocked });
   } catch (err) {
-    console.log("There was an error while checking blocked status" + err);
-    res
-      .status(500)
-      .json({ message: "There was an error while checking blocked status" });
+    const message = checkErrorType(err);
+    console.log("There was an error while checking blocked status" + message);
+    res.status(500).json({
+      error: "There was an error while checking blocked status " + message,
+    });
   }
 }
+//this should require authentication to disallow outside users for modifying friends list
+const UnblockUserSchema = z.object({
+  userID: z.coerce.number().positive(),
+  unblockedID: z.coerce.number().positive(),
+});
 
-async function unblockUser(req, res) {
+export async function unblockUser(req: Request, res: Response) {
   try {
-    db.unblockUser(req.body.userID, req.body.unblockedID);
+    const parsed = UnblockUserSchema.safeParse(req.body);
+    if (!parsed.success) {
+      console.log("Error with parameters while unblocking user");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(400).json({
+        error:
+          "Error with parameters while unblocking users " +
+          z.treeifyError(parsed.error),
+      });
+    }
+    const { userID, unblockedID } = parsed.data;
+    await db.unblockUser(userID, unblockedID);
+    //preserve original call until runtime is proven to work
+    //db.unblockUser(req.body.userID, req.body.unblockedID);
     res.status(200).json({ message: "Unblocked user" });
   } catch (err) {
-    console.log("Error in unblocking user: \n" + err);
-    res.status(500).json({ message: "Error in unblocking user" });
+    const message = checkErrorType(err);
+    console.log("Error in unblocking user: \n" + message);
+    res.status(500).json({ error: "Error in unblocking user " + message });
   }
 }
 
-async function checkIfBlockedByProfile(req, res) {
+export async function checkIfBlockedByProfile(req: Request, res: Response) {
   try {
-    const userID = req.query.profileID;
-    const blockedID = req.query.userID;
+    const parsed = BlockUserSchema.safeParse(req.query);
+    if (!parsed.success) {
+      console.log("Error with parameters while checking blocked status");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(400).json({
+        error:
+          "Error with parameters while checking blocked status " +
+          z.treeifyError(parsed.error),
+      });
+    }
+    const { userID, blockedID } = parsed.data;
+    //keep original variable assignments until runtime is proved to work
+    //const userID = req.query.profileID;
+    //const blockedID = req.query.userID;
 
     const isBlockedByProfile = await db.checkIfBlocked(userID, blockedID);
     res.status(200).json(isBlockedByProfile);
   } catch (err) {
-    console.log("There was an error in checking blocked status: \n" + err);
-    res
-      .status(500)
-      .json({ message: "There was an error in checking blocked status" });
+    const message = checkErrorType(err);
+    console.log("There was an error in checking blocked status: \n" + message);
+    res.status(500).json({
+      error: "There was an error in checking blocked status " + message,
+    });
   }
 }
-
-async function checkIfPublic(req, res) {
+const CheckIfPublicSchema = z.object({
+  profileID: z.coerce.number().positive(),
+});
+export async function checkIfPublic(req: Request, res: Response) {
   try {
-    const isPublic = await db.checkIfPublic(req.query.profileID);
+    const parsed = CheckIfPublicSchema.safeParse(req.query);
+    if (!parsed.success) {
+      console.log("Error with parameters while checking profile status");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(400).json({
+        error:
+          "Error with paramteres while checking profile status " +
+          z.treeifyError(parsed.error),
+      });
+    }
+    const { profileID } = parsed.data;
+    const isPublic = await db.checkIfPublic(profileID);
     res.status(200).json(isPublic);
   } catch (err) {
-    console.log("There was an error in checking profile status" + err);
-    return res
-      .status(500)
-      .json({ message: "There was an error in checking profile status" });
+    const message = checkErrorType(err);
+    console.log("There was an error in checking profile status" + message);
+    return res.status(500).json({
+      error: "There was an error in checking profile status " + message,
+    });
   }
 }
 
-async function changeProfileStatus(req, res) {
+const ChangeProfileStatusSchema = z.object({
+  userID: z.coerce.number().positive(),
+  status: z.boolean(),
+});
+
+export async function changeProfileStatus(req: Request, res: Response) {
   try {
-    const sessionToken = req.cookies.sessionToken;
+    const parsed = ChangeProfileStatusSchema.safeParse(req.body);
+    if (!parsed.success) {
+      console.log("Error with parameters while changing profile status ");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(400).json({
+        error:
+          "Error with parameters while changing profile status " +
+          z.treeifyError(parsed.error),
+      });
+    }
+    const { userID, status } = parsed.data;
+
+    const sessionToken: string = req.cookies.sessionToken;
     const authenticated = await authentication.compareSessionToken(
       sessionToken,
       req.body.userID
     );
     if (authenticated) {
-      const response = await db.changeProfileStatus(
-        req.body.userID,
-        req.body.status
-      );
+      const response = await db.changeProfileStatus(userID, status);
       res
         .status(200)
         .json({ message: "Profile Status Changed", changed: true });
     } else {
       return res.status(403).json({
-        message: "You do not have permission to modify this value",
+        error: "You do not have permission to modify this value",
         changed: false,
       });
     }
   } catch (err) {
-    console.log("There was an error in changing the profile status: \n" + err);
+    const message = checkErrorType(err);
+    console.log(
+      "There was an error in changing the profile status: \n" + message
+    );
     return res.status(500).json({
-      message: "There was an error in changing the profile status",
+      error: "There was an error in changing the profile status " + message,
       changed: false,
     });
   }
 }
 
-async function changeProfilePicture(req, res) {
+export async function changeProfilePicture(req: Request, res: Response) {
   try {
-    const sessionToken = req.cookies.sessionToken;
+    const sessionToken: string = req.cookies.sessionToken;
 
     const authenticated = await authentication.compareSessionToken(
       sessionToken,
@@ -495,6 +618,10 @@ async function changeProfilePicture(req, res) {
       }
 
       const newFile = await fileType.fromBuffer(req.file.buffer);
+
+      if (!newFile) {
+        throw new Error("buffer could not be retrieved from uploaded file");
+      }
 
       if (!validTypes.includes(newFile.mime)) {
         console.log("Invalid Profile Picture Type, Not Supported");
@@ -535,23 +662,43 @@ async function changeProfilePicture(req, res) {
         .json("You do not have the permission to edit this profile");
     }
   } catch (err) {
+    const message = checkErrorType(err);
+
     console.log(
       "userProfileController: \n changeProfilePicture: There was an error in changing the profile Picture" +
-        err
+        message
     );
     res.status(500).json("There was an error in changing profile picture.");
   }
 }
 
-async function editAboutMe(req, res) {
+const EditAboutMeSchema = z.object({
+  aboutMe: z.string().max(500, "Max length is 500 characters"),
+  userID: z.coerce.number().positive(),
+});
+
+export async function editAboutMe(req: Request, res: Response) {
   try {
+    const sessionToken: string = req.cookies.sessionToken;
+
+    const parsed = EditAboutMeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      console.log("Error with parameters while editing about me: ");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(400).json({
+        error:
+          "Error with parameters while editing about me: " +
+          z.treeifyError(parsed.error),
+      });
+    }
+    const { aboutMe, userID } = parsed.data;
+
     const authenticated = await authentication.compareSessionToken(
-      req.cookies.sessionToken,
-      req.body.userID
+      sessionToken,
+      userID
     );
     if (authenticated) {
-      const aboutMe = req.body.aboutMe;
-      const response = await db.editAboutMe(aboutMe, req.body.userID);
+      const response = await db.editAboutMe(aboutMe, userID);
       res.status(200).json("About Me Section Edit Successful");
     } else {
       console.log("User does not have permission for this modification");
@@ -560,31 +707,73 @@ async function editAboutMe(req, res) {
         .json("User Does not have permission for this modification");
     }
   } catch (err) {
-    console.log("There was an error in changing the user's about me section");
-    res.status(500).json("Could not change about me section");
+    const message = checkErrorType(err);
+    console.log(
+      "There was an error in changing the user's about me section: " + message
+    );
+    res.status(500).json({ error: "Could not change about me section" });
   }
 }
 
-async function getMutualFriends(req, res) {
+const MutualFriendsSchema = z.object({
+  userID: z.coerce.number().positive(),
+  profileID: z.coerce.number().positive(),
+});
+
+export async function getMutualFriends(req: Request, res: Response) {
   try {
-    const userID = req.query.userID;
-    const profileID = req.query.profileID;
+    const parsed = MutualFriendsSchema.safeParse(req.query);
+    if (!parsed.success) {
+      console.log("Error with parameters while getting mutual friends: ");
+      console.log(z.treeifyError(parsed.error));
+      return res.status(200).json({
+        error:
+          "Error with parameters while getting mutual friends: " +
+          z.treeifyError(parsed.error),
+      });
+    }
+    const { userID, profileID } = parsed.data;
+    //keep original variable assignments until runtime is proven to work
+    //const userID = req.query.userID;
+    //const profileID = req.query.profileID;
     const data = await db.getMutualFriends(userID, profileID);
 
     res.status(200).json(data);
   } catch (err) {
-    console.log("There was an error in retrieving mutual friends: \n" + err);
-    res.status(500).json("Could not retrieve mutual friends");
+    const message = checkErrorType(err);
+    console.log(
+      "There was an error in retrieving mutual friends: \n" + message
+    );
+    res.status(500).json("Could not retrieve mutual friends " + message);
   }
 }
+const GetUserIDSchema = z.object({
+  id: z.string().max(16),
+});
 
-async function getUserIDByUsername(req, res) {
+export async function getUserIDByUsername(req: Request, res: Response) {
   try {
-    const user = await db.getUserByUsername(req.query.id);
+    const parsed = GetUserIDSchema.safeParse(req.query);
+    if (!parsed.success) {
+      console.log(
+        "Error with parameter while retrieving user id by username: "
+      );
+      console.log(z.treeifyError(parsed.error));
+      return res
+        .status(400)
+        .json({
+          error:
+            "Error with parameter while retrieving user id by username: " +
+            z.treeifyError(parsed.error),
+        });
+    }
+    const { id } = parsed.data;
+    const user = await db.getUserByUsername(id);
     res.status(200).json({ id: user.id });
   } catch (err) {
-    console.log("Error getting user ID by username" + err.message);
-    res.status(500).json("Error retrieving user credentials");
+    const message = checkErrorType(err);
+    console.log("Error getting user ID by username" + message);
+    res.status(500).json("Error retrieving user credentials " + message);
   }
 }
 
