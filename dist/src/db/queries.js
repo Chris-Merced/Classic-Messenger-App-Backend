@@ -847,6 +847,7 @@ async function blockUser(userID, blockedID) {
 }
 async function checkIfBlocked(userID, blockedID) {
     try {
+        //In DB the user_id is the blocker and blocked_id is the person they blocked
         const { rows } = await pool_1.default.query("SELECT * FROM blocked WHERE user_id=$1 AND blocked_id=$2", [userID, blockedID]);
         if (rows[0]) {
             return true;

@@ -41,8 +41,8 @@ const authentication_1 = require("../authentication");
 const zod_1 = require("zod");
 const GetChatMessagesSchema = zod_1.z.object({
     chatName: zod_1.z.string(),
-    conversationID: zod_1.z.coerce.number().int().positive(),
-    userID: zod_1.z.coerce.number().int().positive(),
+    conversationID: zod_1.z.coerce.number().int().positive().optional(),
+    userID: zod_1.z.coerce.number().int().optional(),
     page: zod_1.z.coerce.number().int().nonnegative(),
     limit: zod_1.z.coerce.number().int().positive(),
 });
@@ -52,6 +52,8 @@ async function getChatMessagesByName(req, res) {
         if (!parsed.success) {
             console.log("Error in req params for chat messages");
             console.log(zod_1.z.treeifyError(parsed.error));
+            console.log(zod_1.z.treeifyError(parsed.error).properties?.userID?.errors);
+            console.log(zod_1.z.treeifyError(parsed.error).properties?.conversationID?.errors);
             return res.status(500).json({ error: zod_1.z.treeifyError(parsed.error) });
         }
         const { chatName, conversationID, userID, page, limit } = parsed.data;
@@ -82,6 +84,14 @@ async function getChatMessagesByName(req, res) {
             res.status(200).json({ messages: newMessages });
         }
         else if (req.query.conversationID) {
+            if (!userID) {
+                console.log("UserID is not available for authentication");
+                return res.status(400).json({ error: "User ID not present for authentication" });
+            }
+            if (!conversationID) {
+                console.log("ConversationID is not available for authentication");
+                return res.status(400).json({ error: "ConversationID not present for authentication" });
+            }
             const sessionToken = req.cookies.sessionToken;
             const isValid = await authentication.compareSessionToken(sessionToken, userID);
             let checkID = userID;

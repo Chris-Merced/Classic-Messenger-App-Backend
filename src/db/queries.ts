@@ -1121,6 +1121,7 @@ export async function checkIfBlocked(
   blockedID: number
 ): Promise<boolean> {
   try {
+    //In DB the user_id is the blocker and blocked_id is the person they blocked
     const { rows }: QueryResult<BlockedRow> = await pool.query(
       "SELECT * FROM blocked WHERE user_id=$1 AND blocked_id=$2",
       [userID, blockedID]

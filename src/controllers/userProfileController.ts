@@ -19,7 +19,6 @@ export async function getUser(req: Request, res: Response) {
       if (!userID) {
         return res.status(401).json({ message: "Invalid session ID" });
       }
-
       const user = await db.getUserByUserID(userID);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -29,7 +28,7 @@ export async function getUser(req: Request, res: Response) {
       //const { password, ...userWithoutPassword } = user;
       //user already has password dissected in getFriendRequests so pass user + friendRequests
       // into new object
-      const userObject = { user, friendRequests };
+      const userObject = { ...user, friendRequests };
 
       res.status(200).json({ user: userObject });
     } else {
@@ -78,16 +77,18 @@ export async function getUserPublicProfile(req: Request, res: Response) {
 
 const GetUsersBySearchSchema = z.object({
   username: z.string().min(1).max(16),
-  page: z.coerce.number().min(1),
+  page: z.coerce.number().min(0),
   limit: z.coerce.number(),
 });
 
 export async function getUsersBySearch(req: Request, res: Response) {
   try {
+    console.log(req.query.page)
     const parsed = GetUsersBySearchSchema.safeParse(req.query);
     if (!parsed.success) {
       console.log("Error parsing parameters in getUserBySearch");
       console.log(z.treeifyError(parsed.error));
+      console.log(z.treeifyError(parsed.error).properties?.page?.errors)
       return res.status(400).json({
         error: "Error parsing paramters" + z.treeifyError(parsed.error),
       });
@@ -506,6 +507,7 @@ export async function checkIfBlockedByProfile(req: Request, res: Response) {
     if (!parsed.success) {
       console.log("Error with parameters while checking blocked status");
       console.log(z.treeifyError(parsed.error));
+      console.log(z.treeifyError(parsed.error).properties?.blockedID?.errors)
       return res.status(400).json({
         error:
           "Error with parameters while checking blocked status " +
@@ -517,7 +519,7 @@ export async function checkIfBlockedByProfile(req: Request, res: Response) {
     //const userID = req.query.profileID;
     //const blockedID = req.query.userID;
 
-    const isBlockedByProfile = await db.checkIfBlocked(userID, blockedID);
+    const isBlockedByProfile = await db.checkIfBlocked(blockedID, userID);
     res.status(200).json(isBlockedByProfile);
   } catch (err) {
     const message = checkErrorType(err);

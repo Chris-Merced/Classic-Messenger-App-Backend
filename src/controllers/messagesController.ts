@@ -7,8 +7,8 @@ import { MessagesRow } from "../types/db";
 
 const GetChatMessagesSchema = z.object({
   chatName: z.string(),
-  conversationID: z.coerce.number().int().positive(),
-  userID: z.coerce.number().int().positive(),
+  conversationID: z.coerce.number().int().positive().optional(),
+  userID: z.coerce.number().int().optional(),
   page: z.coerce.number().int().nonnegative(),
   limit: z.coerce.number().int().positive(),
 });
@@ -16,10 +16,13 @@ const GetChatMessagesSchema = z.object({
 export async function getChatMessagesByName(req: Request, res: Response) {
   try {
     const parsed = GetChatMessagesSchema.safeParse(req.query);
-
+    
     if (!parsed.success) {
       console.log("Error in req params for chat messages");
       console.log(z.treeifyError(parsed.error));
+            console.log(z.treeifyError(parsed.error).properties?.userID?.errors)
+
+      console.log(z.treeifyError(parsed.error).properties?.conversationID?.errors)
       return res.status(500).json({ error: z.treeifyError(parsed.error) });
     }
 
@@ -63,6 +66,15 @@ export async function getChatMessagesByName(req: Request, res: Response) {
 
       res.status(200).json({ messages: newMessages });
     } else if (req.query.conversationID) {
+      
+      if(!userID){
+        console.log("UserID is not available for authentication")
+        return res.status(400).json({error: "User ID not present for authentication"})
+      }
+      if(!conversationID){
+        console.log("ConversationID is not available for authentication")
+        return res.status(400).json({error: "ConversationID not present for authentication"})
+      }
       const sessionToken: string = req.cookies.sessionToken;
       const isValid: boolean = await authentication.compareSessionToken(
         sessionToken,
