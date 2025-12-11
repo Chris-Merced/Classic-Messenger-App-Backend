@@ -20,9 +20,6 @@ export async function getChatMessagesByName(req: Request, res: Response) {
     if (!parsed.success) {
       console.log("Error in req params for chat messages");
       console.log(z.treeifyError(parsed.error));
-            console.log(z.treeifyError(parsed.error).properties?.userID?.errors)
-
-      console.log(z.treeifyError(parsed.error).properties?.conversationID?.errors)
       return res.status(500).json({ error: z.treeifyError(parsed.error) });
     }
 
