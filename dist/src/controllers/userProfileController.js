@@ -511,7 +511,6 @@ async function checkIfBlockedByProfile(req, res) {
         if (!parsed.success) {
             console.log("Error with parameters while checking blocked status");
             console.log(zod_1.z.treeifyError(parsed.error));
-            console.log(zod_1.z.treeifyError(parsed.error).properties?.blockedID?.errors);
             return res.status(400).json({
                 error: "Error with parameters while checking blocked status " +
                     zod_1.z.treeifyError(parsed.error),

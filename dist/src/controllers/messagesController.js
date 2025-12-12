@@ -52,8 +52,6 @@ async function getChatMessagesByName(req, res) {
         if (!parsed.success) {
             console.log("Error in req params for chat messages");
             console.log(zod_1.z.treeifyError(parsed.error));
-            console.log(zod_1.z.treeifyError(parsed.error).properties?.userID?.errors);
-            console.log(zod_1.z.treeifyError(parsed.error).properties?.conversationID?.errors);
             return res.status(500).json({ error: zod_1.z.treeifyError(parsed.error) });
         }
         const { chatName, conversationID, userID, page, limit } = parsed.data;

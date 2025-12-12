@@ -1,12 +1,13 @@
 import {Pool} from 'pg'
 import config from '../config'
 
-const pool = null;
+let pool : Pool
 try {
-  const pool = new Pool(config)
-  
+  pool = new Pool(config)
 } catch (err) {
   console.error('Error creating pool:', err)
   throw err
 }
+
+
 export default pool

@@ -15,5 +15,5 @@ const config = {
         connectionTimeoutMillis: 2000,
     },
 };
-module.exports = config[env_1.env.NODE_ENV || 'development'];
+exports.default = config[env_1.env.NODE_ENV || 'development'];
 //# sourceMappingURL=config.js.map
