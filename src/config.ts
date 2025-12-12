@@ -15,4 +15,4 @@ const config = {
   },
 }
 
-module.exports = config[env.NODE_ENV || 'development']
+export default config[env.NODE_ENV || 'development']
