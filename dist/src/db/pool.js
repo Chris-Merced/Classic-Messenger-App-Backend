@@ -10,7 +10,7 @@ try {
     pool = new pg_1.Pool(config_1.default);
 }
 catch (err) {
-    console.error('Error creating pool:', err);
+    console.error("Error creating pool:", err);
     throw err;
 }
 exports.default = pool;

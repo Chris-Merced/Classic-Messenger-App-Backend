@@ -83,7 +83,6 @@ const GetUsersBySearchSchema = z.object({
 
 export async function getUsersBySearch(req: Request, res: Response) {
   try {
-    console.log(req.query.page)
     const parsed = GetUsersBySearchSchema.safeParse(req.query);
     if (!parsed.success) {
       console.log("Error parsing parameters in getUserBySearch");

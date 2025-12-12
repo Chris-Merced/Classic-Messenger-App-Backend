@@ -1,4 +1,4 @@
-import * as db from "../db/queriesOld";
+import * as db from "../db/queries";
 import type { Response, Request } from "express";
 import { z } from "zod";
 import { checkErrorType } from "../authentication";

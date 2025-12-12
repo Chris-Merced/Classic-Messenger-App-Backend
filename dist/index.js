@@ -1,13 +1,13 @@
 "use strict";
 const Express = require("express");
 const app = Express();
-const db = require("./src/db/queriesOld");
+const db = require("./src/db/queries");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const cron = require("node-cron");
 const WebSocket = require("ws");
 const http = require("http");
-const { cleanupSchedule } = require("./src/db/queriesOld");
+const { cleanupSchedule } = require("./src/db/queries");
 const loginRouter = require("./src/routers/loginRouter");
 const logoutRouter = require("./src/routers/logoutRouter");
 const signupRouter = require("./src/routers/signuprouter");

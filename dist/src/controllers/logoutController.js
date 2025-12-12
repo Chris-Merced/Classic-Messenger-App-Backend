@@ -34,7 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.logoutUser = logoutUser;
-const db = __importStar(require("../db/queriesOld"));
+const db = __importStar(require("../db/queries"));
 const zod_1 = require("zod");
 const authentication_1 = require("../authentication");
 const SessionCookieSchema = zod_1.z.object({

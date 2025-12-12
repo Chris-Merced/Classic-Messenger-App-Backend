@@ -3,7 +3,7 @@ const {
   PutObjectCommand,
   DeleteObjectCommand,
 } = require("@aws-sdk/client-s3");
-const db = require("../db/queriesOld.js");
+const db = require("../db/queries");
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
