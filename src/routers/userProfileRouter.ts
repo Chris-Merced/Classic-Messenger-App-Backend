@@ -1,4 +1,4 @@
-import userProfileController from '../controllers/userProfileController'
+import * as userProfileController from '../controllers/userProfileController'
 import { Router } from 'express'
 import upload from '../middleware/multer'
 

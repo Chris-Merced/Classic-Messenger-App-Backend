@@ -10,11 +10,11 @@ const { cleanupSchedule } = require("./src/db/queries");
 const loginRouter = require("./src/routers/loginRouter");
 const logoutRouter = require("./src/routers/logoutRouter");
 const signupRouter = require("./src/routers/signuprouter");
-const conversationRouter = require("./src/routers/conversationRouter");
-const userProfileRouter = require("./src/routers/userProfileRouter");
+const conversationRouter = require("./src/routers/conversationRouter").default;
+const userProfileRouter = require("./src/routers/userProfileRouter").default;
 const messagesRouter = require("./src/routers/messagesRouter");
 const oauthRouter = require("./src/routers/oauthRouter");
-const adminRouter = require("./src/routers/adminRouter");
+const adminRouter = require("./src/routers/adminRouter").default;
 const rateLimit = require("express-rate-limit");
 const { createClient } = require("redis");
 const {

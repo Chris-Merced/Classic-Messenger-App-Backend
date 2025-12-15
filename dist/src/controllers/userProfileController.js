@@ -734,7 +734,7 @@ async function getUserIDByUsername(req, res) {
         res.status(500).json("Error retrieving user credentials " + message);
     }
 }
-module.exports = {
+exports.default = {
     getUser,
     getUserPublicProfile,
     getUserIDByUsername,
