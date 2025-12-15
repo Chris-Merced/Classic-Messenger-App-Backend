@@ -4,7 +4,7 @@ import type { Request, Response } from "express";
 import { checkErrorType } from "../authentication";
 
 
-async function deleteMessage(req: Request, res:Response) {
+export async function deleteMessage(req: Request, res:Response): Promise<void> {
   try {
     const authenticated: boolean = await authentication.compareSessionToken(
       req.cookies.sessionToken,
@@ -28,4 +28,3 @@ async function deleteMessage(req: Request, res:Response) {
   }
 }
 
-module.exports = { deleteMessage };

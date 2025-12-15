@@ -11,7 +11,7 @@ const QuerySchema = z.object({
   profileID: z.coerce.number().int().positive(),
 });
 
-async function checkDirectMessageConversation(req: Request, res: Response) {
+export async function checkDirectMessageConversation(req: Request, res: Response) {
   try {
     const parsed = QuerySchema.safeParse(req.query);
 
@@ -53,7 +53,7 @@ const AddMessageQuery = z.object({
   reciever: z.array(z.coerce.string()),
 });
 
-async function addMessageToConversations(req: Request, res: Response) {
+export async function addMessageToConversations(req: Request, res: Response) {
   try {
     const parsed = AddMessageQuery.safeParse(req.body);
 
@@ -206,7 +206,7 @@ export async function changeIsRead(req: Request, res: Response) {
   }
 }
 
-module.exports = {
+export default {
   checkDirectMessageConversation,
   addMessageToConversations,
   getOnlineUsers,

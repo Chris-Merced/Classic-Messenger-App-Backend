@@ -1,6 +1,6 @@
-const { Router } = require('express')
+import { Router } from 'express'
 const conversationRouter = Router()
-const conversationController = require('../controllers/conversationController')
+import conversationController from '../controllers/conversationController'
 
 conversationRouter.get(
   '/',
@@ -17,4 +17,4 @@ conversationRouter.get(
 )
 conversationRouter.patch('/isRead', conversationController.changeIsRead)
 
-module.exports = conversationRouter
+export default conversationRouter
