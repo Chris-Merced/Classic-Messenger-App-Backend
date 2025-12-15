@@ -33,6 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteMessage = deleteMessage;
 const db = __importStar(require("../db/queries"));
 const authentication = __importStar(require("../authentication"));
 const authentication_1 = require("../authentication");
@@ -59,5 +60,4 @@ async function deleteMessage(req, res) {
         res.status(500).json("Internal Server Error");
     }
 }
-module.exports = { deleteMessage };
 //# sourceMappingURL=adminController.js.map

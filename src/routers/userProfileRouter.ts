@@ -1,6 +1,6 @@
-const userProfileController = require('../controllers/userProfileController')
-const { Router } = require('express')
-const upload = require('../middleware/multer')
+import userProfileController from '../controllers/userProfileController'
+import { Router } from 'express'
+import upload from '../middleware/multer'
 
 const userProfileRouter = Router()
 
@@ -45,4 +45,4 @@ userProfileRouter.post(
 userProfileRouter.patch('/aboutMe', userProfileController.editAboutMe)
 userProfileRouter.get('/mutualFriends', userProfileController.getMutualFriends)
 
-module.exports = userProfileRouter
+export default userProfileRouter

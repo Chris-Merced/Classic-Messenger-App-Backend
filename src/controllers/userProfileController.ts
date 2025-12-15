@@ -777,7 +777,7 @@ export async function getUserIDByUsername(req: Request, res: Response) {
   }
 }
 
-module.exports = {
+export default {
   getUser,
   getUserPublicProfile,
   getUserIDByUsername,

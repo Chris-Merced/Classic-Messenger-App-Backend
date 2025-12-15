@@ -33,6 +33,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.checkDirectMessageConversation = checkDirectMessageConversation;
+exports.addMessageToConversations = addMessageToConversations;
 exports.getOnlineUsers = getOnlineUsers;
 exports.checkIfBlockedByReciever = checkIfBlockedByReciever;
 exports.changeIsRead = changeIsRead;
@@ -208,7 +210,7 @@ async function changeIsRead(req, res) {
             .json({ error: "Could not change isRead status for conversation" });
     }
 }
-module.exports = {
+exports.default = {
     checkDirectMessageConversation,
     addMessageToConversations,
     getOnlineUsers,
