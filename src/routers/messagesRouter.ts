@@ -1,8 +1,8 @@
-const { Router } = require('express')
+import { Router } from 'express'
 const messagesRouter = Router()
-const messagesController = require('../controllers/messagesController')
+import messagesController from '../controllers/messagesController'
 
 messagesRouter.get('/byChatName', messagesController.getChatMessagesByName)
 messagesRouter.get('/userChats', messagesController.getUserChats)
 
-module.exports = messagesRouter
+export default messagesRouter

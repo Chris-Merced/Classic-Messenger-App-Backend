@@ -175,4 +175,4 @@ export async function getUserChats(req: Request, res: Response) {
   }
 }
 
-module.exports = { getChatMessagesByName, getUserChats };
+export default { getChatMessagesByName, getUserChats };

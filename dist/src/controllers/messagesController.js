@@ -165,5 +165,5 @@ async function getUserChats(req, res) {
         });
     }
 }
-module.exports = { getChatMessagesByName, getUserChats };
+exports.default = { getChatMessagesByName, getUserChats };
 //# sourceMappingURL=messagesController.js.map
