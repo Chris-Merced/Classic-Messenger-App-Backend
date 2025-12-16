@@ -22,6 +22,13 @@ const { redisPublisher, redisSubscriber, connectToRedis, } = require("./src/redi
 //ID for redis tracking
 const currentServerId = process.env.DYNO || "local-server";
 connectToRedis();
+/*TODO:
+  When a user sends a message to another user for the first time:
+    Currently the user the message is being sent to does not update in real time
+      and requires a refresh to see the message
+    Modify Behavior so that on first message being sent it updates the sent users
+      listOfChats
+*/
 async function setUpMessageSubscriber() {
     try {
         await redisSubscriber.subscribe("chatMessages", (message) => {
