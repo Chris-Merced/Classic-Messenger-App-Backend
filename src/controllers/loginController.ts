@@ -88,4 +88,4 @@ export async function verifyPassword(
   }
 }
 
-module.exports = { loginHandler };
+export default { loginHandler };

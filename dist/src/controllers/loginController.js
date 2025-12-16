@@ -111,5 +111,5 @@ async function verifyPassword(hashedPassword, inputPassword) {
         throw new Error("Error in password verification: " + message);
     }
 }
-module.exports = { loginHandler };
+exports.default = { loginHandler };
 //# sourceMappingURL=loginController.js.map
