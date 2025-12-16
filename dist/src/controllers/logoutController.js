@@ -59,5 +59,5 @@ async function logoutUser(req, res) {
         res.status(500).json({ message: "Error in logging out user: " + message });
     }
 }
-module.exports = { logoutUser };
+exports.default = { logoutUser };
 //# sourceMappingURL=logoutController.js.map

@@ -26,4 +26,4 @@ export async function logoutUser(req: Request, res: Response) {
   }
 }
 
-module.exports = { logoutUser };
+export default { logoutUser };
