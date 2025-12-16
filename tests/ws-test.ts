@@ -1,4 +1,4 @@
-const WebSocket = require('ws')
+import WebSocket = require('ws')
 
 const WS_URL = 'wss://classic-messenger-app-backend-45b0821935c8.herokuapp.com/'
 const NUM_CLIENTS = 250
@@ -7,14 +7,16 @@ let connected = 0
 let failed = 0
 let messages = 0
 
-const latencies = []
+const latencies: Array<number> = []
 let minLatency = Infinity
 let maxLatency = 0
 
 console.log(`Starting WebSocket test with ${NUM_CLIENTS} clients...`)
 console.log(`Target: ${WS_URL}\n`)
 
-function createClient(id) {
+  
+
+function createClient(id: number) {
   const ws = new WebSocket(WS_URL)
 
   const messageTimestamps = new Map()
@@ -56,13 +58,19 @@ function createClient(id) {
     console.log(`Failed: ${failed} (${err.message})`)
   })
 
-  ws.on('message', (data) => {
+  type Message = {
+    type: string,
+        
+
+  }
+
+  ws.on('message', (data: string) => {
     let message = JSON.parse(data)
 
     if (message.type === 'test_echo' && message.messageId) {
       const sentTime = messageTimestamps.get(message.messageId)
       if (sentTime) {
-        const latency = Date.now() - sentTime
+        const latency: number = Date.now() - sentTime
         latencies.push(latency)
 
         if (latency < minLatency) minLatency = latency

@@ -1,5 +1,6 @@
 "use strict";
-const WebSocket = require('ws');
+Object.defineProperty(exports, "__esModule", { value: true });
+const WebSocket = require("ws");
 const WS_URL = 'wss://classic-messenger-app-backend-45b0821935c8.herokuapp.com/';
 const NUM_CLIENTS = 250;
 let connected = 0;
