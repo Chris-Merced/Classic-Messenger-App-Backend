@@ -144,5 +144,5 @@ async function oauthSignup(req, res) {
         res.status(500).json({ error: "Error in OAuth signup process " + message });
     }
 }
-module.exports = { oauthLogin, oauthSignup };
+exports.default = { oauthLogin, oauthSignup };
 //# sourceMappingURL=oauthController.js.map

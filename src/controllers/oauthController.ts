@@ -131,4 +131,4 @@ export async function oauthSignup(req: Request, res: Response) {
   }
 }
 
-module.exports = { oauthLogin, oauthSignup };
+export default { oauthLogin, oauthSignup };
