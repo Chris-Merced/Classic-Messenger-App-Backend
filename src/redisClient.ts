@@ -1,4 +1,4 @@
-const { createClient } = require('redis');
+import { createClient } from 'redis'
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 const isProduction = process.env.NODE_ENV === 'production';
@@ -13,8 +13,8 @@ const clientOptions = isProduction
     }
   : { url: redisUrl };
 
-const redisPublisher = createClient(clientOptions);
-const redisSubscriber = createClient(clientOptions);
+export const redisPublisher = createClient(clientOptions);
+export const redisSubscriber = createClient(clientOptions);
 
 redisPublisher.on('error', (err) => {
   if (err.code !== 'SELF_SIGNED_CERT_IN_CHAIN') {
@@ -33,5 +33,5 @@ async function connectToRedis() {
   console.log('Redis connected successfully');
 }
 
-module.exports = { redisPublisher, redisSubscriber, connectToRedis };
+export default { redisPublisher, redisSubscriber, connectToRedis };
 

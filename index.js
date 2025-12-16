@@ -21,7 +21,7 @@ const {
   redisPublisher,
   redisSubscriber,
   connectToRedis,
-} = require("./src/redisClient");
+} = require("./src/redisClient").default;
 
 //ID for redis tracking
 const currentServerId = process.env.DYNO || "local-server";

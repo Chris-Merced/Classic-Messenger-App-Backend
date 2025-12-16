@@ -18,7 +18,7 @@ const oauthRouter = require("./src/routers/oauthRouter").default;
 const adminRouter = require("./src/routers/adminRouter").default;
 const rateLimit = require("express-rate-limit");
 const { createClient } = require("redis");
-const { redisPublisher, redisSubscriber, connectToRedis, } = require("./src/redisClient");
+const { redisPublisher, redisSubscriber, connectToRedis, } = require("./src/redisClient").default;
 //ID for redis tracking
 const currentServerId = process.env.DYNO || "local-server";
 connectToRedis();
