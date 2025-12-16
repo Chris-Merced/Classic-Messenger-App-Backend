@@ -74,5 +74,5 @@ async function hashPassword(password) {
         throw new Error("Error hashing password: " + message);
     }
 }
-module.exports = { signupHandler };
+exports.default = { signupHandler };
 //# sourceMappingURL=signupController.js.map

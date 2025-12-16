@@ -42,4 +42,4 @@ export async function hashPassword(password: string): Promise<string> {
   }
 }
 
-module.exports = { signupHandler };
+export default { signupHandler };
