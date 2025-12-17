@@ -175,6 +175,7 @@ wss.on("connection", (ws, req) => {
     console.log("made it to websocket OnMessage");
     const data = message.toString();
     const info = JSON.parse(data);
+    console.log(info)
     if (!info.registration && info.type !== "test") {
       if (info.reciever) {
         recipients = await Promise.all(
@@ -210,6 +211,7 @@ wss.on("connection", (ws, req) => {
               console.log("we seem to have made it so far");
               console.log(recipient);
               console.log(id);
+              console.log(info)
               if (recipient.serverID === currentServerId) {
                 const userData = activeUsers[recipient.username];
                 if (userData) {

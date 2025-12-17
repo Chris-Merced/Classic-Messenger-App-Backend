@@ -1,19 +1,27 @@
-const {
+import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
-} = require("@aws-sdk/client-s3");
-const db = require("../db/queries");
+} from "@aws-sdk/client-s3";
+import * as db from "../db/queries";
+
+function checkEnv(name:string){
+  if(!process.env[name]){
+    throw Error("Env Var ${name} is undefined")
+  }else{
+    return process.env[name]
+  }
+}
 
 const s3 = new S3Client({
-  region: process.env.AWS_REGION,
+  region: checkEnv("AWS_REGION"),
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: checkEnv("AWS_ACCESS_KEY_ID"),
+    secretAccessKey: checkEnv("AWS_SECRET_ACCESS_KEY"),
   },
 });
 
-const deleteFromS3 = async (key) => {
+export const deleteFromS3 = async (key: string) => {
   try {
     const deleteParams = {
       Bucket: process.env.AWS_S3_BUCKET,
@@ -28,7 +36,7 @@ const deleteFromS3 = async (key) => {
   }
 };
 
-const uploadToS3 = async (buffer, key, contentType) => {
+export const uploadToS3 = async (buffer: Buffer<ArrayBufferLike>, key: string, contentType: string) => {
   try {
     const params = {
       Bucket: process.env.AWS_S3_BUCKET,
@@ -48,4 +56,4 @@ const uploadToS3 = async (buffer, key, contentType) => {
   }
 };
 
-module.exports = { uploadToS3, deleteFromS3 };
+export default { uploadToS3, deleteFromS3 };

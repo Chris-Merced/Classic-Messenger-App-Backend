@@ -1,10 +1,15 @@
 const Express = require("express");
+import type {Request, Response} from "express"
 const app = Express();
 const db = require("./src/db/queries");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const cron = require("node-cron");
-const WebSocket = require("ws");
+import {WebSocket, WebSocketServer} from "ws"
+import {Socket} from "net"
+import {IncomingMessage} from "http"
+import {ScheduledTask} from "node-cron"
+import { sessionCleanup } from "./src/utils/cleanupTask";
 const http = require("http");
 const { cleanupSchedule } = require("./src/db/queries");
 const loginRouter = require("./src/routers/loginRouter").default;
@@ -38,11 +43,11 @@ connectToRedis();
 
 async function setUpMessageSubscriber() {
   try {
-    await redisSubscriber.subscribe("chatMessages", (message) => {
+    await redisSubscriber.subscribe("chatMessages", (message: string) => {
       try {
         const messageData = JSON.parse(message);
         if (messageData.reciever) {
-          messageData.reciever.forEach(async (reciever) => {
+          messageData.reciever.forEach(async (reciever: string) => {
             const userGET = await redisPublisher.hGet("activeUsers", reciever);
             const user = JSON.parse(userGET);
             if (
@@ -50,7 +55,7 @@ async function setUpMessageSubscriber() {
               user.serverID === currentServerId &&
               activeUsers[reciever]
             ) {
-              userInformation = activeUsers[reciever];
+              let userInformation = activeUsers[reciever];
               userInformation.ws.send(JSON.stringify(messageData));
             }
           });
@@ -67,11 +72,11 @@ async function setUpMessageSubscriber() {
 
 async function setUpFriendRequestSubscriber() {
   try {
-    await redisSubscriber.subscribe("friendRequests", (request) => {
+    await redisSubscriber.subscribe("friendRequests", (request: string) => {
       try {
         const requestData = JSON.parse(request);
         if (requestData.reciever) {
-          requestData.reciever.forEach(async (reciever) => {
+          requestData.reciever.forEach(async (reciever: string) => {
             const userGET = await redisPublisher.hGet("activeUsers", reciever);
             const user = JSON.parse(userGET);
             if (
@@ -79,7 +84,7 @@ async function setUpFriendRequestSubscriber() {
               user.serverID === currentServerId &&
               activeUsers[reciever]
             ) {
-              userInformation = activeUsers[reciever];
+              let userInformation = activeUsers[reciever];
               userInformation.ws.send(JSON.stringify(requestData));
             }
           });
@@ -103,8 +108,9 @@ const limiter = rateLimit({
   message: "Too Many Requests, please try again later.",
 });
 
-//Database Query to clean up expired sessions
-global.cleanupTask = cron.schedule("* * * * *", cleanupSchedule);
+//Begin task scheduler that cleans up expired sessions
+sessionCleanup()
+
 
 //Middleware
 app.use(
@@ -129,7 +135,7 @@ app.use("/messages", messagesRouter);
 app.use("/conversations", conversationRouter);
 app.use("/oauth", oauthRouter);
 app.use("/admin", adminRouter);
-app.get("/loaderio-363f93789958f968a3e18e63bd2ecfb0.txt", (req, res) => {
+app.get("/loaderio-363f93789958f968a3e18e63bd2ecfb0.txt", (req:Request, res: Response) => {
   console.log("made it loaderio verification");
   res.type("text/plain");
   res.send("loaderio-363f93789958f968a3e18e63bd2ecfb0");
@@ -140,37 +146,42 @@ const server = http.createServer(app);
 
 //Set http server to send request object through to websocket on connection upgrade
 const wss = new WebSocket.Server({ noServer: true });
-server.on("upgrade", async (request, socket, head) => {
+server.on("upgrade", async (request : IncomingMessage, socket: Socket, head: Buffer) => {
   wss.handleUpgrade(request, socket, head, (ws) => {
     wss.emit("connection", ws, request);
   });
 });
 
 //Keeps track of all users with verified sessions
-const activeUsers = {};
+const activeUsers : Record<string, {ws: WebSocket, lastActive: number}> = {}
+
+interface AliveWebSocket extends WebSocket {
+  isAlive: boolean
+}
 
 const interval = setInterval(function ping() {
   wss.clients.forEach(function each(ws) {
-    if (ws.isAlive === false) {
+    const socket = ws as AliveWebSocket
+    if (socket.isAlive === false) {
       console.log("Terminating stale connection");
       return ws.terminate();
     }
-    ws.isAlive = false;
+    socket.isAlive = false;
     ws.ping();
   });
 }, 20000);
 
 wss.on("connection", (ws, req) => {
   console.log("New Data Flow");
-  let userIdentifier = null;
-
-  ws.isAlive = true;
+  let userIdentifier: string | null = null;
+  const socket = ws as AliveWebSocket
+  socket.isAlive = true;
 
   ws.on("pong", () => {
-    ws.isAlive = true;
+    socket.isAlive = true;
   });
 
-  ws.on("message", async (message) => {
+  ws.on("message", async (message:string) => {
     var recipients;
     console.log("made it to websocket OnMessage");
     const data = message.toString();
@@ -178,7 +189,7 @@ wss.on("connection", (ws, req) => {
     if (!info.registration && info.type !== "test") {
       if (info.reciever) {
         recipients = await Promise.all(
-          info.reciever.map(async (username) => {
+          info.reciever.map(async (username:string) => {
             const user = await redisPublisher.hGet("activeUsers", username);
             const parsedUser = JSON.parse(user);
             let completeUser = {};
@@ -263,7 +274,7 @@ wss.on("connection", (ws, req) => {
     } else if (info.registration) {
       const cookieStr = req.headers.cookie;
       if (cookieStr) {
-        const cookies = {};
+        const cookies: Record<string, string> = {};
         cookieStr.split(";").forEach((cookie) => {
           const [name, ...rest] = cookie.trim().split("=");
           cookies[name] = decodeURIComponent(rest.join("="));
