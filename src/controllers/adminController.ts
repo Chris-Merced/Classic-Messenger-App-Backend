@@ -97,6 +97,7 @@ export async function banUser(req: Request, res: Response) {
 }
 
 //START HERE
+//BAN QUERIES EXIST IN QUERIES.OLD
 async function unbanUser(req, res) {
   try {
     const username = req.body.username;
