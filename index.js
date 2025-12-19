@@ -121,19 +121,19 @@ app.use(Express.json());
 app.use("/", limiter);
 
 //Routers
-app.use("/login", loginRouter);
-app.use("/logout", logoutRouter);
-app.use("/signup", signupRouter);
-app.use("/userProfile", userProfileRouter);
-app.use("/messages", messagesRouter);
-app.use("/conversations", conversationRouter);
-app.use("/oauth", oauthRouter);
-app.use("/admin", adminRouter);
-app.get("/loaderio-363f93789958f968a3e18e63bd2ecfb0.txt", (req, res) => {
-  console.log("made it loaderio verification");
-  res.type("text/plain");
-  res.send("loaderio-363f93789958f968a3e18e63bd2ecfb0");
-});
+app.use('/login', loginRouter)
+app.use('/logout', logoutRouter)
+app.use('/signup', signupRouter)
+app.use('/userProfile', userProfileRouter)
+app.use('/messages', messagesRouter)
+app.use('/conversations', conversationRouter)
+app.use('/oauth', oauthRouter)
+app.use('/admin', authentication.checkAdminStatus, adminRouter)
+app.get('/loaderio-363f93789958f968a3e18e63bd2ecfb0.txt', (req, res) => {
+  console.log('made it loaderio verification')
+  res.type('text/plain')
+  res.send('loaderio-363f93789958f968a3e18e63bd2ecfb0')
+})
 
 //http server to use express routing
 const server = http.createServer(app);

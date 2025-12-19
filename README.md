@@ -2,6 +2,8 @@
 
 The backend for the Classic Messenger App is a secure, scalable Node.js server built using Express and PostgreSQL. It manages user authentication, message handling, session management, and data storage for all chat interactions and social features. This server works hand-in-hand with the frontend to power a real-time messaging experience.
 
+[You can also peruse the logic for the Frontend portion of the application here!](https://github.com/Chris-Merced/Classic-Messenger-App-Frontend)
+
 ## Features
 
 * **User Authentication:** Secure signup and login with hashed passwords using Argon2, and OAuth2 integration.
@@ -30,6 +32,8 @@ The backend for the Classic Messenger App is a secure, scalable Node.js server b
 * **cors** for handling cross-origin requests
 
 ## Installation & Setup
+
+[Note that this setup needs to be married with the installation provided in the Frontend repository which can be found here!](https://github.com/Chris-Merced/Classic-Messenger-App-Frontend)
 
 ### Prerequisites
 
