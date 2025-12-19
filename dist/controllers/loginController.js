@@ -8,10 +8,14 @@ async function loginHandler(req, res) {
         console.log(req.body.username);
         console.log(req.body.password);
         const user = await db.getUserByUsername(req.body.username);
-        console.log("made it past db 1");
+        console.log("made it past db");
         if (user) {
             const passConfirm = await verifyPassword(user.password, req.body.password);
             if (passConfirm) {
+                console.log(user);
+                if (user.banned) {
+                    return res.status(403).json({ message: "User is banned" });
+                }
                 const sessionID = crypto.randomUUID();
                 await db.storeSession(user.id, sessionID);
                 const sessionToken = {

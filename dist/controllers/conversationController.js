@@ -63,7 +63,7 @@ async function getOnlineUsers(req, res) {
     }
     catch (err) {
         console.log('Error in retrieving online users list: \n' + err);
-        res
+        resizeBy
             .status(500)
             .json({ message: 'Error in retrieving online users list' });
     }

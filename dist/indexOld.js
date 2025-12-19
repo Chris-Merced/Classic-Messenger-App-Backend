@@ -1,13 +1,11 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 const Express = require("express");
 const app = Express();
 const db = require("./src/db/queries");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const cron = require("node-cron");
-const ws_1 = require("ws");
-const cleanupTask_1 = require("./src/utils/cleanupTask");
+const WebSocket = require("ws");
 const http = require("http");
 const { cleanupSchedule } = require("./src/db/queries");
 const loginRouter = require("./src/routers/loginRouter").default;
@@ -43,7 +41,7 @@ async function setUpMessageSubscriber() {
                         if (user &&
                             user.serverID === currentServerId &&
                             activeUsers[reciever]) {
-                            let userInformation = activeUsers[reciever];
+                            userInformation = activeUsers[reciever];
                             userInformation.ws.send(JSON.stringify(messageData));
                         }
                     });
@@ -71,7 +69,7 @@ async function setUpFriendRequestSubscriber() {
                         if (user &&
                             user.serverID === currentServerId &&
                             activeUsers[reciever]) {
-                            let userInformation = activeUsers[reciever];
+                            userInformation = activeUsers[reciever];
                             userInformation.ws.send(JSON.stringify(requestData));
                         }
                     });
@@ -94,8 +92,8 @@ const limiter = rateLimit({
     max: 9001,
     message: "Too Many Requests, please try again later.",
 });
-//Begin task scheduler that cleans up expired sessions
-(0, cleanupTask_1.sessionCleanup)();
+//Database Query to clean up expired sessions
+global.cleanupTask = cron.schedule("* * * * *", cleanupSchedule);
 //Middleware
 app.use(cors({
     origin: process.env.NODE_ENV === "production"
@@ -107,23 +105,23 @@ app.use(cookieParser());
 app.use(Express.json());
 app.use("/", limiter);
 //Routers
-app.use("/login", loginRouter);
-app.use("/logout", logoutRouter);
-app.use("/signup", signupRouter);
-app.use("/userProfile", userProfileRouter);
-app.use("/messages", messagesRouter);
-app.use("/conversations", conversationRouter);
-app.use("/oauth", oauthRouter);
-app.use("/admin", adminRouter);
-app.get("/loaderio-363f93789958f968a3e18e63bd2ecfb0.txt", (req, res) => {
-    console.log("made it loaderio verification");
-    res.type("text/plain");
-    res.send("loaderio-363f93789958f968a3e18e63bd2ecfb0");
+app.use('/login', loginRouter);
+app.use('/logout', logoutRouter);
+app.use('/signup', signupRouter);
+app.use('/userProfile', userProfileRouter);
+app.use('/messages', messagesRouter);
+app.use('/conversations', conversationRouter);
+app.use('/oauth', oauthRouter);
+app.use('/admin', authentication.checkAdminStatus, adminRouter);
+app.get('/loaderio-363f93789958f968a3e18e63bd2ecfb0.txt', (req, res) => {
+    console.log('made it loaderio verification');
+    res.type('text/plain');
+    res.send('loaderio-363f93789958f968a3e18e63bd2ecfb0');
 });
 //http server to use express routing
 const server = http.createServer(app);
 //Set http server to send request object through to websocket on connection upgrade
-const wss = new ws_1.WebSocket.Server({ noServer: true });
+const wss = new WebSocket.Server({ noServer: true });
 server.on("upgrade", async (request, socket, head) => {
     wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit("connection", ws, request);
@@ -133,28 +131,27 @@ server.on("upgrade", async (request, socket, head) => {
 const activeUsers = {};
 const interval = setInterval(function ping() {
     wss.clients.forEach(function each(ws) {
-        const socket = ws;
-        if (socket.isAlive === false) {
+        if (ws.isAlive === false) {
             console.log("Terminating stale connection");
             return ws.terminate();
         }
-        socket.isAlive = false;
+        ws.isAlive = false;
         ws.ping();
     });
 }, 20000);
 wss.on("connection", (ws, req) => {
     console.log("New Data Flow");
     let userIdentifier = null;
-    const socket = ws;
-    socket.isAlive = true;
+    ws.isAlive = true;
     ws.on("pong", () => {
-        socket.isAlive = true;
+        ws.isAlive = true;
     });
     ws.on("message", async (message) => {
         var recipients;
         console.log("made it to websocket OnMessage");
         const data = message.toString();
         const info = JSON.parse(data);
+        console.log(info);
         if (!info.registration && info.type !== "test") {
             if (info.reciever) {
                 recipients = await Promise.all(info.reciever.map(async (username) => {
@@ -187,6 +184,7 @@ wss.on("connection", (ws, req) => {
                             console.log("we seem to have made it so far");
                             console.log(recipient);
                             console.log(id);
+                            console.log(info);
                             if (recipient.serverID === currentServerId) {
                                 const userData = activeUsers[recipient.username];
                                 if (userData) {
@@ -300,4 +298,4 @@ process.on("SIGINT", () => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
 module.exports = { server, redisPublisher, redisSubscriber };
-//# sourceMappingURL=index.js.map
+//# sourceMappingURL=indexOld.js.map

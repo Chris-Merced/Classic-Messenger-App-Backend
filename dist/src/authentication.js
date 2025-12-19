@@ -75,4 +75,5 @@ async function checkAdminStatus(id) {
 function checkErrorType(err) {
     return err instanceof Error ? err.message : String(err);
 }
+exports.default = { compareSessionToken, checkAdminStatus };
 //# sourceMappingURL=authentication.js.map

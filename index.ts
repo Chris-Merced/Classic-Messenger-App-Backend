@@ -10,6 +10,7 @@ import {Socket} from "net"
 import {IncomingMessage} from "http"
 import {ScheduledTask} from "node-cron"
 import { sessionCleanup } from "./src/utils/cleanupTask";
+import authentication from "./src/authentication";
 const http = require("http");
 const { cleanupSchedule } = require("./src/db/queries");
 const loginRouter = require("./src/routers/loginRouter").default;
@@ -134,7 +135,7 @@ app.use("/userProfile", userProfileRouter);
 app.use("/messages", messagesRouter);
 app.use("/conversations", conversationRouter);
 app.use("/oauth", oauthRouter);
-app.use("/admin", adminRouter);
+app.use("/admin", authentication.checkAdminStatus, adminRouter);
 app.get("/loaderio-363f93789958f968a3e18e63bd2ecfb0.txt", (req:Request, res: Response) => {
   console.log("made it loaderio verification");
   res.type("text/plain");

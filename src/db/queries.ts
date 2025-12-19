@@ -227,7 +227,7 @@ export async function getUserByUserID(
   }
 }
 
-export async function getUserBySession(token: string) {
+export async function getUserBySession(token: string) : Promise<UserNameRow>{
   try {
     const { rows }: QueryResult<UserNameRow> = await pool.query(
       `
@@ -245,7 +245,7 @@ export async function getUserBySession(token: string) {
     return rows[0];
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("Error getting the user ID by session: \n" + message);
+    throw new Error("Error getting the user ID by session: \n" + message);
   }
 }
 
@@ -1376,5 +1376,50 @@ export async function deleteMessage(messageID: number):Promise<boolean> {
   } catch (err) {
     const message = checkErrorType(err)
     throw new Error(message)
+  }
+}
+
+export async function banUser(banExpiresAt: string |Date, id: number) {
+  try {
+    let timeUpdateResult = null;
+    await pool.query("DELETE FROM sessions WHERE user_id = $1", [id]);
+    const bannedResult = await pool.query(
+      "UPDATE users SET banned=TRUE WHERE id=$1 RETURNING id",
+      [id]
+    );
+
+    if (bannedResult.rowCount === 0) {
+      return false;
+    }
+
+    if (banExpiresAt !== "perm") {
+      const { rowCount } = await pool.query(
+        "UPDATE users SET ban_expires=$1 WHERE id=$2",
+        [banExpiresAt, id]
+      );
+      if(!rowCount){
+        return false
+      }
+      timeUpdateResult = rowCount > 0;
+    }
+    if (banExpiresAt === "perm") {
+      const { rowCount } = await pool.query(
+        "UPDATE users SET ban_expires=NULL WHERE id=$1",
+        [id]
+      );
+      if(!rowCount){
+        return false
+      }
+      timeUpdateResult = rowCount > 0;
+    }
+
+    if (timeUpdateResult) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    console.log("Error while banning user in DB");
+    throw err;
   }
 }

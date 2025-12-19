@@ -1,5 +1,5 @@
 "use strict";
-const db = require('./db/queries');
+const db = require("./db/queries");
 async function compareSessionToken(token, userID) {
     try {
         const isValid = await db.checkSession(token, userID);
@@ -11,12 +11,12 @@ async function compareSessionToken(token, userID) {
         }
     }
     catch (err) {
-        console.error('Error authenticating user: ' + err.message);
+        console.error("Error authenticating user: " + err.message);
     }
 }
-async function checkAdminStatus(id) {
+async function checkAdminStatus(req, res, token, id) {
     try {
-        const adminStatus = await db.checkAdminStatus(id);
+        const adminStatus = await db.checkAdminStatus(token, id);
         console.log(adminStatus);
         if (adminStatus) {
             console.log("admin true");
@@ -24,11 +24,11 @@ async function checkAdminStatus(id) {
         }
         else {
             console.log("admin false");
-            return false;
+            res.status(403).json({ error: "Forbidden" });
         }
     }
     catch (err) {
-        console.log('Error verifying admin status' + err.message);
+        console.log("Error verifying admin status" + err.message);
         return false;
     }
 }
