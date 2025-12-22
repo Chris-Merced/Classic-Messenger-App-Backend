@@ -10,7 +10,7 @@ import {
   BlockedRow,
 } from "../types/db";
 import argon2 from "argon2";
-import { z } from "zod";
+import { check, z } from "zod";
 import { checkErrorType } from "../authentication";
 import type { Query, QueryResult } from "pg";
 import type { Request, Response } from "express";
@@ -28,8 +28,6 @@ export type UserInput = z.infer<typeof UserInputSchema>;
 type UserNameRow = { username: string };
 type UserEmailRow = { email: string };
 type UserIDRow = { id: number };
-
-
 
 export async function addUser(user: UserInput) {
   console.log("NEW TYPED ROUTE");
@@ -227,7 +225,7 @@ export async function getUserByUserID(
   }
 }
 
-export async function getUserBySession(token: string) : Promise<UserNameRow>{
+export async function getUserBySession(token: string): Promise<UserNameRow> {
   try {
     const { rows }: QueryResult<UserNameRow> = await pool.query(
       `
@@ -249,9 +247,7 @@ export async function getUserBySession(token: string) : Promise<UserNameRow>{
   }
 }
 
-export async function checkEmailExists(
-  email: string
-): Promise<UserRow | null> {
+export async function checkEmailExists(email: string): Promise<UserRow | null> {
   try {
     const { rows }: QueryResult<UserRow> = await pool.query(
       "SELECT * FROM users WHERE LOWER(email)=LOWER($1)",
@@ -1340,46 +1336,45 @@ export async function getMutualFriends(
   }
 }
 
-
-type CheckAdminStatus = Pick<UserRow, "is_admin">
+type CheckAdminStatus = Pick<UserRow, "is_admin">;
 
 export async function checkAdminStatus(id: number): Promise<boolean> {
   try {
-    const { rows }:QueryResult<CheckAdminStatus> = await pool.query(
-      'SELECT is_admin FROM users WHERE id=$1',
-      [id],
-    )
+    const { rows }: QueryResult<CheckAdminStatus> = await pool.query(
+      "SELECT is_admin FROM users WHERE id=$1",
+      [id]
+    );
     if (rows[0].is_admin) {
-      return true
+      return true;
     } else {
-      return false
+      return false;
     }
   } catch (err) {
-    const message = checkErrorType(err)
-    throw new Error(message)
+    const message = checkErrorType(err);
+    throw new Error(message);
   }
 }
 
-export async function deleteMessage(messageID: number):Promise<boolean> {
+export async function deleteMessage(messageID: number): Promise<boolean> {
   try {
     const result: QueryResult<MessagesRow> = await pool.query(
-      'DELETE from MESSAGES where id=$1 RETURNING *',
-      [messageID],
-    )
+      "DELETE from MESSAGES where id=$1 RETURNING *",
+      [messageID]
+    );
     if (result.rowCount! > 0) {
-      console.log('Deleted: ' + result.rows[0])
-      return true
+      console.log("Deleted: " + result.rows[0]);
+      return true;
     } else {
-      console.log('No Messages match that ID for deletion')
-      return false
+      console.log("No Messages match that ID for deletion");
+      return false;
     }
   } catch (err) {
-    const message = checkErrorType(err)
-    throw new Error(message)
+    const message = checkErrorType(err);
+    throw new Error(message);
   }
 }
 
-export async function banUser(banExpiresAt: string |Date, id: number) {
+export async function banUser(banExpiresAt: string | Date, id: number) {
   try {
     let timeUpdateResult = null;
     await pool.query("DELETE FROM sessions WHERE user_id = $1", [id]);
@@ -1397,8 +1392,8 @@ export async function banUser(banExpiresAt: string |Date, id: number) {
         "UPDATE users SET ban_expires=$1 WHERE id=$2",
         [banExpiresAt, id]
       );
-      if(!rowCount){
-        return false
+      if (!rowCount) {
+        return false;
       }
       timeUpdateResult = rowCount > 0;
     }
@@ -1407,8 +1402,8 @@ export async function banUser(banExpiresAt: string |Date, id: number) {
         "UPDATE users SET ban_expires=NULL WHERE id=$1",
         [id]
       );
-      if(!rowCount){
-        return false
+      if (!rowCount) {
+        return false;
       }
       timeUpdateResult = rowCount > 0;
     }
@@ -1421,5 +1416,45 @@ export async function banUser(banExpiresAt: string |Date, id: number) {
   } catch (err) {
     console.log("Error while banning user in DB");
     throw err;
+  }
+}
+
+export async function unbanUser(id: number) : Promise<boolean> {
+  try {
+    const { rowCount } = await pool.query(
+      "UPDATE users SET banned=false, ban_expires=null WHERE id=$1",
+      [id]
+    );
+    if (!rowCount) {
+      throw new Error("User not found in unban request");
+    }
+    if (rowCount > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    const message = checkErrorType(err)
+    throw new Error("Error modifying db while unbanning: " + message);
+  }
+}
+
+
+export async function makeAdmin(id: number) {
+  try {
+    const { rowCount } = await pool.query(
+      "UPDATE users SET is_admin=true WHERE id=$1",
+      [id]
+    );
+    if(!rowCount){
+      throw new Error("User not found in db to create admin")
+    }
+    if (rowCount > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    throw new Error("Error modifying db while making admin");
   }
 }

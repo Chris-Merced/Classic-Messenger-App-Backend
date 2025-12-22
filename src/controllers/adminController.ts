@@ -1,7 +1,7 @@
 import * as db from "../db/queries";
 import * as authentication from "../authentication";
 import type { Request, Response } from "express";
-import {z} from "zod"
+import { z } from "zod";
 import { checkErrorType } from "../authentication";
 import { getUserIDByUsername } from "./userProfileController";
 
@@ -34,16 +34,19 @@ export async function deleteMessage(
 
 const BanUserSchema = z.object({
   username: z.string(),
-  days: z.string().or(z.number().int().positive())
-})
+  days: z.string().or(z.number().int().positive()),
+});
 
 export async function banUser(req: Request, res: Response) {
   try {
     const admin = await db.getUserBySession(req.cookies.sessionToken);
     if (!admin) {
       console.log("There is no user to authenticate admin status");
-      return res.status(400).json({ error: "No user to authenticate admin status" });
+      return res
+        .status(400)
+        .json({ error: "No user to authenticate admin status" });
     }
+    
     const adminID = await db.getUserIDByUsername(admin.username);
     if (!adminID) {
       console.log("oopsie poopie");
@@ -51,6 +54,7 @@ export async function banUser(req: Request, res: Response) {
         .status(404)
         .json({ error: "Unable to find id for provided user" });
     }
+    
     const authenticated = authentication.checkAdminStatus(adminID);
     if (!authenticated) {
       console.log("User is not allowed to ban other users");
@@ -58,24 +62,26 @@ export async function banUser(req: Request, res: Response) {
         .status(403)
         .json({ error: "You are not permitted to perform that operation" });
     }
-    
-    const parsed = BanUserSchema.safeParse(req.query)
-    if(!parsed.success){
-      console.log("Data provided is invalid: " + z.treeifyError(parsed.error))
-      return res.status(403).json({error: "Data provided is invalid: " + z.treeifyError(parsed.error)})
+
+    const parsed = BanUserSchema.safeParse(req.query);
+    if (!parsed.success) {
+      console.log("Data provided is invalid: " + z.treeifyError(parsed.error));
+      return res.status(403).json({
+        error: "Data provided is invalid: " + z.treeifyError(parsed.error),
+      });
     }
-    let {days, username} = parsed.data
+    let { days, username } = parsed.data;
     //keep original logic until runtime is proven to work
     //let days = req.query.days;
     //const username = req.query.username;
 
     const user = await db.getUserByUsername(username);
-    let banExpiresAt : Date | string = "";
+    let banExpiresAt: Date | string = "";
     if (user) {
       if (days === "perm") {
         banExpiresAt = "perm";
       } else {
-        if(typeof days === "string"){
+        if (typeof days === "string") {
           days = parseInt(days);
         }
         banExpiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
@@ -90,18 +96,63 @@ export async function banUser(req: Request, res: Response) {
       res.status(404).json({ error: "User not found" });
     }
   } catch (err) {
-    const message =  checkErrorType(err)
+    const message = checkErrorType(err);
     console.log("Error banning user " + message);
-    res.status(500).json({ error: "Server error while banning user: " + message });
+    res
+      .status(500)
+      .json({ error: "Server error while banning user: " + message });
   }
 }
 
 //START HERE
 //BAN QUERIES EXIST IN QUERIES.OLD
-async function unbanUser(req, res) {
+const UnbanUserSchema = z.object({
+  username: z.string(),
+});
+
+export async function unbanUser(req: Request, res: Response) {
   try {
-    const username = req.body.username;
+    const admin = await db.getUserBySession(req.cookies.sessionToken);
+    if (!admin) {
+      console.log("There is no user to authenticate admin status");
+      return res
+        .status(400)
+        .json({ error: "No user to authenticate admin status" });
+    }
+    
+    const adminID = await db.getUserIDByUsername(admin.username);
+    if (!adminID) {
+      console.log("oopsie poopie");
+      return res
+        .status(404)
+        .json({ error: "Unable to find id for provided user" });
+    }
+    
+    const authenticated = authentication.checkAdminStatus(adminID);
+    if (!authenticated) {
+      console.log("User is not allowed to ban other users");
+      return res
+        .status(403)
+        .json({ error: "You are not permitted to perform that operation" });
+    }
+    
+    const parsed = UnbanUserSchema.safeParse(req.body);
+    if (!parsed.success) {
+      console.error(
+        "Invalid user input for unbanning user: " + z.treeifyError(parsed.error)
+      );
+      return res
+        .status(400)
+        .json({
+          error:
+            "Invalid user input for unbanning user: " +
+            z.treeifyError(parsed.error),
+        });
+    }
+    const {username} = parsed.data
+    
     const user = await db.getUserByUsername(username);
+    
     if (user) {
       const response = await db.unbanUser(user.id);
       if (response) {
@@ -114,15 +165,51 @@ async function unbanUser(req, res) {
       res.status(404).json({ error: "User Does Not Exist" });
     }
   } catch (err) {
-    console.log("Error while banning user" + err.message);
+    const message = checkErrorType(err)
+    console.log("Error while banning user" + message);
     res.status(500).json({ error: "Server error while banning user" });
   }
 }
 
-async function makeAdmin(req, res) {
+const MakeAdminSchema = z.object({
+  username: z.string(),
+});
+
+export async function makeAdmin(req:Request, res: Response) {
   try {
-    console.log("made it");
-    const username = req.body.username;
+
+    const admin = await db.getUserBySession(req.cookies.sessionToken);
+    if (!admin) {
+      console.log("There is no user to authenticate admin status");
+      return res
+        .status(400)
+        .json({ error: "No user to authenticate admin status" });
+    }
+    
+    const adminID = await db.getUserIDByUsername(admin.username);
+    if (!adminID) {
+      console.log("oopsie poopie");
+      return res
+        .status(404)
+        .json({ error: "Unable to find id for provided user" });
+    }
+    
+    const authenticated = authentication.checkAdminStatus(adminID);
+    if (!authenticated) {
+      console.log("User is not allowed to ban other users");
+      return res
+        .status(403)
+        .json({ error: "You are not permitted to perform that operation" });
+    }
+    
+    const parsed = MakeAdminSchema.safeParse(req.body)
+    if(!parsed.success){
+      console.error("Invalid input while making admin: " + z.treeifyError(parsed.error))
+      return res.status(400).json({error: "Invalid username input for making a user admin: " + z.treeifyError(parsed.error)})
+    }
+    
+    const {username} = parsed.data
+
     const user = await db.getUserByUsername(username);
 
     if (user) {
@@ -136,7 +223,8 @@ async function makeAdmin(req, res) {
       res.status(404).json({ error: "Could not find user to update" });
     }
   } catch (err) {
-    console.log("Error updating admin status: " + err.message);
+    const message = checkErrorType(err)
+    console.log("Error updating admin status: " + message);
     res.status(500).json({ error: "Error updating admin status" });
   }
 }
