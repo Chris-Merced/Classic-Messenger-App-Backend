@@ -49,6 +49,9 @@ exports.editAboutMe = editAboutMe;
 exports.getMutualFriends = getMutualFriends;
 exports.checkAdminStatus = checkAdminStatus;
 exports.deleteMessage = deleteMessage;
+exports.banUser = banUser;
+exports.unbanUser = unbanUser;
+exports.makeAdmin = makeAdmin;
 const pool_1 = __importDefault(require("./pool"));
 const argon2_1 = __importDefault(require("argon2"));
 const zod_1 = require("zod");
@@ -213,7 +216,7 @@ async function getUserBySession(token) {
     }
     catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        console.error("Error getting the user ID by session: \n" + message);
+        throw new Error("Error getting the user ID by session: \n" + message);
     }
 }
 async function checkEmailExists(email) {
@@ -999,7 +1002,7 @@ async function getMutualFriends(userID, profileID) {
 }
 async function checkAdminStatus(id) {
     try {
-        const { rows } = await pool_1.default.query('SELECT is_admin FROM users WHERE id=$1', [id]);
+        const { rows } = await pool_1.default.query("SELECT is_admin FROM users WHERE id=$1", [id]);
         if (rows[0].is_admin) {
             return true;
         }
@@ -1014,19 +1017,88 @@ async function checkAdminStatus(id) {
 }
 async function deleteMessage(messageID) {
     try {
-        const result = await pool_1.default.query('DELETE from MESSAGES where id=$1 RETURNING *', [messageID]);
+        const result = await pool_1.default.query("DELETE from MESSAGES where id=$1 RETURNING *", [messageID]);
         if (result.rowCount > 0) {
-            console.log('Deleted: ' + result.rows[0]);
+            console.log("Deleted: " + result.rows[0]);
             return true;
         }
         else {
-            console.log('No Messages match that ID for deletion');
+            console.log("No Messages match that ID for deletion");
             return false;
         }
     }
     catch (err) {
         const message = (0, authentication_1.checkErrorType)(err);
         throw new Error(message);
+    }
+}
+async function banUser(banExpiresAt, id) {
+    try {
+        let timeUpdateResult = null;
+        await pool_1.default.query("DELETE FROM sessions WHERE user_id = $1", [id]);
+        const bannedResult = await pool_1.default.query("UPDATE users SET banned=TRUE WHERE id=$1 RETURNING id", [id]);
+        if (bannedResult.rowCount === 0) {
+            return false;
+        }
+        if (banExpiresAt !== "perm") {
+            const { rowCount } = await pool_1.default.query("UPDATE users SET ban_expires=$1 WHERE id=$2", [banExpiresAt, id]);
+            if (!rowCount) {
+                return false;
+            }
+            timeUpdateResult = rowCount > 0;
+        }
+        if (banExpiresAt === "perm") {
+            const { rowCount } = await pool_1.default.query("UPDATE users SET ban_expires=NULL WHERE id=$1", [id]);
+            if (!rowCount) {
+                return false;
+            }
+            timeUpdateResult = rowCount > 0;
+        }
+        if (timeUpdateResult) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    catch (err) {
+        console.log("Error while banning user in DB");
+        throw err;
+    }
+}
+async function unbanUser(id) {
+    try {
+        const { rowCount } = await pool_1.default.query("UPDATE users SET banned=false, ban_expires=null WHERE id=$1", [id]);
+        if (!rowCount) {
+            throw new Error("User not found in unban request");
+        }
+        if (rowCount > 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    catch (err) {
+        const message = (0, authentication_1.checkErrorType)(err);
+        throw new Error("Error modifying db while unbanning: " + message);
+    }
+}
+async function makeAdmin(id) {
+    try {
+        const { rowCount } = await pool_1.default.query("UPDATE users SET is_admin=true WHERE id=$1", [id]);
+        if (!rowCount) {
+            throw new Error("User not found in db to create admin");
+        }
+        if (rowCount > 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    catch (err) {
+        throw new Error("Error modifying db while making admin");
     }
 }
 //# sourceMappingURL=queries.js.map

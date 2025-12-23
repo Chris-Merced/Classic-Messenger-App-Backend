@@ -37,5 +37,8 @@ const express_1 = require("express");
 const adminController = __importStar(require("../controllers/adminController"));
 const adminRouter = (0, express_1.Router)();
 adminRouter.delete("/message", adminController.deleteMessage);
+adminRouter.post("/ban", adminController.banUser);
+adminRouter.patch("/unban", adminController.unbanUser);
+adminRouter.patch("/adminStatus", adminController.makeAdmin);
 exports.default = adminRouter;
 //# sourceMappingURL=adminRouter.js.map

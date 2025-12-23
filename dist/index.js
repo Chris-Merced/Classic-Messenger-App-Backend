@@ -1,4 +1,7 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const Express = require("express");
 const app = Express();
@@ -8,6 +11,7 @@ const cookieParser = require("cookie-parser");
 const cron = require("node-cron");
 const ws_1 = require("ws");
 const cleanupTask_1 = require("./src/utils/cleanupTask");
+const authentication_1 = __importDefault(require("./src/authentication"));
 const http = require("http");
 const { cleanupSchedule } = require("./src/db/queries");
 const loginRouter = require("./src/routers/loginRouter").default;
@@ -114,7 +118,7 @@ app.use("/userProfile", userProfileRouter);
 app.use("/messages", messagesRouter);
 app.use("/conversations", conversationRouter);
 app.use("/oauth", oauthRouter);
-app.use("/admin", adminRouter);
+app.use("/admin", authentication_1.default.checkAdminStatus, adminRouter);
 app.get("/loaderio-363f93789958f968a3e18e63bd2ecfb0.txt", (req, res) => {
     console.log("made it loaderio verification");
     res.type("text/plain");
