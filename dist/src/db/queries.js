@@ -1003,6 +1003,7 @@ async function getMutualFriends(userID, profileID) {
 async function checkAdminStatus(id) {
     try {
         const { rows } = await pool_1.default.query("SELECT is_admin FROM users WHERE id=$1", [id]);
+        console.log("made it past db query");
         if (rows[0].is_admin) {
             return true;
         }

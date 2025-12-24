@@ -34,16 +34,6 @@ const currentServerId = process.env.DYNO || "local-server";
 
 connectToRedis();
 
-/*TODO:
-  WHEN a user sends a message to another user for the first time:
-    Currently the user the message is being sent to does not update in real time
-      and requires a refresh to see the message
-    Modify Behavior so that on first message being sent it updates the sent users
-      listOfChats
-
-  WHEN window on front end is in mobile form the messages are not updated
-    in real time
-*/ 
 
 async function setUpMessageSubscriber() {
   try {
@@ -138,7 +128,7 @@ app.use("/userProfile", userProfileRouter);
 app.use("/messages", messagesRouter);
 app.use("/conversations", conversationRouter);
 app.use("/oauth", oauthRouter);
-app.use("/admin", authentication.checkAdminStatus, adminRouter);
+app.use("/admin", adminRouter);
 app.get("/loaderio-363f93789958f968a3e18e63bd2ecfb0.txt", (req:Request, res: Response) => {
   console.log("made it loaderio verification");
   res.type("text/plain");

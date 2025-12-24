@@ -28,7 +28,7 @@ export async function checkAdminStatus(id : number) {
     }
   } catch (err) {
     const message = checkErrorType(err)
-    console.log("Error verifying admin status" + message);
+    console.log("Error verifying admin status within ts: " + message);
     return false;
   }
 }

@@ -1340,10 +1340,11 @@ type CheckAdminStatus = Pick<UserRow, "is_admin">;
 
 export async function checkAdminStatus(id: number): Promise<boolean> {
   try {
-    const { rows }: QueryResult<CheckAdminStatus> = await pool.query(
+    const { rows }: QueryResult<{is_admin: boolean}> = await pool.query(
       "SELECT is_admin FROM users WHERE id=$1",
       [id]
     );
+    console.log("made it past db query")
     if (rows[0].is_admin) {
       return true;
     } else {

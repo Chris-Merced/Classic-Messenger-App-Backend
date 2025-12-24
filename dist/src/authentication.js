@@ -68,7 +68,7 @@ async function checkAdminStatus(id) {
     }
     catch (err) {
         const message = checkErrorType(err);
-        console.log("Error verifying admin status" + message);
+        console.log("Error verifying admin status within ts: " + message);
         return false;
     }
 }

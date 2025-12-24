@@ -44,6 +44,8 @@ const authentication_1 = require("../authentication");
 async function deleteMessage(req, res) {
     try {
         const authenticated = await authentication.compareSessionToken(req.cookies.sessionToken, req.body.id);
+        console.log("within deleteMessage in admin controller: ");
+        console.log(req.body);
         const isAdmin = await authentication.checkAdminStatus(req.body.id);
         if (authenticated && isAdmin) {
             const success = await db.deleteMessage(req.body.messageID);

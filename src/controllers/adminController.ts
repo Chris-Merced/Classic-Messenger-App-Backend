@@ -14,6 +14,8 @@ export async function deleteMessage(
       req.cookies.sessionToken,
       req.body.id
     );
+    console.log("within deleteMessage in admin controller: ")
+    console.log(req.body)
     const isAdmin: boolean = await authentication.checkAdminStatus(req.body.id);
     if (authenticated && isAdmin) {
       const success: boolean = await db.deleteMessage(req.body.messageID);
