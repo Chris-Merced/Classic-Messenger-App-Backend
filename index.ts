@@ -32,10 +32,6 @@ const currentServerId = process.env.DYNO || "local-server";
 connectToRedis();
 
 /* TODO:
-  Clean up imports within index.ts
-  Remove all old js files within controllers, routers, queriesOld.js,
-    authentication.js, indexOld.js, and redisClient.js. Verify each of
-    these files are not being used by a typeScript file before deletion
   Default profile pictures are not showing up appropriately within DMs
 */
 
