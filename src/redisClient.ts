@@ -27,7 +27,7 @@ redisSubscriber.on('error', (err) => {
   }
 });
 
-async function connectToRedis() {
+export async function connectToRedis() {
   await redisPublisher.connect();
   await redisSubscriber.connect();
   console.log('Redis connected successfully');

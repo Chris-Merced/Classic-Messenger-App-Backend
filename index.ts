@@ -1,33 +1,30 @@
-const Express = require("express");
+import Express from "express";
 import type {Request, Response} from "express"
-const app = Express();
-const db = require("./src/db/queries");
-const cors = require("cors");
-const cookieParser = require("cookie-parser");
-const cron = require("node-cron");
+import * as  db from "./src/db/queries";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 import {WebSocket, WebSocketServer} from "ws"
 import {Socket} from "net"
 import {IncomingMessage} from "http"
-import {ScheduledTask} from "node-cron"
 import { sessionCleanup } from "./src/utils/cleanupTask";
-import authentication from "./src/authentication";
-const http = require("http");
-const { cleanupSchedule } = require("./src/db/queries");
-const loginRouter = require("./src/routers/loginRouter").default;
-const logoutRouter = require("./src/routers/logoutRouter").default;
-const signupRouter = require("./src/routers/signuprouter").default;
-const conversationRouter = require("./src/routers/conversationRouter").default;
-const userProfileRouter = require("./src/routers/userProfileRouter").default;
-const messagesRouter = require("./src/routers/messagesRouter").default;
-const oauthRouter = require("./src/routers/oauthRouter").default;
-const adminRouter = require("./src/routers/adminRouter").default;
-const rateLimit = require("express-rate-limit");
-const { createClient } = require("redis");
-const {
+import http from "http";
+import loginRouter from "./src/routers/loginRouter"
+import logoutRouter from "./src/routers/logoutRouter"
+import signupRouter from "./src/routers/signupRouter"
+import conversationRouter from "./src/routers/conversationRouter"
+import userProfileRouter from "./src/routers/userProfileRouter"
+import messagesRouter from "./src/routers/messagesRouter"
+import oauthRouter from "./src/routers/oauthRouter"
+import adminRouter from "./src/routers/adminRouter"
+import rateLimit from "express-rate-limit"
+import {
   redisPublisher,
   redisSubscriber,
   connectToRedis,
-} = require("./src/redisClient").default;
+} from "./src/redisClient"
+
+
+const app = Express();
 
 //ID for redis tracking
 const currentServerId = process.env.DYNO || "local-server";
@@ -39,16 +36,19 @@ connectToRedis();
   Remove all old js files within controllers, routers, queriesOld.js,
     authentication.js, indexOld.js, and redisClient.js. Verify each of
     these files are not being used by a typeScript file before deletion
+  Default profile pictures are not showing up appropriately within DMs
 */
 
 async function setUpMessageSubscriber() {
   try {
     await redisSubscriber.subscribe("chatMessages", (message: string) => {
-      try {
         const messageData = JSON.parse(message);
         if (messageData.reciever) {
           messageData.reciever.forEach(async (reciever: string) => {
             const userGET = await redisPublisher.hGet("activeUsers", reciever);
+            if(!userGET){
+              throw new Error("Failed to retrieve user information from chat Message Pub/Sub")
+            }
             const user = JSON.parse(userGET);
             if (
               user &&
@@ -60,12 +60,12 @@ async function setUpMessageSubscriber() {
             }
           });
         }
-      } catch (error) {
-        console.error("Error processing Redis message:", error);
-      }
     });
   } catch (error) {
     console.error("Redis connection error:", error);
+    //more robust error handling can exist here by implementing return
+    //   value that indicates connection, set timeout in while loop
+    //    until connection is confirmed
     setTimeout(connectToRedis, 5000);
   }
 }
@@ -78,6 +78,9 @@ async function setUpFriendRequestSubscriber() {
         if (requestData.reciever) {
           requestData.reciever.forEach(async (reciever: string) => {
             const userGET = await redisPublisher.hGet("activeUsers", reciever);
+            if(!userGET){
+              throw new Error("Failed to retrieve user information from Friend Request Pub/Sub")
+            }
             const user = JSON.parse(userGET);
             if (
               user &&
@@ -191,6 +194,9 @@ wss.on("connection", (ws, req) => {
         recipients = await Promise.all(
           info.reciever.map(async (username:string) => {
             const user = await redisPublisher.hGet("activeUsers", username);
+            if(!user){
+              throw new Error("Failed to Retrieve user from activeUsers redis hashtable")
+            }
             const parsedUser = JSON.parse(user);
             let completeUser = {};
             return (completeUser = { ...parsedUser, username });

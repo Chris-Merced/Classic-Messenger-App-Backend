@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.redisSubscriber = exports.redisPublisher = void 0;
+exports.connectToRedis = connectToRedis;
 const redis_1 = require("redis");
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 const isProduction = process.env.NODE_ENV === 'production';
