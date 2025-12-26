@@ -31,9 +31,6 @@ const currentServerId = process.env.DYNO || "local-server";
 
 connectToRedis();
 
-/* TODO:
-  Default profile pictures are not showing up appropriately within DMs
-*/
 
 async function setUpMessageSubscriber() {
   try {
